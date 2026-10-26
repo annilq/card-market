@@ -93,37 +93,38 @@
 
 | 字段 | 说明 |
 | --- | --- |
-| 卡牌类别 | 例如宝可梦等 |
-| 系列分类 | 例如 MEGA 系列 |
-| 卡牌类型 | 根据实际业务定义 |
-| 稀有程度 | 根据实际业务定义 |
-| 排序 | 控制分类展示顺序 |
-| 状态 | 是否启用 |
+| IP 维度（卡牌类别） | 动态维度集合 `ips`（多 IP 集市：宝可梦 / 游戏王 / 龙珠 …），即大类 |
+| 系列分类 | IP 子级 `series`，三层结构：IP → 系列 → 子系列（如 宝可梦 → MEGA → [M6a]） |
+| 子系列 | 系列子级 `sub_series`，**必填**（仅两层 IP 也须建空壳占位） |
+| 稀有程度 | 独立维度集合 `rarities`，`cards` 经关系引用（全局单一枚举，后台配置） |
+| 排序 | 各维度自身的展示顺序字段（facet 排序，非分类维度）；`cards` 不设 sort |
+| 状态 | 维度「是否启用」；卡牌生命周期用 Directus 内置 status（draft/published/archived），不计入分类维度 |
 
-**分类层级与字段枚举待定**（见 [01-classification-model](../.scratch/card-market/issues/01-classification-model.md)）。
+> 分类层级与字段枚举**已定**（见 [01-classification-model](../.scratch/card-market/issues/01-classification-model.md)）：多 IP 集市、三层 IP→系列→子系列（sub_series 必填）、稀有程度为独立维度集合 + 关系、卡牌类型(card_types)已删除、`ips`/`series`/`sub_series`/`rarities` 四个维度均后台配置化。
 
 ### 3.3 卡牌信息管理（后台 + 前台）
 
 管理员可在后台创建、编辑、查看和下架卡牌信息。初步字段：
 
-| 字段 | 说明 |
-| --- | --- |
-| 卡牌名称 | 卡牌展示名称 |
-| 所属类别 | 关联卡牌类别 |
-| 所属系列 | 关联系列分类 |
-| 卡牌类型 | 卡牌类型或其他业务分类 |
-| 回购类型 | 卡牌对应的回购方式或规则 |
-| 卡牌状态 | 例如裸卡、有包装等 |
-| 稀有程度 | 卡牌稀有等级 |
-| 商品图片 | 支持上传和管理图片 |
-| 商品描述 | 卡牌介绍及相关说明 |
-| 价格 | 卡片价格 |
-| 是否高价买取 | 是否高价买取 |
-| 展示状态 | 上架、下架 |
-| 排序 | 控制列表展示顺序 |
-| 创建及更新时间 | 后台记录和维护 |
+| 字段 | 说明 | 必填 |
+| --- | --- | --- |
+| 卡牌名称 | 卡牌展示名称 | 始终 |
+| 所属 IP（类别） | 关联 IP 维度（ips，后台配置） | 始终 |
+| 所属系列 | 关联系列分类（series） | 始终 |
+| 子系列 | 关联子系列（sub_series，必填） | 始终 |
+| 编号 | 卡牌收藏编号，如 `123/197` / `SWSH01-025` | 上架必填 |
+| 稀有程度 | 关联稀有程度维度（rarities，后台配置） | 始终 |
+| 商品图片 | 支持上传和管理图片 | 上架≥1 |
+| 商品描述 | 卡牌介绍及相关说明 | 可选 |
+| 价格 | 卡片卖价（仅卖价，不含买取价/估值） | 上架必填 |
+| 是否高价买取 | **纯标识**：运营自由标注、无统一标准，仅「只看精品」筛选 | 可选（默认 false） |
+| 卡牌状态 | 裸卡 / 有包装（代码常量） | 始终（默认 裸卡） |
+| 生命周期状态 | Directus 内置 status：草稿/上架/下架归档 | 系统 |
+| 创建及更新时间 | 后台记录和维护 | 系统 |
 
-字段类型、选项与必填规则以最终确认的业务规则为准（见 [02-card-fields](../.scratch/card-market/issues/02-card-fields.md)）。
+> 删除项：卡牌类型(card_types)、回购类型（与 IP 维度重复）、展示状态（改用 Directus 内置 status）、排序（列表纯 price DESC）。列表默认按价格降序；`is_high_value` 不影响排序。
+
+字段类型、选项与必填规则以最终确认的业务规则为准（见 [02-card-fields](../.scratch/card-market/issues/02-card-fields.md)，已 resolved）。
 
 **前台展示功能：**
 
@@ -134,7 +135,7 @@
 - 隐藏已下架卡牌。
 - 按需支持分页和排序。
 
-是否提供关键词搜索、价格区间筛选、多图片展示等，见 [03-frontend-search-filter](../.scratch/card-market/issues/03-frontend-search-filter.md)。
+检索与筛选范围**已定**（见 [03-frontend-search-filter](../.scratch/card-market/issues/03-frontend-search-filter.md)，已 resolved）：首页/列表页支持 卡名+编号 关键词搜索、IP→系列→子系列 级联筛选、稀有程度多选过滤、价格区间、只看精品，排序为 价格升降 + 最新上架，分页且过滤态进 URL；多图片画廊属详情页。
 
 ### 3.4 图片管理及 OSS 存储（后台 + 前台）
 
@@ -159,25 +160,28 @@
 - 新增、编辑和删除 banner。
 - 上传 banner 图片。
 - 设置标题及描述。
-- 设置跳转链接。
-- 设置展示位置。
-- 控制启用或停用。
-- 调整展示顺序。
+- 设置跳转链接（内部路由或外部 URL）。
+- 调整展示顺序（单槽位轮播顺序）。
+- 通过 Directus 内置 status（draft/published/archived）控制上下线。
 
-前台按配置展示 banner，支持图片轮播及链接跳转。是否设置开始/结束时间、是否需要多 banner 位，见 [05-banner-capabilities](../.scratch/card-market/issues/05-banner-capabilities.md)。
+前台按配置展示 banner，支持图片轮播（自动播放 + 固定切换间隔，前端常量）及链接跳转。
+
+> banner 能力**已定**（见 [05-banner-capabilities](../.scratch/card-market/issues/05-banner-capabilities.md)，已 resolved）：**单槽位**（仅首页顶部轮播，无多 position）、**无定时上下线**（仅靠 status）、**轮播策略前端硬编码**；status 统一复用 Directus 内置 status，删除原 boolean 启用/停用。`link` 内/外链安全与图片宽高比为实现期次要项。
 
 ### 3.6 公告管理（后台 + 前台）
 
 管理员发布和维护网站公告：
 
 - 新增、编辑和删除公告。
-- 设置标题及正文。
-- 支持富文本内容。
-- 控制发布状态。
-- 设置发布时间。
-- 设置排序。
+- 设置标题及富文本正文。
+- 通过 Directus 内置 status（draft/published/archived）控制发布与归档。
+- 设置发布时间（未来时间 = 定时发布，留空 = 发布即展示）。
+- 支持置顶（`is_pinned`）公告。
+- 可选手动排序（`sort`）作为组内 tie-break。
 
-前台展示公告入口及详情。是否需要置顶、定时发布、历史归档，见 [06-announcement-capabilities](../.scratch/card-market/issues/06-announcement-capabilities.md)。
+前台公告列表：可见 = `status=published 且 published_at<=now`；排序 = 置顶组在前、组内按 `published_at` 倒序；`archived` 公告不展示。
+
+> 公告能力**已定**（见 [06-announcement-capabilities](../.scratch/card-market/issues/06-announcement-capabilities.md)，已 resolved）：status 统一复用 Directus 内置 status、需要置顶、需要定时发布、手动归档（无自动过期）。`body` 富文本渲染需防 XSS。
 
 ### 3.7 网站基本信息管理（后台）
 
@@ -199,20 +203,21 @@
 
 **前台：**
 
-- 提交留言内容。
-- 填写必要的联系信息。
+- 提交留言内容（必填）。
+- 联系信息（联系人 / 联系方式）**选填**，降低提交门槛。
 - 提交成功后显示反馈信息。
-- 对输入内容进行基本校验。
+- 对输入内容进行基本校验（长度等）。
+- **不要求登录**、**无验证码**。
 
 **后台：**
 
-- 查看留言列表。
-- 查看留言详情。
-- 记录提交时间。
-- 标记处理状态。
+- 查看留言列表（仅管理员可见，公开不可读）。
+- 查看留言详情与提交时间。
+- 标记处理状态：新 / 已处理 / 已归档 / **已标记垃圾**（垃圾由管理员手动判定，无自动检测）。
 - 按需删除或归档。
+- 通知方式：**仅站内**（管理员登录 Directus 后台可见 `status=新`），无邮件通知。
 
-是否要求访客登录、是否需要验证码/防滥用/邮件通知，见 [07-message-anti-abuse](../.scratch/card-market/issues/07-message-anti-abuse.md)。
+> 留言防滥用**已定**（见 [07-message-anti-abuse](../.scratch/card-market/issues/07-message-anti-abuse.md)，已 resolved）：直连 Directus public create（零自定义后端）；防滥用仅边缘限流（Cloudflare/Nginx）+ 字段校验，不引验证码/频率限制/内容审核/蜜罐；仅站内通知；联系方式全可选；垃圾留言手动置 `已标记垃圾`。
 
 ### 3.9 后台用户与权限管理
 
@@ -229,18 +234,23 @@
 
 ## 4. 数据实体与字段草案
 
-以下为初步数据模型草案（落地前需结合第 9 节决策 ticket 收敛）。Directus collections：
+以下为数据模型（分类维度与卡牌字段已定稿，见 [01](../.scratch/card-market/issues/01-classification-model.md)/[02](../.scratch/card-market/issues/02-card-fields.md)；banner/公告/留言能力亦已决议，见 [05](../.scratch/card-market/issues/05-banner-capabilities.md)/[06](../.scratch/card-market/issues/06-announcement-capabilities.md)/[07](../.scratch/card-market/issues/07-message-anti-abuse.md)）。Directus collections：
 
 | 集合（Collection） | 用途 | 关键字段（草案） |
 | --- | --- | --- |
-| `categories` | 卡牌分类 | id, name, dimension(类别/系列/类型/稀有度?), parent(多层?), sort, status |
-| `cards` | 卡牌信息 | id, name, category_id, series_id, card_type, buyback_type, card_status, rarity, images(M2M→files), description, price, is_high_value, display_status, sort, created/updated |
-| `banners` | 广告位 | id, title, description, image(fk→files), link, position, status, sort, start_time?, end_time? |
-| `announcements` | 公告 | id, title, body(rich), status, published_at, sort, is_pinned? |
-| `messages` | 访客留言 | id, content, contact_name?, contact_info?, created_at, status(新/已处理) |
+| `ips` | IP 维度 / 卡牌类别 / 大类 | id, name, sort, status |
+| `series` | 系列分类（IP 子级，三层：IP→系列→子系列） | id, name, ip_id→ips, sort, status |
+| `sub_series` | 子系列（系列子级，必填） | id, name, series_id→series, sort, status |
+| `rarities` | 稀有程度维度（全局单一枚举，后台配置） | id, name, sort, status |
+| `cards` | 卡牌信息 | id, name, ip_id→ips, series_id→series, sub_series_id→sub_series, code, rarity_id→rarities, price, images(M2M→files), description, is_high_value, card_status, status(Directus 内置), created/updated |
+| `banners` | 广告位（单槽位首页轮播） | id, title, description, image(fk→files), link, sort, status(Directus 内置) |
+| `announcements` | 公告 | id, title, body(rich), published_at, is_pinned, sort, status(Directus 内置) |
+| `messages` | 访客留言 | id, content, contact_name?(可选), contact_info?(可选), created_at, status(新/已处理/已归档/已标记垃圾，自定义枚举非 Directus) |
 | `site_settings` | 网站基本信息 | site_name, logo, intro, x_account, shop_address, contact_phone, contact_email, business_hours, data_notice, privacy_policy |
 | `directus_files` | 图片文件（内置） | 由 Directus 管理，存海外对象存储或本地 |
 | `directus_roles` / `directus_users` | 后台权限（内置） | 复用 |
+
+> 字段带 `?` 者为待确认项（见第 9 节 ticket）。分类维度与卡牌字段已定（见 [01](../.scratch/card-market/issues/01-classification-model.md)/[02](../.scratch/card-market/issues/02-card-fields.md)），`cards` 已移除 card_types/buyback_type/display_status/sort。
 
 > 字段带 `?` 者为待确认项，对应第 9 节 ticket。
 
@@ -258,7 +268,7 @@
 
 - 后台必须经过身份验证。
 - 前台只能访问授权公开的数据。
-- 留言提交接口需要基本输入校验和防滥用措施。
+- 留言提交接口需要基本输入校验和防滥用措施（直连 Directus public create + 边缘限流，不引自定义网关；详见 [07](../.scratch/card-market/issues/07-message-anti-abuse.md)）。
 - 敏感配置和 OSS 凭证不得暴露在前端代码中（经 Directus API 代理，前端不直连 OSS 凭证）。
 
 ### 5.3 可维护性
@@ -334,13 +344,13 @@
 
 | # | 决策主题 | 类型 | 对应 ticket | 主要影响 |
 | --- | --- | --- | --- | --- |
-| 1 | 卡牌分类层级与字段枚举建模 | grilling | [01-classification-model](../.scratch/card-market/issues/01-classification-model.md) | `categories`/`cards` 结构、前台筛选 |
-| 2 | 卡牌信息字段定义、选项与必填 | grilling | [02-card-fields](../.scratch/card-market/issues/02-card-fields.md) | `cards` 字段、价格/回购语义 |
-| 3 | 前台检索与筛选范围 | grilling | [03-frontend-search-filter](../.scratch/card-market/issues/03-frontend-search-filter.md) | 前端交互、API 查询参数 |
+| ~~1~~ | ~~卡牌分类层级与字段枚举建模~~ **（已决议）** | grilling | [01-classification-model](../.scratch/card-market/issues/01-classification-model.md) | 多 IP 集市、三层 IP→系列→子系列（sub_series 必填）、稀有程度为独立维度集合+关系；卡牌类型(card_types)已删；`ips`/`series`/`sub_series`/`rarities`/`cards` 结构已定 |
+| ~~2~~ | ~~卡牌信息字段定义、选项与必填~~ **（已决议）** | grilling | [02-card-fields](../.scratch/card-market/issues/02-card-fields.md) | `cards` 字段、价格(仅卖价)/回购语义已定：删 card_types/buyback_type/display_status/sort，新增 code，三层 IP→系列→子系列，状态用 Directus 内置 status |
+| ~~3~~ | ~~前台检索与筛选范围~~ **（已决议）** | grilling | [03-frontend-search-filter](../.scratch/card-market/issues/03-frontend-search-filter.md) | 级联筛选(IP→系列→子系列)+稀有程度/精品/价格区间 facet+关键词(卡名+编号,pg_trgm)+排序(价格±/最新)+分页URL同步；画廊归详情页 |
 | 4 | 图片存储与 Directus 集成方案（已定方向：海外 S3 兼容 或 Directus 本地） | research | [04-oss-integration](../.scratch/card-market/issues/04-oss-integration.md) | 存储选型、多区域(JP/US)访问 |
-| 5 | banner 时间控制与多 banner 位 | grilling | [05-banner-capabilities](../.scratch/card-market/issues/05-banner-capabilities.md) | `banners` 模型、轮播逻辑 |
-| 6 | 公告置顶/定时/归档 | grilling | [06-announcement-capabilities](../.scratch/card-market/issues/06-announcement-capabilities.md) | `announcements` 模型 |
-| 7 | 留言防滥用策略 | grilling | [07-message-anti-abuse](../.scratch/card-market/issues/07-message-anti-abuse.md) | 留言接口安全、`messages` 模型 |
+| ~~5~~ | ~~banner 时间控制与多 banner 位~~ **（已决议）** | grilling | [05-banner-capabilities](../.scratch/card-market/issues/05-banner-capabilities.md) | 单槽位（无 position 枚举）、无定时上下线（仅靠 Directus status）、轮播策略前端硬编码；status 统一复用 Directus 内置 status，`banners` 模型已定 |
+| ~~6~~ | ~~公告置顶/定时/归档~~ **（已决议）** | grilling | [06-announcement-capabilities](../.scratch/card-market/issues/06-announcement-capabilities.md) | 统一 Directus status（archived=归档）、需要置顶 is_pinned、需要定时发布（published_at 未来暂不展示）、手动归档无自动过期；`announcements` 模型已定 |
+| ~~7~~ | ~~留言防滥用策略~~ **（已决议）** | grilling | [07-message-anti-abuse](../.scratch/card-market/issues/07-message-anti-abuse.md) | 直连 Directus public create（零后端）、边缘限流+字段校验、仅站内通知、联系方式全可选、垃圾留言 `已标记垃圾` 态；`messages` 用自定义 status 枚举（非 Directus） |
 | 8 | SEO/统计/CDN/图片优化范围 | grilling | [08-seo-ops](../.scratch/card-market/issues/08-seo-ops.md) | 非功能增强范围 |
 | 9 | 部署环境与技术栈落定 | task | [09-deployment](../.scratch/card-market/issues/09-deployment.md) | 上线基石 |
 

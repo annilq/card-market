@@ -19,10 +19,10 @@
 - 技术选型：前端 TanStack Start、后台 Directus、数据库 PostgreSQL、图片存储为海外 S3 兼容对象存储或 Directus 本地文件（部署于日本/美国）、前后端经 Directus API 通信。
 - 图片统一走后台上传，存海外对象存储或 Directus 本地文件；不重复开发后台 CRUD，复用 Directus。
 - [图片存储方案：海外 S3 兼容存储 或 Directus 本地文件](issues/04-oss-integration.md)：弃用阿里云 OSS，按部署规模二选一（R2/S3+CloudFront 或本地文件）。
+- [卡牌分类建模](issues/01-classification-model.md)：多 IP 集市 → 两层 类别→系列；类型/稀有程度为独立维度集合+关系（非 cards 属性列）；四个维度均后台配置化。状态/排序不计入分类。
 
 ## Not yet specified
 
-- [卡牌分类的层级与字段枚举如何建模](issues/01-classification-model.md)（类别/系列/类型/稀有度）。
 - [卡牌信息字段的最终定义、选项与必填规则](issues/02-card-fields.md)。
 - [前台检索与筛选能力范围](issues/03-frontend-search-filter.md)（关键词搜索、价格区间、多图）。
 - [banner 是否需要开始/结束时间与多 banner 位](issues/05-banner-capabilities.md)。

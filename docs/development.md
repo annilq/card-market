@@ -71,75 +71,122 @@
 
 ## 4. 数据模型设计（Directus collections）
 
-> 草案；字段带 `?` 者为待确认，需先解决 ticket [01](../.scratch/card-market/issues/01-classification-model.md)/[02](../.scratch/card-market/issues/02-card-fields.md)/[05](../.scratch/card-market/issues/05-banner-capabilities.md)/[06](../.scratch/card-market/issues/06-announcement-capabilities.md)/[07](../.scratch/card-market/issues/07-message-anti-abuse.md)。
+> 草案；[02](../.scratch/card-market/issues/02-card-fields.md) 卡牌字段、[01](../.scratch/card-market/issues/01-classification-model.md) 分类维度、[05](../.scratch/card-market/issues/05-banner-capabilities.md) banner 能力、[06](../.scratch/card-market/issues/06-announcement-capabilities.md) 公告能力、[07](../.scratch/card-market/issues/07-message-anti-abuse.md) 留言防滥用**均已决议**；`messages` 字段已收敛（见 §4.5）。
 
-### 4.1 `categories`（卡牌分类）
+### 4.1 分类与维度集合（已定，见 ticket [01](../.scratch/card-market/issues/01-classification-model.md)）
+
+> 决策要点：多 IP 卡牌集市；**三层 IP→系列→子系列**；`稀有程度` 为独立维度集合 + 关系（非 `cards` 属性列）；`卡牌类型`(card_types) 已删除；`ips`/`series`/`sub_series`/`rarities` 四个维度均由 Directus 后台配置化维护。`状态` 用 Directus 内置 status（不计入分类维度）；`排序` 仅维度表保留（用于 facet 排序），`cards` 不设 sort。
+
+#### 4.1.1 `ips`（IP 维度 / 卡牌类别 / 大类）
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | id | uuid/auto | PK |
-| name | string | 分类名称（如"宝可梦"） |
-| dimension | enum? | 类别 / 系列 / 类型 / 稀有度（或拆多表，见 01） |
-| parent_id | FK→categories? | 多层（类别→系列）时使用 |
+| name | string | IP / 大类名称（如"宝可梦""游戏王""龙珠"） |
+| sort | integer | 展示顺序（facet 侧边栏） |
+| status | boolean | 是否启用 |
+
+#### 4.1.2 `series`（系列分类，IP 子级）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| id | PK |  |
+| name | string | 系列名称（如"MEGA""朱紫""剑盾"） |
+| ip_id | FK→ips | 所属 IP / 大类 |
+| sort | integer | 展示顺序（facet 侧边栏） |
+| status | boolean | 是否启用 |
+
+#### 4.1.3 `sub_series`（子系列，系列子级，必填）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| id | PK |  |
+| name | string | 子系列名称（如 `[M6a] 30th CELEBRATION`） |
+| series_id | FK→series | 所属系列 |
+| sort | integer | 展示顺序（facet 侧边栏） |
+| status | boolean | 是否启用 |
+
+> `sub_series` **必填**：即使仅两层的 IP（如龙珠）也须建空壳子系列占位，以保证 `cards` 上 (ip_id, series_id, sub_series_id, code) 组合唯一约束有效（SQL NULL 不参与唯一匹配）。
+
+#### 4.1.4 `rarities`（稀有程度维度，全局单一枚举）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| id | PK |  |
+| name | string | 稀有度名称（如 SSR / UR / HR，按 IP 分馆时于 facet 层过滤） |
 | sort | integer | 展示顺序 |
-| status | boolean/enum | 是否启用 |
+| status | boolean | 是否启用 |
 
 ### 4.2 `cards`（卡牌信息）
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| id | uuid/auto | PK |
-| name | string | 卡牌名称（必填） |
-| category_id | FK→categories | 所属类别 |
-| series_id | FK→categories? | 所属系列 |
-| card_type | string/enum? | 卡牌类型 |
-| buyback_type | string/enum? | 回购方式/规则（语义待定） |
-| card_status | enum | 裸卡 / 有包装 |
-| rarity | enum? | 稀有程度 |
-| images | M2M→directus_files | 商品图片（多图） |
-| description | text/rich? | 描述 |
-| price | decimal? | 价格（单值或区间待定） |
-| is_high_value | boolean | 是否高价买取 |
-| display_status | enum | 上架 / 下架 |
-| sort | integer | 列表顺序 |
-| created_at / updated_at | timestamp | 自动 |
+> 字段定义、数据类型、必填规则与枚举配置化结论已定（见 [02](../.scratch/card-market/issues/02-card-fields.md)）。列表默认按 `price` DESC；`is_high_value` 仅作「只看精品」筛选，不影响排序。检索/筛选/排序/分页/URL 态的范围见 ticket [03](../.scratch/card-market/issues/03-frontend-search-filter.md)（已 resolved）：暴露排序为 价格升降 + 最新上架；稀有程度仅作字典过滤；关键词搜 卡名+编号（pg_trgm 索引）；价格区间 `_between`；分页 + URL 同步。
 
-### 4.3 `banners`（广告位）
+| 字段 | 类型 | 说明 | 必填 |
+| --- | --- | --- | --- |
+| id | uuid/auto | PK | — |
+| name | string | 卡牌名称 | 始终 |
+| ip_id | FK→ips | 所属 IP / 大类（见 4.1.1） | 始终 |
+| series_id | FK→series | 所属系列（见 4.1.2） | 始终 |
+| sub_series_id | FK→sub_series | 所属子系列（见 4.1.3，必填） | 始终 |
+| code | string | 收藏编号，如 `123/197` / `SWSH01-025` | 上架必填 |
+| rarity_id | FK→rarities | 稀有程度（见 4.1.4） | 始终 |
+| price | decimal(10,2) | 卖价（标价，仅卖价，不含买取价/估值） | 上架必填 |
+| images | M2M→directus_files | 商品图片（多图） | 上架≥1 |
+| description | text | 描述 | 可选 |
+| is_high_value | boolean | 是否高价买取（**纯标识**：运营自由标注、无统一标准，仅「只看精品」筛选） | 可选（默认 false） |
+| card_status | enum | 裸卡 / 有包装（代码常量，不进后台） | 始终（默认 裸卡） |
+| status | — | **Directus 内置 status**：draft / published / archived（草稿=下架、上架=published、下架或已售归档=archived） | — |
+| created_at / updated_at | timestamp | 自动 | — |
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| id | PK |  |
-| title | string | 标题 |
-| description | text? | 描述 |
-| image | FK→directus_files | 图片（必填） |
-| link | string? | 跳转链接 |
-| position | enum? | 展示位置（多 banner 位待定，见 05） |
-| status | boolean | 启用/停用 |
-| sort | integer | 顺序 |
-| start_time / end_time | timestamp? | 定时上下线（待定，见 05） |
+> 已删除：`category_id`（并入 `ip_id`）、`type_id`/`card_types`（卡牌类型维度已删）、`buyback_type`、`display_status`（改用 Directus 内置 status）、`sort`（列表纯 price DESC，无手动置顶）。`code` 建议 (ip_id, series_id, sub_series_id, code) 组合唯一。
+
+### 4.3 `banners`（广告位，单槽位首页轮播）
+
+> banner 能力已定（见 [05](../.scratch/card-market/issues/05-banner-capabilities.md)）：**单槽位**（仅首页顶部轮播，无 position 枚举）、**无定时上下线**（仅靠 Directus status 控制）、**轮播自动播放/间隔为前端硬编码常量**（不进模型）、status **统一复用 Directus 内置 status**（与 cards 一致，删原 boolean 启用/停用）。
+
+| 字段 | 类型 | 说明 | 必填 |
+| --- | --- | --- | --- |
+| id | PK |  | — |
+| title | string | 标题 | 可选 |
+| description | text | 描述 | 可选 |
+| image | FK→directus_files | 轮播图（必填） | 始终 |
+| link | string | 跳转链接（内部路由或外部 URL） | 可选 |
+| sort | integer | 轮播顺序（单槽位内） | 可选（默认 0） |
+| status | — | **Directus 内置 status**：draft / published / archived | — |
+
+> 已删除：原 `position`（多槽位枚举）、原 boolean `status`（启用/停用）、`start_time` / `end_time`（定时上下线）。`link` 内/外链安全与图片宽高比为实现期次要项（见 05）。
 
 ### 4.4 `announcements`（公告）
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| id | PK |  |
-| title | string | 标题（必填） |
-| body | rich text | 正文（富文本） |
-| status | enum | 草稿 / 已发布 |
-| published_at | timestamp | 发布时间（支持定时，见 06） |
-| sort | integer | 顺序 |
-| is_pinned | boolean? | 置顶（待定，见 06） |
+> 公告能力已定（见 [06](../.scratch/card-market/issues/06-announcement-capabilities.md)）：**status 统一复用 Directus 内置 status**（draft/published/archived，与 cards/banners 一致）；**需要置顶 `is_pinned`**；**需要定时发布**（`published_at` 未来暂不展示）；**手动归档**（`archived`，无自动过期、无 end_time）。
+
+| 字段 | 类型 | 说明 | 必填 |
+| --- | --- | --- | --- |
+| id | PK |  | — |
+| title | string | 标题 | 始终（必填） |
+| body | rich text | 正文（富文本） | 可选 |
+| published_at | timestamp | 发布时间；未来=定时发布，null=发布即展示 | 可选 |
+| is_pinned | boolean | 置顶 | 可选（默认 false） |
+| sort | integer | 手动排序 tie-break（组内） | 可选（默认 0） |
+| status | — | **Directus 内置 status**：draft / published / archived | — |
+| created_at / updated_at | timestamp | 自动 | — |
+
+> 已删除：原自定义 `status` enum（草稿/已发布，改 Directus status）。前台可见 = `status=published AND (published_at IS NULL OR published_at <= now)`；排序 `is_pinned DESC, published_at DESC`。`body` 富文本渲染需防 XSS。
 
 ### 4.5 `messages`（访客留言）
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| id | PK |  |
-| content | text | 留言内容（必填） |
-| contact_name | string? | 联系人（待定是否必填，见 07） |
-| contact_info | string? | 联系方式 |
-| created_at | timestamp | 提交时间 |
-| status | enum | 新 / 已处理 / 已归档 |
+> 留言防滥用已定（见 [07](../.scratch/card-market/issues/07-message-anti-abuse.md)）：**直连 Directus public create**（零自定义后端）；防滥用仅取**边缘限流 + 字段校验**（不引验证码/频率限制/内容审核/蜜罐）；**仅站内通知**（无邮件）；**联系方式全可选**；垃圾留言由管理员手动打 **`已标记垃圾`** 状态。
+
+| 字段 | 类型 | 说明 | 必填 |
+| --- | --- | --- | --- |
+| id | PK |  | — |
+| content | text | 留言内容 | 始终（必填） |
+| contact_name | string | 联系人（选填，降门槛） | 可选 |
+| contact_info | string | 联系方式（邮箱/电话/微信，选填） | 可选 |
+| created_at | timestamp | 提交时间 | 自动 |
+| status | enum | **新 / 已处理 / 已归档 / 已标记垃圾**（自定义枚举，非 Directus 内置 status） | — |
+
+> `messages` **有意不使用** Directus 内置 status：留言非发布内容、无 `published` 语义，其生命周期是工单式处理流，自定义枚举更贴切（与 cards/banners/announcements 统一用 Directus status 的取向**有意不同**）。
 
 ### 4.6 `site_settings`（网站基本信息）
 
@@ -154,10 +201,10 @@
 
 | 角色 | 读取 | 创建 | 其他 |
 | --- | --- | --- | --- |
-| Public（公开） | `cards`(仅上架) / `banners`(启用) / `announcements`(已发布) / `site_settings` / 图片 assets | `messages`（仅留言字段） | 不可读 `messages`；不可写其他集合 |
+| Public（公开） | `cards`(仅 published) / `banners`(仅 published) / `announcements`(仅 published 且 published_at<=now) / `site_settings` / 图片 assets | `messages`（仅 content/contact_name/contact_info 创建） | 不可读 `messages`；不可写其他集合 |
 | Admin（管理员） | 全部 | 全部 | 全部（后台 UI） |
 
-> 公开角色对 `messages` 需配置"字段级创建权限"（仅允许写入 content/contact 字段），并关闭公开读取。
+> 公开角色对 `messages` 需配置"字段级创建权限"（仅允许写入 `content`/`contact_name`/`contact_info` 字段），并关闭公开读取。垃圾留言由管理员在后台手动置 `status=已标记垃圾`。
 
 ---
 
@@ -251,7 +298,7 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 
 - 前端不配置任何对象存储/Directus 写凭证。
 - Directus 开启 `ENABLED` 的 CORS 白名单（仅限前端域名）。
-- 留言接口加基础校验 + 防滥用（见 [07](../.scratch/card-market/issues/07-message-anti-abuse.md)）。
+- 留言接口加基础校验 + 防滥用：直连 Directus public create + 边缘限流（Cloudflare/Nginx），不引自定义网关；详见 [07](../.scratch/card-market/issues/07-message-anti-abuse.md)（已 resolved）。
 
 ---
 
@@ -260,27 +307,55 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 | 路由 | 页面 | 数据来源 |
 | --- | --- | --- |
 | `/` | 首页（搜索框、推荐卡牌、banner 轮播、公告入口、分类入口、店铺信息） | cards/banners/announcements/site_settings |
-| `/cards` | 卡牌列表（筛选/分页/排序） | cards + categories（筛选待 03 定） |
+| `/cards` | 卡牌列表（筛选/分页/排序/关键词） | cards + ips（检索筛选已定，见 03 与 §7.1） |
 | `/cards/:id` | 卡牌详情（图片、描述、回购信息） | cards |
 | `/announcements` | 公告列表 | announcements |
 | `/announcements/:id` | 公告详情 | announcements |
 | `/contact` | 店铺信息 / 联系方式 | site_settings |
 | `/message` 或弹层 | 留言表单 | POST messages |
-| `/search?q=` | 搜索结果（待 03 定） | cards search |
+| `/cards?q=` | 关键词搜索结果（卡名+编号，见 03）— 首页搜索框跳转目标；`/search` 不再单列 | cards(name+code) |
 
 > 后台不单独开发，复用 Directus `/admin`。
+
+### 7.1 卡牌列表检索 / 筛选 / 排序（见 ticket [03](../.scratch/card-market/issues/03-frontend-search-filter.md)）
+
+- **筛选 UI**：IP→系列→子系列 **级联下钻**（每层多选 checkbox，父约束子可见性）+ 独立扁平 facet（稀有程度多选、只看精品开关、价格区间、关键词框）。
+- **排序**：价格降序（默认）/ 价格升序 / 最新上架；稀有程度仅作字典过滤、不参与排序。
+- **关键词**：仅 卡名 + 编号，Directus `_icontains` + `pg_trgm` GIN 索引（CJK 友好），无相关度排序（相关度排名需另建 tsvector + 自定义接口，本期不做）。
+- **价格区间**：`filter[price][_between]=[min,max]`。
+- **加载**：分页（`page`/`limit`）+ 全部过滤态写入 URL query（可分享 / SEO 友好）。
+- 详情页多图画廊不属本范围，归 `/cards/:id`。
 
 ---
 
 ## 8. 后台配置清单（Directus）
 
-1. 创建集合：`categories` / `cards` / `banners` / `announcements` / `messages` / `site_settings`（字段见第 4 节）。
-2. 配置关系：`cards.category_id→categories`、`cards.images→directus_files`（M2M）、`banners.image→directus_files`。
-3. 角色与权限：
+1. 创建集合：`ips` / `series` / `sub_series` / `rarities` / `cards` / `banners` / `announcements` / `messages` / `site_settings`（字段见第 4 节）。
+2. 配置关系（M2O，`npm run directus:bootstrap` 自动完成）：
+   - `series.ip_id → ips`、`sub_series.series_id → series`
+   - `cards.ip_id → ips`、`cards.series_id → series`、`cards.sub_series_id → sub_series`、`cards.rarity_id → rarities`、`cards.user_created → directus_users`
+   - `banners.image → directus_files`、`site_settings.logo → directus_files`（两列须为 `uuid` 类型）
+   - `cards.images` 是 **M2M**：关联表 `cards_images`（`cards_id` + `directus_files_id` + `sort`），
+     `cards.images` 本身是 `type: alias` 的虚拟字段（`special: ['m2m']`、`interface: 'list-m2m'`）。
+     **建表顺序不能颠倒**：建关联表 → 迁移旧数据 → 删旧 json 列 → 建两条 relations → 建 alias 字段。
+     Directus 的 Files 接口只支持 alias 字段（`types: ['alias']`），挂在真实 json 列上会出现
+     「同一字段返回两条（一条真实、一条 alias）」或 `column does not exist`。
+3. **字段接口约定（重要）**：多对一下拉必须用 `interface: 'select-dropdown-m2o'`（配 `options.template = '{{name}}'`）。
+   `relational` 只是展示方式（display），若误写成 interface，后台会退化成「手输主键」的文本框，
+   且 `/relations` 端点会忽略 filter 导致关系建不起来——两者叠加就是"后台只能输入 ID"的根因。
+4. 角色与权限：
    - 新建/调整 `Admin` 角色：全集合 CRUD。
    - 配置 `Public` 角色：只读公开集合（带状态过滤）、仅可创建 `messages`。
-4. 文件存储：配置对象存储或本地存储位置（第 5 节 env）。
-5. 界面（可选）：为集合配置友好显示名、编辑布局、缩略图。
+   - M2M 需额外给 `Public` 授予 `cards_images` 的 read（字段 `cards_id/directus_files_id/sort`），
+     否则匿名读 `cards.images` 会被拒绝。
+5. 文件存储：配置对象存储或本地存储位置（第 5 节 env）。
+6. 界面本地化：`directus_settings.default_language = 'zh-CN'`；集合与字段在 `meta.translations`
+   写入**中文 + 日文**名（bootstrap 已内置：中文写在集合声明里，日文集中在
+   `COLLECTION_LABELS_JA` / `FIELD_LABELS_JA`），后台侧边栏与表单标签随界面语言切换。
+   Directus 界面语言内置支持 `zh-CN` / `ja-JP` 等，单个用户在头像 → Settings → Language 自选。
+
+> 说明：`select-dropdown` 的 choices 文本（草稿/已发布等）是固定字符串，不随界面语言变化；
+> 如需多语言选项标签，应改为翻译集合或双语文本。
 
 ---
 
@@ -292,7 +367,7 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 | --- | --- | --- | --- |
 | M0 决策 | 逐张 grilling/research 解决 01–09 ticket | — | 决策回填需求/开发文档 |
 | M1 环境 | 搭建 Directus + PostgreSQL + 对象存储/本地存储（自定义域名+HTTPS/CDN） | 04,09 | 可运行后台与存储 |
-| M2 模型 | 在 Directus 落地各集合与关系、权限 | 01,02,05,06,07 | 数据模型 + 权限 |
+| M2 模型 | 在 Directus 落地各集合与关系、权限 | 01,02,05(已决议),06(已决议),07(已决议) | 数据模型 + 权限 |
 | M3 后台 | 配置后台界面、上传流程验证（存储全链路） | M1,M2 | 可用后台 |
 | M4 前台 | TanStack Start 页面与路由、API 对接 | M2 | 公开网站 |
 | M5 留言 | 留言表单 + 公开创建权限 + 防滥用 | 07 | 留言闭环 |
@@ -306,8 +381,9 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 | 风险 / 待确认 | 影响 | 对应 ticket |
 | --- | --- | --- |
 | 存储选型与多区域访问（JP/US） | 上线可达性、延迟 | [04](../.scratch/card-market/issues/04-oss-integration.md)、[09](../.scratch/card-market/issues/09-deployment.md) |
-| 分类/卡牌字段未定 | 数据模型返工风险 | [01](../.scratch/card-market/issues/01-classification-model.md)、[02](../.scratch/card-market/issues/02-card-fields.md) |
-| 留言防滥用不足 | 垃圾留言 | [07](../.scratch/card-market/issues/07-message-anti-abuse.md) |
+| ~~卡牌字段未定（02）~~ **（已决议）** | 数据模型已收敛，无返工风险 | [02](../.scratch/card-market/issues/02-card-fields.md) |
+| ~~前台检索/筛选范围未定（03）~~ **（已决议）** | 交互/API 范围已收敛，无返工风险 | [03](../.scratch/card-market/issues/03-frontend-search-filter.md) |
+| ~~留言防滥用不足~~ **（已决议）** | 弱防护（直连 Directus + 边缘限流 + 字段校验），无自定义网关 | [07](../.scratch/card-market/issues/07-message-anti-abuse.md) |
 | 部署方案未定 | 成本与运维 | [09](../.scratch/card-market/issues/09-deployment.md) |
 | SEO/统计/CDN 范围 | 非功能增强 | [08](../.scratch/card-market/issues/08-seo-ops.md) |
 
@@ -320,7 +396,7 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 - [ ] 图片上传 → OSS → 前台展示 全链路通过（含自定义域名 HTTPS）。
 - [ ] 公开角色无法读取 `messages`、无法写其他集合。
 - [ ] 访客留言成功写入并进入后台待处理。
-- [ ] 前台：已下架卡牌不展示；banner/公告按状态/时间正确显示。
+- [ ] 前台：已下架卡牌不展示；banner 按 Directus status（published）显示；公告按 status=published 且 `published_at<=now` 显示（含定时发布与手动 archived 不展示）。
 - [ ] 移动端/桌面端响应式正常。
 - [ ] 部署：域名 HTTPS、反向代理、数据库备份、基础监控就绪。
 - [ ] 提供部署与后台使用说明文档。
