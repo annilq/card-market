@@ -69,7 +69,7 @@ async function seedShops() {
   }
   const shops = [
     {
-      name: '卡牌回购站 · 秋叶原本店',
+      name: 'card-market · 秋叶原本店',
       address: '东京都千代田区外神田 1-1 示例大楼 3F',
       lat: 35.6995,
       lng: 139.7717,
@@ -80,7 +80,7 @@ async function seedShops() {
       status: 'published',
     },
     {
-      name: '卡牌回购站 · 涩谷店',
+      name: 'card-market · 涩谷店',
       address: '东京都涩谷区涩谷 2-2 示例大厦 1F',
       lat: 35.6595,
       lng: 139.7004,
@@ -91,7 +91,7 @@ async function seedShops() {
       status: 'published',
     },
     {
-      name: '卡牌回购站 · 池袋店',
+      name: 'card-market · 池袋店',
       address: '东京都丰岛区西池袋 1-3 示例大楼 B1',
       lat: 35.7295,
       lng: 139.7109,
@@ -290,7 +290,7 @@ async function main() {
 
   // 站点设置（单例，用 PATCH upsert）
   await patch('site_settings', {
-    site_name: '卡牌回购站',
+    site_name: 'card-market',
     intro: '专注宝可梦 / 游戏王 / 龙珠等卡牌展示与高价回购。',
     x_account: '@cardmarket',
     contact_email: 'shop@example.com',
