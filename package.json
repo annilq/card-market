@@ -1,0 +1,35 @@
+{
+  "name": "card-market",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --port 3000",
+    "build": "vite build",
+    "start": "node prod-server.mjs",
+    "typecheck": "tsc --noEmit",
+    "directus:bootstrap": "node directus/bootstrap.mjs",
+    "directus:seed": "node directus/seed.mjs",
+    "directus:snapshot": "npx directus schema snapshot directus/schema.yaml --yes"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "latest",
+    "@tanstack/react-start": "latest",
+    "leaflet": "^1.9.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@directus/sdk": "^27.0.0",
+    "@tailwindcss/vite": "latest",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "latest",
+    "pg": "^8.23.1",
+    "tailwindcss": "latest",
+    "typescript": "^5.6.0",
+    "vite": "latest",
+    "vite-tsconfig-paths": "latest"
+  }
+}

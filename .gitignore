@@ -7,3 +7,11 @@
 
 # ── 系统 ──
 .DS_Store
+
+# ── 依赖与构建产物 ──
+node_modules
+dist
+.tanstack
+
+# ── 运行时数据（用户上传、健康检查等，不入库） ──
+directus/uploads

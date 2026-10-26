@@ -1,0 +1,61 @@
+# 卡牌展示与回购信息网站 — 本地开发栈
+# 直接 docker compose up -d 即可拉起 Directus + PostgreSQL（含 pg_trgm 扩展）。
+# 详见 README.md。生产部署见 ticket 09-deployment。
+
+services:
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: directus
+      POSTGRES_PASSWORD: directus
+      POSTGRES_DB: directus
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U directus -d directus"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    ports:
+      - "5432:5432"
+
+  directus:
+    image: directus/directus:11
+    restart: unless-stopped
+    ports:
+      - "8055:8055"
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      # 开发默认值，生产务必替换为强随机值（见 .env.example）
+      KEY: "dev-only-key-please-change-in-production-0000000000"
+      SECRET: "dev-only-secret-please-change-in-production-0000000000"
+      ADMIN_EMAIL: "admin@example.com"
+      ADMIN_PASSWORD: "admin12345"
+      # 数据库（pg_trgm 扩展已通过 init SQL 启用）
+      DB_CLIENT: "pg"
+      DB_HOST: "database"
+      DB_PORT: "5432"
+      DB_DATABASE: "directus"
+      DB_USER: "directus"
+      DB_PASSWORD: "directus"
+      # 公开 API 根；前端跨域访问地址
+      PUBLIC_URL: "http://localhost:8055"
+      # CORS：开发允许前端源（Vite 默认 5173 / TanStack dev 默认 3000）
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "true"
+      CORS_CREDENTIALS: "true"
+      # 存储：本地磁盘（MVP 路线 B，见 development.md §5.2）
+      STORAGE_LOCATIONS: "local"
+      STORAGE_LOCAL_DRIVER: "local"
+      STORAGE_LOCAL_ROOT: "/directus/uploads"
+      # 内容 API 安全
+      WEBSOCKETS_ENABLED: "true"
+    volumes:
+      - ./directus/uploads:/directus/uploads
+
+volumes:
+  db_data:
