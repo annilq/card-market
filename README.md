@@ -8,7 +8,7 @@ TCG 卡牌（宝可梦 / 游戏王 / 龙珠等）展示与回购信息站。前�
 
 - 前端：TanStack Start（React 19 + Vite 8 + TypeScript），Tailwind v4，SSR 数据加载，筛选状态写入 URL。
 - 后端：Directus 11（headless CMS），PostgreSQL 16+，使用 `pg_trgm` GIN 索引做中文子串模糊匹配。
-- 关系：维度表 `ips / series / sub_series / rarities`（IP→系列→子系列三层）+ 实体表 `cards`；外加 `banners / announcements / messages / shops / site_settings`。
+- 关系：维度表 `ips / series / sub_series / rarities`（IP→系列→子系列三层）+ 实体表 `cards`；外加 `banners / announcements / messages / shops / site_settings / info_pages`。
 
 ## 目录结构
 
@@ -20,12 +20,26 @@ directus/
   seed.mjs                # 样例数据（IP/卡牌/公告/banner/留言）
   run-local.sh            # 本地直连 Postgres 跑 Directus（绕过 Docker Hub 限制时的备选）
 src/                      # TanStack Start 前端
-  routes/                 # 首页 / 列表 / 详情 / 公告 / 店铺 / 留言（均在 {-$locale} 布局下）
+  routes/                 # 首页 / 列表 / 详情 / 公告 / 店铺 / 信息页 / 留言（均在 {-$locale} 布局下）
   lib/directus.ts         # 公开 REST 客户端（读 + 留言提交）
   lib/i18n/               # 界面多语言：语言注册表 + 三语文案字典 + useT/useLocale
+  lib/info-pages.ts       # 审核信息页清单（key → 文案键），页脚与路由共用
   components/CardCard.tsx # 卡牌卡片复用组件
-scripts/check-i18n.mjs    # 多语言验收脚本（三语 SSR / 404 / hreflang）
+scripts/check-i18n.mjs    # 多语言验收脚本（三语 SSR / 信息页入口 / 404 / hreflang）
 ```
+
+## 审核信息页（公共 footer）
+
+网站审核要求的四类信息页由后台 `info_pages` 集合维护，全站 footer 常驻入口：
+
+| 页面 | 路由 | 后台标识 `page_key` |
+| --- | --- | --- |
+| 运营信息 | `/info/operation` | `operation` |
+| 个人信息收集 | `/info/personal-info` | `personal-info` |
+| 利用规则 | `/info/terms` | `terms` |
+| 数据使用 | `/info/data-usage` | `data-usage` |
+
+后台改标题与正文即可，入口顺序与文案在 `src/lib/info-pages.ts` + `src/lib/i18n/messages.ts` 固定（三语）。未发布时页面仍 200 并提示「尚未发布」，未登记标识才 404。详见 `docs/development.md` §4.6.1。
 
 ## 界面多语言
 
@@ -126,15 +140,16 @@ npm run dev
 
 ## 权限模型（详见 development.md §4.8）
 
-- **Public 角色**：只读 `ips/series/sub_series/rarities/cards/banners/announcements/shops/site_settings/directus_files`（带 `status=published` 过滤）；可 `create` `messages`（仅 `content/contact_name/contact_info` 三字段，预设 `status=new`）。
+- **Public 角色**：只读 `ips/series/sub_series/rarities/cards/banners/announcements/shops/info_pages/site_settings/directus_files`（带 `status=published` 过滤）；可 `create` `messages`（仅 `content/contact_name/contact_info` 三字段，预设 `status=new`）。
 - `messages` 有意**不**使用 Directus 内置 status（工单式生命周期：new/processed/archived/spam），与内容集合区分。
 - 索引：`(ip_id, series_id, sub_series_id, code)` 组合唯一（code 非空时）；`cards.name` / `cards.code` 的 `pg_trgm` GIN 索引。
 
 ## 验收清单
 
-- [ ] Directus 后台可登录，10 个集合已创建（含 `shops`）
+- [ ] Directus 后台可登录，11 个集合已创建（含 `shops` / `info_pages`）
 - [ ] 组合唯一约束：`(ip, series, sub_series, code)` 重复 code 被拒
 - [ ] 中文关键词搜索走 `pg_trgm`（如搜「皮卡」「197」）
 - [ ] 公开角色无法读取未发布内容、无法读取/写入 `messages` 列表
 - [ ] 前端列表页级联筛选（IP→系列→子系列）、价格区间、只看精品、排序、分页、URL 同步均生效
 - [ ] 留言表单提交后仅写入允许字段
+- [ ] 公共 footer 四个审核信息页入口三语可用，`/info/<key>` 渲染后台正文

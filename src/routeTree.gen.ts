@@ -19,6 +19,7 @@ import { Route as Char123LocaleChar125AnnouncementsIndexRouteImport } from './ro
 import { Route as Char123LocaleChar125AnnouncementsIdRouteImport } from './routes/{-$locale}.announcements.$id'
 import { Route as Char123LocaleChar125CardsIndexRouteImport } from './routes/{-$locale}.cards.index'
 import { Route as Char123LocaleChar125CardsIdRouteImport } from './routes/{-$locale}.cards.$id'
+import { Route as Char123LocaleChar125InfoKeyRouteImport } from './routes/{-$locale}.info.$key'
 
 const Char123LocaleChar125Route = Char123LocaleChar125RouteImport.update({
   id: '/{-$locale}',
@@ -79,6 +80,12 @@ const Char123LocaleChar125CardsIdRoute =
     path: '/$id',
     getParentRoute: () => Char123LocaleChar125CardsRoute,
   } as any)
+const Char123LocaleChar125InfoKeyRoute =
+  Char123LocaleChar125InfoKeyRouteImport.update({
+    id: '/info/$key',
+    path: '/info/$key',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
   '/{-$locale}/announcements/$id': typeof Char123LocaleChar125AnnouncementsIdRoute
   '/{-$locale}/cards/$id': typeof Char123LocaleChar125CardsIdRoute
+  '/{-$locale}/info/$key': typeof Char123LocaleChar125InfoKeyRoute
   '/{-$locale}/announcements/': typeof Char123LocaleChar125AnnouncementsIndexRoute
   '/{-$locale}/cards/': typeof Char123LocaleChar125CardsIndexRoute
 }
@@ -98,6 +106,7 @@ export interface FileRoutesByTo {
   '/{-$locale}': typeof Char123LocaleChar125IndexRoute
   '/{-$locale}/announcements/$id': typeof Char123LocaleChar125AnnouncementsIdRoute
   '/{-$locale}/cards/$id': typeof Char123LocaleChar125CardsIdRoute
+  '/{-$locale}/info/$key': typeof Char123LocaleChar125InfoKeyRoute
   '/{-$locale}/announcements': typeof Char123LocaleChar125AnnouncementsIndexRoute
   '/{-$locale}/cards': typeof Char123LocaleChar125CardsIndexRoute
 }
@@ -111,6 +120,7 @@ export interface FileRoutesById {
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
   '/{-$locale}/announcements/$id': typeof Char123LocaleChar125AnnouncementsIdRoute
   '/{-$locale}/cards/$id': typeof Char123LocaleChar125CardsIdRoute
+  '/{-$locale}/info/$key': typeof Char123LocaleChar125InfoKeyRoute
   '/{-$locale}/announcements/': typeof Char123LocaleChar125AnnouncementsIndexRoute
   '/{-$locale}/cards/': typeof Char123LocaleChar125CardsIndexRoute
 }
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/{-$locale}/'
     | '/{-$locale}/announcements/$id'
     | '/{-$locale}/cards/$id'
+    | '/{-$locale}/info/$key'
     | '/{-$locale}/announcements/'
     | '/{-$locale}/cards/'
   fileRoutesByTo: FileRoutesByTo
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/{-$locale}'
     | '/{-$locale}/announcements/$id'
     | '/{-$locale}/cards/$id'
+    | '/{-$locale}/info/$key'
     | '/{-$locale}/announcements'
     | '/{-$locale}/cards'
   id:
@@ -146,6 +158,7 @@ export interface FileRouteTypes {
     | '/{-$locale}/'
     | '/{-$locale}/announcements/$id'
     | '/{-$locale}/cards/$id'
+    | '/{-$locale}/info/$key'
     | '/{-$locale}/announcements/'
     | '/{-$locale}/cards/'
   fileRoutesById: FileRoutesById
@@ -226,6 +239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125CardsIdRouteImport
       parentRoute: typeof Char123LocaleChar125CardsRoute
     }
+    '/{-$locale}/info/$key': {
+      id: '/{-$locale}/info/$key'
+      path: '/info/$key'
+      fullPath: '/{-$locale}/info/$key'
+      preLoaderRoute: typeof Char123LocaleChar125InfoKeyRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
   }
 }
 
@@ -269,6 +289,7 @@ interface Char123LocaleChar125RouteChildren {
   Char123LocaleChar125MessageRoute: typeof Char123LocaleChar125MessageRoute
   Char123LocaleChar125ShopsRoute: typeof Char123LocaleChar125ShopsRoute
   Char123LocaleChar125IndexRoute: typeof Char123LocaleChar125IndexRoute
+  Char123LocaleChar125InfoKeyRoute: typeof Char123LocaleChar125InfoKeyRoute
 }
 
 const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
@@ -278,6 +299,7 @@ const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
   Char123LocaleChar125MessageRoute: Char123LocaleChar125MessageRoute,
   Char123LocaleChar125ShopsRoute: Char123LocaleChar125ShopsRoute,
   Char123LocaleChar125IndexRoute: Char123LocaleChar125IndexRoute,
+  Char123LocaleChar125InfoKeyRoute: Char123LocaleChar125InfoKeyRoute,
 }
 
 const Char123LocaleChar125RouteWithChildren =

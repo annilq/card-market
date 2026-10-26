@@ -192,6 +192,30 @@
 
 单例集合（singleton），或 key-value 集合。字段：site_name, logo(fk→files), intro, x_account, shop_address, contact_phone, contact_email, business_hours, data_notice, privacy_policy(rich)。
 
+### 4.6.1 `info_pages`（审核用信息页）
+
+面向网站审核的四个固定信息页：**运营信息 / 个人信息收集 / 利用规则 / 数据使用**。前端在公共 footer 提供入口，正文由后台维护。
+
+| 字段 | 类型 | 说明 | 必填 |
+| --- | --- | --- | --- |
+| id | PK |  | — |
+| page_key | string（唯一） | 页面标识：`operation` / `personal-info` / `terms` / `data-usage` | 始终 |
+| title | string | 页面标题（后台可改；前端详情页 `<h1>` 用它） | 始终 |
+| body | rich text | 正文（Markdown/HTML，渲染与公告一致） | 可选 |
+| sort | integer | 排序（页脚顺序由前端清单固定，不依赖它） | 可选（默认 0） |
+| status | — | **Directus 内置 status**：draft / published / archived | — |
+
+设计要点：
+
+- **标识与入口的职责分离**：`page_key` 是前端路由 `/info/<page_key>` 与页脚入口的对接键；四个 key 与顺序在
+  `src/lib/info-pages.ts` 硬编码（审计要求入口必须始终存在，不能因后台误删记录而变成空链接），
+  后台只负责内容（标题 + 正文）。
+- **页脚入口文案走界面语言**（`messages.ts` 的 `infoOperation` 等），不取后台 `title`——
+  与头部导航一致；「不翻译 Directus 内容」的边界只针对正文与详情页标题。
+- **后台未发布时不 404**：`/info/<已登记 key>` 始终 200，正文缺失时显示「尚未发布」，
+  保证审核爬虫/人工点击四个入口都能落到有效页面。**未登记的 key**（如 `/info/bogus`）才 404。
+- 唯一索引 `uniq_info_pages_page_key` 保证同 key 只有一条。
+
 ### 4.7 内置集合
 
 - `directus_files`：所有图片，存储位置指向对象存储或本地（见第 5 节）。
@@ -201,7 +225,7 @@
 
 | 角色 | 读取 | 创建 | 其他 |
 | --- | --- | --- | --- |
-| Public（公开） | `cards`(仅 published) / `banners`(仅 published) / `announcements`(仅 published 且 published_at<=now) / `shops`(仅 published) / `site_settings` / 图片 assets | `messages`（仅 content/contact_name/contact_info 创建） | 不可读 `messages`；不可写其他集合 |
+| Public（公开） | `cards`(仅 published) / `banners`(仅 published) / `announcements`(仅 published 且 published_at<=now) / `shops`(仅 published) / `info_pages`(仅 published) / `site_settings` / 图片 assets | `messages`（仅 content/contact_name/contact_info 创建） | 不可读 `messages`；不可写其他集合 |
 | Admin（管理员） | 全部 | 全部 | 全部（后台 UI） |
 
 > 公开角色对 `messages` 需配置"字段级创建权限"（仅允许写入 `content`/`contact_name`/`contact_info` 字段），并关闭公开读取。垃圾留言由管理员在后台手动置 `status=已标记垃圾`。
@@ -312,6 +336,7 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 | `/announcements` | 公告列表 | announcements |
 | `/announcements/:id` | 公告详情 | announcements |
 | `/shops` | 店铺列表 + 地图 | shops |
+| `/info/:key` | 审核信息页：`/info/operation`、`/info/personal-info`、`/info/terms`、`/info/data-usage`（见 §4.6.1） | info_pages |
 | `/message` 或弹层 | 留言表单 | POST messages |
 | `/cards?q=` | 关键词搜索结果（卡名+编号，见 03）— 首页搜索框跳转目标；`/search` 不再单列 | cards(name+code) |
 
@@ -353,7 +378,7 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 
 ## 8. 后台配置清单（Directus）
 
-1. 创建集合：`ips` / `series` / `sub_series` / `rarities` / `cards` / `banners` / `announcements` / `messages` / `shops` / `site_settings`（字段见第 4 节）。
+1. 创建集合：`ips` / `series` / `sub_series` / `rarities` / `cards` / `banners` / `announcements` / `messages` / `shops` / `info_pages` / `site_settings`（字段见第 4 节）。
 2. 配置关系（M2O，`npm run directus:bootstrap` 自动完成）：
    - `series.ip_id → ips`、`sub_series.series_id → series`
    - `cards.ip_id → ips`、`cards.series_id → series`、`cards.sub_series_id → sub_series`、`cards.rarity_id → rarities`、`cards.user_created → directus_users`
@@ -432,6 +457,7 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 - [ ] 公开角色无法读取 `messages`、无法写其他集合。
 - [ ] 访客留言成功写入并进入后台待处理。
 - [ ] 前台：已下架卡牌不展示；banner 按 Directus status（published）显示；公告按 status=published 且 `published_at<=now` 显示（含定时发布与手动 archived 不展示）。
+- [ ] 审核信息页：公共 footer 常驻四个入口（运营信息 / 个人信息收集 / 利用规则 / 数据使用），顺序与界面语言一致；`/info/<key>` 三语均 200 且渲染后台正文；未登记 key 404（见 §4.6.1）。
 - [ ] 移动端/桌面端响应式正常。
 - [ ] 多语言：`/`、`/ja`、`/en` 三语首屏文案与 `<html lang>` 正确；未知语言段 404；语言切换保留当前路径与筛选态；`node scripts/check-i18n.mjs` 全绿（见 §7.2）。
 - [ ] 部署：域名 HTTPS、反向代理、数据库备份、基础监控就绪。

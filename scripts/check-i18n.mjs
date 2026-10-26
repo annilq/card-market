@@ -48,7 +48,26 @@ function assertLocale(html, locale, { allowOthers = [] } = {}) {
   }
 }
 
-const PAGES = ['', '/cards', '/cards/1', '/shops', '/message', '/announcements']
+const PAGES = [
+  '',
+  '/cards',
+  '/cards/1',
+  '/shops',
+  '/message',
+  '/announcements',
+  '/info/operation',
+  '/info/personal-info',
+  '/info/terms',
+  '/info/data-usage',
+]
+
+// 审核用信息页：页脚入口的文案与顺序（四种语言都断言，不依赖后台是否已录数据）
+const INFO_LINKS = {
+  zh: ['运营信息', '个人信息收集', '利用规则', '数据使用'],
+  ja: ['運営情報', '個人情報の収集', '利用規約', 'データの利用'],
+  en: ['Operations', 'Personal data we collect', 'Terms of use', 'How we use data'],
+}
+const INFO_KEYS = ['operation', 'personal-info', 'terms', 'data-usage']
 
 console.log(`\n== 首页 / 列表页三语 SSR ==  (${BASE})`)
 for (const locale of ['zh', 'ja', 'en']) {
@@ -86,6 +105,39 @@ for (const locale of ['zh', 'ja', 'en']) {
     if (other === locale) continue
     assert(`${locale} 筛选面板不含 ${other} 的「${marker}」`, !res.body.includes(marker))
   }
+}
+
+console.log('\n== 审核用信息页：页脚入口 + 页面可达 ==')
+for (const locale of ['zh', 'ja', 'en']) {
+  const prefix = locale === 'zh' ? '' : `/${locale}`
+  const home = await get(prefix || '/')
+  // 页脚入口：四个链接、顺序固定、文案随界面语言、href 带当前语言前缀
+  for (const [i, key] of INFO_KEYS.entries()) {
+    const label = INFO_LINKS[locale][i]
+    const href = `${prefix}/info/${key}`
+    assert(
+      `${locale} 页脚含信息页入口「${label}」`,
+      home.body.includes(`href="${href}"`) && home.body.includes(label),
+      `期望 href="${href}" + 文案「${label}」`,
+    )
+  }
+  // 顺序：四个入口在 HTML 中的出现次序必须与 INFO_KEYS 一致
+  const positions = INFO_KEYS.map((key) => home.body.indexOf(`href="${prefix}/info/${key}"`))
+  assert(
+    `${locale} 页脚信息页顺序正确`,
+    positions.every((p, i) => p >= 0 && (i === 0 || p > positions[i - 1])),
+    positions.join(','),
+  )
+  for (const key of INFO_KEYS) {
+    const page = await get(`${prefix}/info/${key}`)
+    assert(`${locale} ${prefix}/info/${key} -> 200`, page.status === 200, `status=${page.status}`)
+  }
+}
+
+console.log('\n== 未登记的信息页标识必须 404 ==')
+for (const path of ['/info/bogus', '/ja/info/bogus', '/en/info/nope']) {
+  const res = await get(path)
+  assert(`${path} -> 404`, res.status === 404, `status=${res.status}`)
 }
 
 console.log('\n== 未知语言段必须 404（不能被当成语言渲染）==')

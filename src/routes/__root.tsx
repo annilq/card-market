@@ -11,6 +11,7 @@ import {
 import type { ErrorComponentProps } from '@tanstack/react-router'
 import { getSiteSettings } from '~/lib/directus'
 import type { SiteSettings } from '~/lib/types'
+import { INFO_PAGE_KEYS, INFO_PAGE_LABEL_KEY } from '~/lib/info-pages'
 import { DEFAULT_LOCALE, LOCALES, isDefaultLocale, resolveLocaleParam } from '~/lib/i18n/locales'
 import type { Locale } from '~/lib/i18n/locales'
 import { useLocale, useT } from '~/lib/i18n/react'
@@ -359,6 +360,26 @@ function RootDocument({
               )}
             </div>
           </div>
+
+          {/* 审核用信息页入口：运营信息 / 个人信息收集 / 利用规则 / 数据使用。
+              顺序由前端固定（lib/info-pages.ts），不依赖后台是否已录数据。
+              入口文字走界面语言翻译（与头部导航一致）：不翻译 Directus 内容这条边界
+              只针对正文与标题，页脚的链接文字属于界面 chrome。 */}
+          <nav
+            aria-label={t('infoNavTitle')}
+            className="mx-auto max-w-6xl px-4 py-3 border-t border-border flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted"
+          >
+            {INFO_PAGE_KEYS.map((key) => (
+              <Link
+                key={key}
+                to="/{-$locale}/info/$key"
+                params={{ key }}
+                className="hover:text-fg hover:underline transition"
+              >
+                {t(INFO_PAGE_LABEL_KEY[key])}
+              </Link>
+            ))}
+          </nav>
 
           <div className="text-center text-xs text-faint py-4">
             {t('copyright', {

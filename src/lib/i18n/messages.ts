@@ -32,6 +32,13 @@ const zh = {
   shopsHint: '店铺地址与营业时间见「店铺」页',
   copyright: '© {year} {site} · 内容由 Directus 驱动',
 
+  // 信息页（审核用：运营信息 / 个人信息收集 / 利用规则 / 数据使用）
+  infoNavTitle: '网站信息',
+  infoOperation: '运营信息',
+  infoPersonalInfo: '个人信息收集',
+  infoTerms: '利用规则',
+  infoDataUsage: '数据使用',
+  infoPageNotFound: '该信息页不存在或尚未发布。',
 
   // 首页
   searchPlaceholder: '搜索卡名或编号，如 皮卡丘 / 197',
@@ -139,6 +146,12 @@ const ja: Record<MessageKey, string> = {
   shopsHint: '店舗の住所と営業時間は「店舗」ページをご覧ください',
   copyright: '© {year} {site} · コンテンツは Directus で管理しています',
 
+  infoNavTitle: 'サイト情報',
+  infoOperation: '運営情報',
+  infoPersonalInfo: '個人情報の収集',
+  infoTerms: '利用規約',
+  infoDataUsage: 'データの利用',
+  infoPageNotFound: 'このページは存在しないか、公開されていません。',
 
   searchPlaceholder: 'カード名または型番で検索（例：ピカチュウ / 197）',
   search: '検索',
@@ -239,6 +252,12 @@ const en: Record<MessageKey, string> = {
   shopsHint: 'See the Stores page for addresses and opening hours',
   copyright: '© {year} {site} · Content powered by Directus',
 
+  infoNavTitle: 'Site information',
+  infoOperation: 'Operations',
+  infoPersonalInfo: 'Personal data we collect',
+  infoTerms: 'Terms of use',
+  infoDataUsage: 'How we use data',
+  infoPageNotFound: 'This page does not exist or has not been published.',
 
   searchPlaceholder: 'Search by card name or number, e.g. Pikachu / 197',
   search: 'Search',

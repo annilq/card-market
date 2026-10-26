@@ -199,6 +199,26 @@
 
 实际字段根据业务情况确定。
 
+#### 3.7.1 审核信息页（合规四页）— 已落地
+
+为满足网站审核要求，后台需提供四类**独立、可维护、可公开访问**的信息页，并在**全站公共 footer** 提供固定入口：
+
+| # | 页面 | 内容职责 | 前端路由 |
+| --- | --- | --- | --- |
+| 1 | 运营信息 | 运营主体、客服联系方式、免责声明 | `/info/operation` |
+| 2 | 个人信息收集 | 收集范围、收集目的、保存与删除方式 | `/info/personal-info` |
+| 3 | 利用规则 | 网站使用规则、内容权利、禁止行为、规则变更 | `/info/terms` |
+| 4 | 数据使用 | 数据用途、Cookie/本地存储、数据安全 | `/info/data-usage` |
+
+约束（已定）：
+
+- 四个入口顺序固定、**常驻 footer**，与界面语言一致（zh / ja / en 各自翻译入口文案），链接带当前语言前缀。
+- 正文由后台维护（Directus `info_pages` 集合，字段 `page_key / title / body / sort / status`），前台不硬编码正文。
+- 审核入口**必须始终可点**：后台未录入或未发布时，页面仍返回 200 并提示「尚未发布」，只有**未登记的标识**才 404。
+- 已发布内容才可被公开角色读取（`status=published`），与 cards/banners/announcements 一致。
+
+> 实现细节与字段表见 `docs/development.md` §4.6.1。
+
 ### 3.8 留言管理（前台 + 后台）
 
 **前台：**
@@ -246,7 +266,8 @@
 | `banners` | 广告位（单槽位首页轮播） | id, title, description, image(fk→files), link, sort, status(Directus 内置) |
 | `announcements` | 公告 | id, title, body(rich), published_at, is_pinned, sort, status(Directus 内置) |
 | `messages` | 访客留言 | id, content, contact_name?(可选), contact_info?(可选), created_at, status(新/已处理/已归档/已标记垃圾，自定义枚举非 Directus) |
-| `site_settings` | 网站基本信息 | site_name, logo, intro, x_account, shop_address, contact_phone, contact_email, business_hours, data_notice, privacy_policy |
+| `site_settings` | 网站基本信息 | site_name, logo, intro, x_account, contact_email, data_notice, privacy_policy |
+| `info_pages` | 审核信息页（运营信息 / 个人信息收集 / 利用规则 / 数据使用） | id, page_key(唯一), title, body(rich), sort, status(Directus 内置) |
 | `directus_files` | 图片文件（内置） | 由 Directus 管理，存海外对象存储或本地 |
 | `directus_roles` / `directus_users` | 后台权限（内置） | 复用 |
 
@@ -331,6 +352,7 @@
 - [ ] 图片经后台上传、存对象存储或本地、前台可访问（上传/读取/展示全链路验证通过）。
 - [ ] 访客留言可提交并进入后台待处理列表。
 - [ ] 后台访问受身份认证与角色权限约束；前台仅能读取公开数据。
+- [ ] 公共 footer 常驻四个审核信息页入口（运营信息 / 个人信息收集 / 利用规则 / 数据使用），顺序固定且随界面语言；四页正文可由后台维护。
 - [ ] 移动端与桌面端布局正常。
 - [ ] 提供部署与后台使用说明。
 

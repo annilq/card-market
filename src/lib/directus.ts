@@ -6,6 +6,7 @@ import type {
   Card,
   CardListResult,
   CardQuery,
+  InfoPage,
   Ip,
   Rarity,
   Series,
@@ -209,6 +210,37 @@ export async function getSiteSettings(): Promise<SiteSettings | null> {
   if (!res) return null
   const item = Array.isArray(res.data) ? res.data[0] : res.data
   return item ?? null
+}
+
+// 审核用信息页：运营信息 / 个人信息收集 / 利用规则 / 数据使用。
+// 页脚入口与路由都按 page_key 定位，故排序按后台 sort 字段（保持运营约定的展示顺序）。
+const INFO_PAGE_FIELDS = 'id,page_key,title,body,sort'
+
+export async function getInfoPages(): Promise<InfoPage[]> {
+  const params = new URLSearchParams()
+  params.set('fields', INFO_PAGE_FIELDS)
+  params.set('filter', JSON.stringify({ status: { _eq: 'published' } }))
+  params.set('sort', 'sort')
+  const res = await dGet<DirectusList<InfoPage>>(`/items/info_pages?${params}`)
+  return res?.data ?? []
+}
+
+/** 按标识取单个信息页；未发布或不存在的页返回 null（页面据此显示 404 面板）。 */
+export async function getInfoPage(
+  pageKey: string,
+): Promise<InfoPage | null> {
+  const params = new URLSearchParams()
+  params.set('fields', INFO_PAGE_FIELDS)
+  params.set(
+    'filter',
+    JSON.stringify({
+      page_key: { _eq: pageKey },
+      status: { _eq: 'published' },
+    }),
+  )
+  params.set('limit', '1')
+  const res = await dGet<DirectusList<InfoPage>>(`/items/info_pages?${params}`)
+  return res?.data?.[0] ?? null
 }
 
 const SHOP_FIELDS =

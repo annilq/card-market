@@ -106,10 +106,87 @@ async function seedShops() {
   console.log(`+ 店铺种子：${shops.length} 家`)
 }
 
+// 审核用信息页（运营信息 / 个人信息收集 / 利用规则 / 数据使用）。
+// 可独立补种：即便其他数据已存在也执行一次；已存在同 page_key 的条目则跳过。
+async function seedInfoPages() {
+  const existing = await api(
+    'GET',
+    '/items/info_pages?limit=100&fields=page_key',
+  ).then((r) => new Set((r.data || []).map((p) => p.page_key)))
+  const pages = [
+    {
+      page_key: 'operation',
+      title: '运营信息',
+      sort: 1,
+      body: [
+        '<h2>运营主体</h2>',
+        '<p>本网站由 card-market 运营，提供卡牌展示、回购咨询与门店信息服务。</p>',
+        '<h2>联系方式</h2>',
+        '<p>客服邮箱：shop@example.com。营业日通常在 1 个工作日内回复。</p>',
+        '<h2>免责声明</h2>',
+        '<p>网站展示的卡牌信息、价格与库存仅供参考，实际以门店鉴定与确认为准。</p>',
+      ].join(''),
+    },
+    {
+      page_key: 'personal-info',
+      title: '个人信息收集',
+      sort: 2,
+      body: [
+        '<h2>收集范围</h2>',
+        '<p>留言表单会收集您主动填写的留言内容、联系人姓名与联系方式（邮箱 / 电话 / 微信）。联系人为选填项。</p>',
+        '<h2>收集目的</h2>',
+        '<p>仅用于回复您的咨询、处理回购请求与改进服务，不用于任何营销推送。</p>',
+        '<h2>保存与删除</h2>',
+        '<p>留言在后台保存至处理完毕。如需删除您的个人信息，请通过客服邮箱联系我们。</p>',
+      ].join(''),
+    },
+    {
+      page_key: 'terms',
+      title: '利用规则',
+      sort: 3,
+      body: [
+        '<h2>网站使用</h2>',
+        '<p>访问本网站即表示您同意遵守本规则。请勿以爬虫、批量抓取等方式对本站造成负担。</p>',
+        '<h2>内容权利</h2>',
+        '<p>本站的文案、图片与排版归运营方或相应权利人所有，未经许可不得转载用于商业用途。</p>',
+        '<h2>禁止行为</h2>',
+        '<p>禁止提交违法、侵权、辱骂或垃圾信息。违反者我们有权删除内容并限制访问。</p>',
+        '<h2>规则变更</h2>',
+        '<p>本规则可能随服务调整而更新，更新后在本页公布即生效。</p>',
+      ].join(''),
+    },
+    {
+      page_key: 'data-usage',
+      title: '数据使用',
+      sort: 4,
+      body: [
+        '<h2>数据用途</h2>',
+        '<p>本站收集的留言数据仅用于咨询回复与回购业务处理，不对外出售或共享给第三方。</p>',
+        '<h2>Cookie 与本地存储</h2>',
+        '<p>本站仅使用浏览器本地存储保存界面语言与深色模式偏好，不做跨站跟踪，也未接入第三方广告统计。</p>',
+        '<h2>数据安全</h2>',
+        '<p>数据存放于受控的内容管理系统，仅授权管理员可访问；我们会采取合理措施防止未授权访问与泄露。</p>',
+      ].join(''),
+    },
+  ]
+  let created = 0
+  for (const p of pages) {
+    if (existing.has(p.page_key)) continue
+    await post('info_pages', { ...p, status: 'published' })
+    created++
+  }
+  console.log(
+    created
+      ? `+ 信息页种子：${created} 页（运营信息 / 个人信息收集 / 利用规则 / 数据使用）`
+      : '· 信息页已存在，跳过 info_pages 种子。',
+  )
+}
+
 async function main() {
   await login()
-  // 店铺可独立补种（即便其他数据已存在也执行一次）
+  // 店铺 / 信息页可独立补种（即便其他数据已存在也执行一次）
   await seedShops()
+  await seedInfoPages()
   if (await getOne('ips')) {
     console.log('⚠ 已存在数据（ips 非空），跳过其余 seed。如需重置请清空相关集合。')
     return

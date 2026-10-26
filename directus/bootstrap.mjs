@@ -105,6 +105,7 @@ const COLLECTION_LABELS_JA = {
   messages: 'お問い合わせ',
   site_settings: 'サイト設定',
   shops: '店舗',
+  info_pages: 'サイト情報',
 }
 
 const FIELD_LABELS_JA = {
@@ -174,6 +175,13 @@ const FIELD_LABELS_JA = {
     business_hours: '営業時間',
     description: '店舗紹介',
     image: '店舗画像',
+    sort: '並び順',
+    status: '公開ステータス',
+  },
+  info_pages: {
+    page_key: 'ページ識別子',
+    title: 'タイトル',
+    body: '本文',
     sort: '並び順',
     status: '公開ステータス',
   },
@@ -432,6 +440,51 @@ const collections = [
     ],
   },
   {
+    name: 'info_pages',
+    label: '站点信息页',
+    icon: 'policy',
+    note: '审核用信息页（运营信息 / 个人信息收集 / 利用规则 / 数据使用）',
+    sortField: 'sort',
+    displayTemplate: '{{title}}',
+    fields: [
+      {
+        field: 'page_key',
+        label: '页面标识',
+        type: 'string',
+        interface: 'select-dropdown',
+        required: true,
+        options: {
+          choices: CHOICES({
+            operation: '运营信息',
+            'personal-info': '个人信息收集',
+            terms: '利用规则',
+            'data-usage': '数据使用',
+          }),
+        },
+        note: '页面标识（唯一，前端路由 /info/<page_key> 与页脚入口据此匹配）',
+      },
+      { field: 'title', label: '页面标题', type: 'string', interface: 'input', required: true },
+      {
+        field: 'body',
+        label: '正文',
+        type: 'text',
+        interface: 'input-rich-text-md',
+        note: '正文（富文本 Markdown/HTML）',
+      },
+      { field: 'sort', label: '排序', type: 'integer', interface: 'sort', default: 0 },
+      {
+        field: 'status',
+        label: '发布状态',
+        type: 'string',
+        interface: 'select-dropdown',
+        default: 'draft',
+        options: {
+          choices: CHOICES({ draft: '草稿', published: '已发布', archived: '已归档' }),
+        },
+      },
+    ],
+  },
+  {
     name: 'site_settings',
     label: '站点设置',
     icon: 'settings',
@@ -635,7 +688,11 @@ async function setupIndexes() {
     await pool.query(
       'CREATE INDEX IF NOT EXISTS cards_code_trgm ON cards USING GIN (code gin_trgm_ops);',
     )
-    console.log('✓ 索引已就绪（组合唯一 + pg_trgm GIN）')
+    // 信息页按 page_key 唯一定位（前端 /info/<page_key> 直接按标识查一条）
+    await pool.query(
+      'CREATE UNIQUE INDEX IF NOT EXISTS uniq_info_pages_page_key ON info_pages (page_key);',
+    )
+    console.log('✓ 索引已就绪（组合唯一 + pg_trgm GIN + info_pages 唯一标识）')
   } finally {
     await pool.end()
   }
@@ -741,6 +798,7 @@ async function setupPermissions() {
       { collection: 'banners', permissions: { status: { _eq: 'published' } } },
       { collection: 'announcements', permissions: { status: { _eq: 'published' } } },
       { collection: 'shops', permissions: { status: { _eq: 'published' } } },
+      { collection: 'info_pages', permissions: { status: { _eq: 'published' } } },
       { collection: 'site_settings', permissions: {} },
       {
         collection: 'directus_files',

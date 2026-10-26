@@ -94,6 +94,22 @@ export interface SiteSettings {
   privacy_policy: string | null
 }
 
+/**
+ * 审核用信息页（运营信息 / 个人信息收集 / 利用规则 / 数据使用）。
+ * 用 page_key 定位而不是主键：页脚入口与前端路由 `/info/<page_key>` 都按标识匹配，
+ * 后台可改标题与正文，但标识变更会让对应入口失效。
+ */
+export type InfoPageKey = 'operation' | 'personal-info' | 'terms' | 'data-usage'
+
+export interface InfoPage {
+  id: number
+  page_key: InfoPageKey
+  title: string
+  body: string | null
+  sort?: number
+  status?: string
+}
+
 /** 店铺（独立模型，可多个；含定位坐标，前端以列表 + 地图展示） */
 export interface Shop {
   id: number
