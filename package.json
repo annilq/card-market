@@ -8,6 +8,7 @@
     "build": "vite build",
     "start": "node prod-server.mjs",
     "typecheck": "tsc --noEmit",
+    "backend": "bash scripts/start-backend.sh",
     "directus:bootstrap": "node directus/bootstrap.mjs",
     "directus:seed": "node directus/seed.mjs",
     "directus:snapshot": "npx directus schema snapshot directus/schema.yaml --yes"
