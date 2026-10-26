@@ -66,7 +66,7 @@ export function MapView({
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
           attribution: '&copy; OpenStreetMap',
-        }).addTo(map as unknown as L.Map)
+        }).addTo(map as unknown as MapInstance)
         mapRef.current = map
         markersRef.current = {}
         initedForRef.current = key
@@ -79,7 +79,7 @@ export function MapView({
               iconSize: [28, 36],
               iconAnchor: [14, 36],
             }),
-          }).addTo(map as unknown as L.Map) as unknown as MarkerInstance
+          }).addTo(map as unknown as MapInstance) as unknown as MarkerInstance
           if (onSelect) marker.on('click', () => onSelect(p.id))
           markersRef.current[p.id] = marker
         }
@@ -88,7 +88,7 @@ export function MapView({
           const bounds = L.latLngBounds(
             points.map((p) => [p.lat, p.lng] as [number, number]),
           )
-          ;(map as unknown as L.Map).fitBounds(bounds, { padding: [48, 48] })
+          ;(map as unknown as MapInstance).fitBounds(bounds, { padding: [48, 48] })
         } else {
           map.setView([35.68, 139.76], 11)
         }

@@ -8,7 +8,7 @@ TCG 卡牌（宝可梦 / 游戏王 / 龙珠等）展示与回购信息站。前�
 
 - 前端：TanStack Start（React 19 + Vite 8 + TypeScript），Tailwind v4，SSR 数据加载，筛选状态写入 URL。
 - 后端：Directus 11（headless CMS），PostgreSQL 16+，使用 `pg_trgm` GIN 索引做中文子串模糊匹配。
-- 关系：维度表 `ips / series / sub_series / rarities`（IP→系列→子系列三层）+ 实体表 `cards`；外加 `banners / announcements / messages / site_settings`。
+- 关系：维度表 `ips / series / sub_series / rarities`（IP→系列→子系列三层）+ 实体表 `cards`；外加 `banners / announcements / messages / shops / site_settings`。
 
 ## 目录结构
 
@@ -20,12 +20,61 @@ directus/
   seed.mjs                # 样例数据（IP/卡牌/公告/banner/留言）
   run-local.sh            # 本地直连 Postgres 跑 Directus（绕过 Docker Hub 限制时的备选）
 src/                      # TanStack Start 前端
-  routes/                 # 首页 / 列表 / 详情 / 公告 / 联系 / 留言
+  routes/                 # 首页 / 列表 / 详情 / 公告 / 店铺 / 留言（均在 {-$locale} 布局下）
   lib/directus.ts         # 公开 REST 客户端（读 + 留言提交）
+  lib/i18n/               # 界面多语言：语言注册表 + 三语文案字典 + useT/useLocale
   components/CardCard.tsx # 卡牌卡片复用组件
+scripts/check-i18n.mjs    # 多语言验收脚本（三语 SSR / 404 / hreflang）
 ```
 
-## 快速开始（Docker，推荐）
+## 界面多语言
+
+界面支持 **简体中文（默认）/ 日本語 / English**，语言是 URL 的可选第一段：`/cards`（中文）、`/ja/cards`、`/en/cards`。右上角可切换语言，切换时保留当前路径与筛选条件。未知语言段（如 `/de/cards`）返回 404。详见 `docs/development.md` §7.2。
+
+```bash
+node scripts/check-i18n.mjs http://localhost:3000   # 多语言验收（需站点已启动）
+```
+
+## 本机当前环境（原生 Postgres + Directus 容器）
+
+这台机器上的后端**不是** `docker compose` 那套，而是「本机 Postgres + 独立容器」：
+
+| 部件 | 实际形态 |
+| --- | --- |
+| 数据库 | 本机 Postgres.app 实例，数据目录 `/tmp/pg_cardmarket`，端口 5432，账号 `directus/directus` |
+| Directus | 容器 `cardmarket-directus`（`docker run` 创建，无 compose 标签），`DB_HOST=host.docker.internal`，端口 8055 |
+
+一条命令启动（幂等，已在运行则只报告状态）：
+
+```bash
+npm run backend        # 等价于 ./scripts/start-backend.sh
+```
+
+它做的事：检查/启动 5432 → 检查/启动容器 `cardmarket-directus` → 轮询 `8055/server/health` 直到 200 →
+打印后台地址与账号（`admin@example.com / admin12345`）。
+
+手工等价命令：
+
+```bash
+# 1. 数据库（Postgres.app 不在运行时）
+/Applications/Postgres.app/Contents/Versions/latest/bin/pg_ctl \
+  -D /tmp/pg_cardmarket -l /tmp/pg_cardmarket/server.log start
+
+# 2. Directus（容器已存在时）
+docker start cardmarket-directus
+
+# 3. 健康检查
+curl -s --noproxy '*' http://localhost:8055/server/health
+```
+
+两个坑：
+
+- **别直接 `docker compose up -d`**：compose 里的 `database` 服务要绑 5432，与本机 Postgres 冲突，且会另建一个
+  `DB_HOST=database` 的 Directus 容器，数据对不上。要跑 compose 请先停掉本机 Postgres 或改端口映射。
+- **数据在 `/tmp` 下，重启机器会丢**：`/tmp/pg_cardmarket` 不是持久位置。长期保留需把数据目录迁到
+  `~/` 或项目内，并同步修改 `scripts/start-backend.sh` 的 `PG_DATA`。
+
+## 快速开始（Docker，全新环境）
 
 ```bash
 # 1. 启动后端（Directus 8055 + PostgreSQL 5432）
@@ -77,13 +126,13 @@ npm run dev
 
 ## 权限模型（详见 development.md §4.8）
 
-- **Public 角色**：只读 `ips/series/sub_series/rarities/cards/banners/announcements/site_settings/directus_files`（带 `status=published` 过滤）；可 `create` `messages`（仅 `content/contact_name/contact_info` 三字段，预设 `status=new`）。
+- **Public 角色**：只读 `ips/series/sub_series/rarities/cards/banners/announcements/shops/site_settings/directus_files`（带 `status=published` 过滤）；可 `create` `messages`（仅 `content/contact_name/contact_info` 三字段，预设 `status=new`）。
 - `messages` 有意**不**使用 Directus 内置 status（工单式生命周期：new/processed/archived/spam），与内容集合区分。
 - 索引：`(ip_id, series_id, sub_series_id, code)` 组合唯一（code 非空时）；`cards.name` / `cards.code` 的 `pg_trgm` GIN 索引。
 
 ## 验收清单
 
-- [ ] Directus 后台可登录，8 个集合已创建
+- [ ] Directus 后台可登录，10 个集合已创建（含 `shops`）
 - [ ] 组合唯一约束：`(ip, series, sub_series, code)` 重复 code 被拒
 - [ ] 中文关键词搜索走 `pg_trgm`（如搜「皮卡」「197」）
 - [ ] 公开角色无法读取未发布内容、无法读取/写入 `messages` 列表

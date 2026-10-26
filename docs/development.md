@@ -201,7 +201,7 @@
 
 | 角色 | 读取 | 创建 | 其他 |
 | --- | --- | --- | --- |
-| Public（公开） | `cards`(仅 published) / `banners`(仅 published) / `announcements`(仅 published 且 published_at<=now) / `site_settings` / 图片 assets | `messages`（仅 content/contact_name/contact_info 创建） | 不可读 `messages`；不可写其他集合 |
+| Public（公开） | `cards`(仅 published) / `banners`(仅 published) / `announcements`(仅 published 且 published_at<=now) / `shops`(仅 published) / `site_settings` / 图片 assets | `messages`（仅 content/contact_name/contact_info 创建） | 不可读 `messages`；不可写其他集合 |
 | Admin（管理员） | 全部 | 全部 | 全部（后台 UI） |
 
 > 公开角色对 `messages` 需配置"字段级创建权限"（仅允许写入 `content`/`contact_name`/`contact_info` 字段），并关闭公开读取。垃圾留言由管理员在后台手动置 `status=已标记垃圾`。
@@ -311,11 +311,12 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 | `/cards/:id` | 卡牌详情（图片、描述、回购信息） | cards |
 | `/announcements` | 公告列表 | announcements |
 | `/announcements/:id` | 公告详情 | announcements |
-| `/contact` | 店铺信息 / 联系方式 | site_settings |
+| `/shops` | 店铺列表 + 地图 | shops |
 | `/message` 或弹层 | 留言表单 | POST messages |
 | `/cards?q=` | 关键词搜索结果（卡名+编号，见 03）— 首页搜索框跳转目标；`/search` 不再单列 | cards(name+code) |
 
 > 后台不单独开发，复用 Directus `/admin`。
+> 公共 footer 常驻四个信息页入口（运营信息 / 个人信息收集 / 利用规则 / 数据使用），顺序与文案见 §4.6.1。
 
 ### 7.1 卡牌列表检索 / 筛选 / 排序（见 ticket [03](../.scratch/card-market/issues/03-frontend-search-filter.md)）
 
@@ -326,11 +327,33 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 - **加载**：分页（`page`/`limit`）+ 全部过滤态写入 URL query（可分享 / SEO 友好）。
 - 详情页多图画廊不属本范围，归 `/cards/:id`。
 
+### 7.2 前端界面多语言（见 ticket [10](../.scratch/card-market/issues/10-frontend-i18n.md)）
+
+语言：`zh`（默认）/ `ja` / `en`。**语言是 URL 的可选第一段**，默认语言不带前缀：
+
+| URL | 语言 |
+| --- | --- |
+| `/cards`、`/cards/1` | 简体中文（默认，无前缀） |
+| `/ja/cards`、`/en/cards/1` | 日语 / 英语 |
+| `/foo`、`/de/cards` | 404（未知语言段不静默降级） |
+
+实现约定（改动前先读，容易踩）：
+
+- **路由结构**：全部页面挂在 `src/routes/{-$locale}.tsx` 布局路由下（TanStack Router 可选路径段），文件名形如 `{-$locale}.cards.index.tsx`。`routeTree.gen.ts` 由构建自动生成，不要手改。
+- **文案**：`src/lib/i18n/messages.ts`。`zh` 是唯一键来源，`MessageKey = keyof typeof zh`；`ja`/`en` 为 `Record<MessageKey, string>`，**少翻或多写一条键都会 typecheck 报错**。插值用 `{name}`，`t('totalCount', { total })`。
+- **取值**：`useLocale()` 从 pathname 首段派生（无 Provider、无 locale state，保证 SSR 与客户端一致）；`useT()` 返回按 locale 缓存的稳定引用。日期用 `formatDate(x, locale)`（内部 `Intl`，固定 `Asia/Tokyo` 时区避免抖动）。
+- **站内链接**：`<Link to>` 必须带 `/{-$locale}` 前缀。语言段由当前路由**自动继承**，不要传 `params={{ locale }}`——显式传无效，裸 `to` 不会因 params 长出语言段。索引路由的 `to` 是 `'/{-$locale}'`（**无**尾斜杠）。
+- **后台内容里的站内路径**（如 `banners.link`）绕过路由类型系统，须经 `localizeHref(path, locale)` 补前缀，否则从 `/ja` 点进去掉回中文。
+- **语言切换**：`__root.tsx` 的 `LocaleSwitcher` 用相对路由 + params reducer + `search: true`，保留路径、路径参数与查询串。切到默认语言必须传 `locale: undefined`（传 `'zh'` 会生成 404 的 `/zh/...`）。
+- **SEO**：`<html lang>`、每语言 `<title>`/`description`（在 `LOCALES` 注册表）、`hreflang` 交替链接（含 `x-default`）均按当前语言输出。
+- **不翻译 Directus 内容**：卡名、公告正文、店铺地址等按后台原样输出。界面语言 ≠ 内容语言，内容多语言是 Directus 字段翻译的职责。
+- **验收**：`node scripts/check-i18n.mjs http://localhost:3000`（三语 SSR 文案、`<html lang>`、未知语言段 404、hreflang、banner 链接补前缀、内容不被翻译）。
+
 ---
 
 ## 8. 后台配置清单（Directus）
 
-1. 创建集合：`ips` / `series` / `sub_series` / `rarities` / `cards` / `banners` / `announcements` / `messages` / `site_settings`（字段见第 4 节）。
+1. 创建集合：`ips` / `series` / `sub_series` / `rarities` / `cards` / `banners` / `announcements` / `messages` / `shops` / `site_settings`（字段见第 4 节）。
 2. 配置关系（M2O，`npm run directus:bootstrap` 自动完成）：
    - `series.ip_id → ips`、`sub_series.series_id → series`
    - `cards.ip_id → ips`、`cards.series_id → series`、`cards.sub_series_id → sub_series`、`cards.rarity_id → rarities`、`cards.user_created → directus_users`
@@ -410,6 +433,7 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 - [ ] 访客留言成功写入并进入后台待处理。
 - [ ] 前台：已下架卡牌不展示；banner 按 Directus status（published）显示；公告按 status=published 且 `published_at<=now` 显示（含定时发布与手动 archived 不展示）。
 - [ ] 移动端/桌面端响应式正常。
+- [ ] 多语言：`/`、`/ja`、`/en` 三语首屏文案与 `<html lang>` 正确；未知语言段 404；语言切换保留当前路径与筛选态；`node scripts/check-i18n.mjs` 全绿（见 §7.2）。
 - [ ] 部署：域名 HTTPS、反向代理、数据库备份、基础监控就绪。
 - [ ] 提供部署与后台使用说明文档。
 

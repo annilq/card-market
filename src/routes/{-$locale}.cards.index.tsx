@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCards, getIps, getRarities, getSeries, getSubSeries } from '~/lib/directus'
 import { CardCard } from '~/components/CardCard'
+import { useT } from '~/lib/i18n/react'
 import type { CardQuery, Ip, Rarity, Series, SubSeries } from '~/lib/types'
 
 // 数值型参数在 search 中：单选取标量 number，多选取 number[]（与 TanStack 默认
@@ -45,7 +47,7 @@ const toArr = (v: number | number[] | undefined): number[] =>
 const norm = (v: number | number[] | undefined): number[] | undefined =>
   v == null ? undefined : Array.isArray(v) ? v : [v]
 
-export const Route = createFileRoute('/cards/')({
+export const Route = createFileRoute('/{-$locale}/cards/')({
   validateSearch: (s: Record<string, unknown>): CardSearch => ({
     ip: asNum(s.ip),
     series: asNum(s.series),
@@ -106,6 +108,7 @@ function CardList() {
   const { result, ips, series, subSeries, rarities } = Route.useLoaderData()
   const search = Route.useSearch()
   const navigate = useNavigate()
+  const t = useT()
 
   const ipSel = new Set(toArr(search.ip))
   const seriesSel = new Set(toArr(search.series))
@@ -113,10 +116,10 @@ function CardList() {
   const raritySel = new Set(toArr(search.rarity))
 
   const patch = (p: Partial<CardSearch>) =>
-    navigate({ to: '/cards', search: { ...search, ...p, page: 1 } })
+    navigate({ to: '/{-$locale}/cards', search: { ...search, ...p, page: 1 } })
 
   const patchPage = (page: number) =>
-    navigate({ to: '/cards', search: { ...search, page } })
+    navigate({ to: '/{-$locale}/cards', search: { ...search, page } })
 
   const toggleMulti = (
     key: 'ip' | 'series' | 'sub' | 'rarity',
@@ -155,7 +158,7 @@ function CardList() {
 
   const clearAll = () =>
     navigate({
-      to: '/cards',
+      to: '/{-$locale}/cards',
       search: { q: search.q || undefined, sort: search.sort },
     })
 
@@ -170,6 +173,7 @@ function CardList() {
     return true
   }
 
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const total = result.total
   const page = search.page ?? 1
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
@@ -186,65 +190,78 @@ function CardList() {
 
   return (
     <div className="grid lg:grid-cols-[260px_1fr] gap-6">
-      <aside className="space-y-5 lg:sticky lg:top-20 lg:self-start">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">筛选</h2>
-          {hasFilter && (
-            <button onClick={clearAll} className="text-xs text-slate-500 hover:underline">
-              清空
+      <aside className="lg:sticky lg:top-20 lg:self-start">
+        <div className="flex items-center justify-between mb-4 lg:mb-0">
+          <h2 className="font-semibold">{t('filters')}</h2>
+          <div className="flex items-center gap-3">
+            {hasFilter && (
+              <button onClick={clearAll} className="text-xs text-muted hover:underline">
+                {t('clearAll')}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((v) => !v)}
+              className="lg:hidden rounded-lg border border-border-strong px-3 py-1.5 text-sm text-muted"
+            >
+              {filtersOpen ? t('collapse') : t('expand')}
             </button>
-          )}
+          </div>
         </div>
 
-        <Facet title="IP / 大类" items={ips} sel={ipSel} onToggle={(id) => toggleMulti('ip', id)} />
-        <Facet
-          title="系列"
-          items={series}
-          sel={seriesSel}
-          enabled={seriesEnabled}
-          onToggle={(id) => toggleMulti('series', id)}
-        />
-        <Facet
-          title="子系列"
-          items={subSeries}
-          sel={subSel}
-          enabled={subEnabled}
-          onToggle={(id) => toggleMulti('sub', id)}
-        />
-        <Facet
-          title="稀有程度"
-          items={rarities}
-          sel={raritySel}
-          onToggle={(id) => toggleMulti('rarity', id)}
-        />
-
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={!!search.hv}
-            onChange={(e) => patch({ hv: e.target.checked ? true : undefined })}
+        <div
+          className={`${filtersOpen ? 'block' : 'hidden'} lg:block lg:mt-4 space-y-5 mt-4`}
+        >
+          <Facet title={t('facetIp')} items={ips} sel={ipSel} onToggle={(id) => toggleMulti('ip', id)} />
+          <Facet
+            title={t('facetSeries')}
+            items={series}
+            sel={seriesSel}
+            enabled={seriesEnabled}
+            onToggle={(id) => toggleMulti('series', id)}
           />
-          只看精品
-        </label>
+          <Facet
+            title={t('facetSubSeries')}
+            items={subSeries}
+            sel={subSel}
+            enabled={subEnabled}
+            onToggle={(id) => toggleMulti('sub', id)}
+          />
+          <Facet
+            title={t('facetRarity')}
+            items={rarities}
+            sel={raritySel}
+            onToggle={(id) => toggleMulti('rarity', id)}
+          />
 
-        <div className="space-y-1 text-sm">
-          <div className="font-medium">价格区间（¥）</div>
-          <div className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm text-muted">
             <input
-              type="number"
-              placeholder="最低"
-              defaultValue={search.min}
-              onBlur={(e) => patch({ min: e.target.value ? Number(e.target.value) : undefined })}
-              className="w-full rounded border border-slate-300 px-2 py-1"
+              type="checkbox"
+              checked={!!search.hv}
+              onChange={(e) => patch({ hv: e.target.checked ? true : undefined })}
             />
-            <span className="text-slate-400">—</span>
-            <input
-              type="number"
-              placeholder="最高"
-              defaultValue={search.max}
-              onBlur={(e) => patch({ max: e.target.value ? Number(e.target.value) : undefined })}
-              className="w-full rounded border border-slate-300 px-2 py-1"
-            />
+            {t('highValueOnly')}
+          </label>
+
+          <div className="space-y-1 text-sm">
+            <div className="font-medium">{t('priceRange')}</div>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                placeholder={t('minPrice')}
+                defaultValue={search.min}
+                onBlur={(e) => patch({ min: e.target.value ? Number(e.target.value) : undefined })}
+                className="w-full rounded border border-border-strong px-2 py-1 bg-surface text-fg placeholder:text-faint outline-none focus:border-muted"
+              />
+              <span className="text-faint">—</span>
+              <input
+                type="number"
+                placeholder={t('maxPrice')}
+                defaultValue={search.max}
+                onBlur={(e) => patch({ max: e.target.value ? Number(e.target.value) : undefined })}
+                className="w-full rounded border border-border-strong px-2 py-1 bg-surface text-fg placeholder:text-faint outline-none focus:border-muted"
+              />
+            </div>
           </div>
         </div>
       </aside>
@@ -253,25 +270,25 @@ function CardList() {
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <input
             defaultValue={search.q}
-            placeholder="关键词：卡名 / 编号"
+            placeholder={t('keywordPlaceholder')}
             onKeyDown={(e) => {
               if (e.key === 'Enter')
                 patch({ q: (e.target as HTMLInputElement).value || undefined })
             }}
-            className="flex-1 min-w-[180px] rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+            className="flex-1 min-w-[180px] rounded-lg border border-border-strong px-3 py-2 text-sm outline-none focus:border-muted bg-surface text-fg placeholder:text-faint"
           />
           <select
             value={search.sort ?? 'price_desc'}
             onChange={(e) => patch({ sort: e.target.value as CardSearch['sort'] })}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            className="rounded-lg border border-border-strong px-3 py-2 text-sm bg-surface text-fg outline-none focus:border-muted"
           >
-            <option value="price_desc">价格：高→低</option>
-            <option value="price_asc">价格：低→高</option>
-            <option value="newest">最新上架</option>
+            <option value="price_desc">{t('sortPriceDesc')}</option>
+            <option value="price_asc">{t('sortPriceAsc')}</option>
+            <option value="newest">{t('sortNewest')}</option>
           </select>
         </div>
 
-        <div className="text-sm text-slate-500 mb-3">共 {total} 张</div>
+        <div className="text-sm text-muted mb-3">{t('totalCount', { total })}</div>
 
         {result.items.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -280,8 +297,8 @@ function CardList() {
             ))}
           </div>
         ) : (
-          <div className="text-sm text-slate-400 py-16 text-center border border-dashed border-slate-200 rounded-xl">
-            没有符合条件的卡牌，试试调整筛选。
+          <div className="text-sm text-faint py-16 text-center border border-dashed border-border rounded-xl">
+            {t('emptyFiltered')}
           </div>
         )}
 
@@ -290,19 +307,19 @@ function CardList() {
             <button
               disabled={page <= 1}
               onClick={() => patchPage(page - 1)}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm disabled:opacity-40"
+              className="rounded-lg border border-border-strong px-3 py-1.5 text-sm text-muted hover:bg-surface-2 disabled:opacity-40"
             >
-              上一页
+              {t('prevPage')}
             </button>
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-muted">
               {page} / {totalPages}
             </span>
             <button
               disabled={page >= totalPages}
               onClick={() => patchPage(page + 1)}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm disabled:opacity-40"
+              className="rounded-lg border border-border-strong px-3 py-1.5 text-sm text-muted hover:bg-surface-2 disabled:opacity-40"
             >
-              下一页
+              {t('nextPage')}
             </button>
           </div>
         )}

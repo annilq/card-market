@@ -9,236 +9,282 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AnnouncementsRouteImport } from './routes/announcements'
-import { Route as CardsRouteImport } from './routes/cards'
-import { Route as MessageRouteImport } from './routes/message'
-import { Route as ShopsRouteImport } from './routes/shops'
-import { Route as AnnouncementsIndexRouteImport } from './routes/announcements.index'
-import { Route as AnnouncementsIdRouteImport } from './routes/announcements.$id'
-import { Route as CardsIndexRouteImport } from './routes/cards.index'
-import { Route as CardsIdRouteImport } from './routes/cards.$id'
+import { Route as Char123LocaleChar125RouteImport } from './routes/{-$locale}'
+import { Route as Char123LocaleChar125IndexRouteImport } from './routes/{-$locale}.index'
+import { Route as Char123LocaleChar125AnnouncementsRouteImport } from './routes/{-$locale}.announcements'
+import { Route as Char123LocaleChar125CardsRouteImport } from './routes/{-$locale}.cards'
+import { Route as Char123LocaleChar125MessageRouteImport } from './routes/{-$locale}.message'
+import { Route as Char123LocaleChar125ShopsRouteImport } from './routes/{-$locale}.shops'
+import { Route as Char123LocaleChar125AnnouncementsIndexRouteImport } from './routes/{-$locale}.announcements.index'
+import { Route as Char123LocaleChar125AnnouncementsIdRouteImport } from './routes/{-$locale}.announcements.$id'
+import { Route as Char123LocaleChar125CardsIndexRouteImport } from './routes/{-$locale}.cards.index'
+import { Route as Char123LocaleChar125CardsIdRouteImport } from './routes/{-$locale}.cards.$id'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const Char123LocaleChar125Route = Char123LocaleChar125RouteImport.update({
+  id: '/{-$locale}',
+  path: '/{-$locale}',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnnouncementsRoute = AnnouncementsRouteImport.update({
-  id: '/announcements',
-  path: '/announcements',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CardsRoute = CardsRouteImport.update({
-  id: '/cards',
-  path: '/cards',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MessageRoute = MessageRouteImport.update({
-  id: '/message',
-  path: '/message',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ShopsRoute = ShopsRouteImport.update({
-  id: '/shops',
-  path: '/shops',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AnnouncementsIndexRoute = AnnouncementsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AnnouncementsRoute,
-} as any)
-const AnnouncementsIdRoute = AnnouncementsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AnnouncementsRoute,
-} as any)
-const CardsIndexRoute = CardsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => CardsRoute,
-} as any)
-const CardsIdRoute = CardsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => CardsRoute,
-} as any)
+const Char123LocaleChar125IndexRoute =
+  Char123LocaleChar125IndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125AnnouncementsRoute =
+  Char123LocaleChar125AnnouncementsRouteImport.update({
+    id: '/announcements',
+    path: '/announcements',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125CardsRoute =
+  Char123LocaleChar125CardsRouteImport.update({
+    id: '/cards',
+    path: '/cards',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125MessageRoute =
+  Char123LocaleChar125MessageRouteImport.update({
+    id: '/message',
+    path: '/message',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125ShopsRoute =
+  Char123LocaleChar125ShopsRouteImport.update({
+    id: '/shops',
+    path: '/shops',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125AnnouncementsIndexRoute =
+  Char123LocaleChar125AnnouncementsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => Char123LocaleChar125AnnouncementsRoute,
+  } as any)
+const Char123LocaleChar125AnnouncementsIdRoute =
+  Char123LocaleChar125AnnouncementsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => Char123LocaleChar125AnnouncementsRoute,
+  } as any)
+const Char123LocaleChar125CardsIndexRoute =
+  Char123LocaleChar125CardsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => Char123LocaleChar125CardsRoute,
+  } as any)
+const Char123LocaleChar125CardsIdRoute =
+  Char123LocaleChar125CardsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => Char123LocaleChar125CardsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/announcements': typeof AnnouncementsRouteWithChildren
-  '/cards': typeof CardsRouteWithChildren
-  '/message': typeof MessageRoute
-  '/shops': typeof ShopsRoute
-  '/announcements/$id': typeof AnnouncementsIdRoute
-  '/cards/$id': typeof CardsIdRoute
-  '/announcements/': typeof AnnouncementsIndexRoute
-  '/cards/': typeof CardsIndexRoute
+  '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
+  '/{-$locale}/announcements': typeof Char123LocaleChar125AnnouncementsRouteWithChildren
+  '/{-$locale}/cards': typeof Char123LocaleChar125CardsRouteWithChildren
+  '/{-$locale}/message': typeof Char123LocaleChar125MessageRoute
+  '/{-$locale}/shops': typeof Char123LocaleChar125ShopsRoute
+  '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
+  '/{-$locale}/announcements/$id': typeof Char123LocaleChar125AnnouncementsIdRoute
+  '/{-$locale}/cards/$id': typeof Char123LocaleChar125CardsIdRoute
+  '/{-$locale}/announcements/': typeof Char123LocaleChar125AnnouncementsIndexRoute
+  '/{-$locale}/cards/': typeof Char123LocaleChar125CardsIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/message': typeof MessageRoute
-  '/shops': typeof ShopsRoute
-  '/announcements/$id': typeof AnnouncementsIdRoute
-  '/cards/$id': typeof CardsIdRoute
-  '/announcements': typeof AnnouncementsIndexRoute
-  '/cards': typeof CardsIndexRoute
+  '/{-$locale}/message': typeof Char123LocaleChar125MessageRoute
+  '/{-$locale}/shops': typeof Char123LocaleChar125ShopsRoute
+  '/{-$locale}': typeof Char123LocaleChar125IndexRoute
+  '/{-$locale}/announcements/$id': typeof Char123LocaleChar125AnnouncementsIdRoute
+  '/{-$locale}/cards/$id': typeof Char123LocaleChar125CardsIdRoute
+  '/{-$locale}/announcements': typeof Char123LocaleChar125AnnouncementsIndexRoute
+  '/{-$locale}/cards': typeof Char123LocaleChar125CardsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/announcements': typeof AnnouncementsRouteWithChildren
-  '/cards': typeof CardsRouteWithChildren
-  '/message': typeof MessageRoute
-  '/shops': typeof ShopsRoute
-  '/announcements/$id': typeof AnnouncementsIdRoute
-  '/cards/$id': typeof CardsIdRoute
-  '/announcements/': typeof AnnouncementsIndexRoute
-  '/cards/': typeof CardsIndexRoute
+  '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
+  '/{-$locale}/announcements': typeof Char123LocaleChar125AnnouncementsRouteWithChildren
+  '/{-$locale}/cards': typeof Char123LocaleChar125CardsRouteWithChildren
+  '/{-$locale}/message': typeof Char123LocaleChar125MessageRoute
+  '/{-$locale}/shops': typeof Char123LocaleChar125ShopsRoute
+  '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
+  '/{-$locale}/announcements/$id': typeof Char123LocaleChar125AnnouncementsIdRoute
+  '/{-$locale}/cards/$id': typeof Char123LocaleChar125CardsIdRoute
+  '/{-$locale}/announcements/': typeof Char123LocaleChar125AnnouncementsIndexRoute
+  '/{-$locale}/cards/': typeof Char123LocaleChar125CardsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/announcements'
-    | '/cards'
-    | '/message'
-    | '/shops'
-    | '/announcements/$id'
-    | '/cards/$id'
-    | '/announcements/'
-    | '/cards/'
+    | '/{-$locale}'
+    | '/{-$locale}/announcements'
+    | '/{-$locale}/cards'
+    | '/{-$locale}/message'
+    | '/{-$locale}/shops'
+    | '/{-$locale}/'
+    | '/{-$locale}/announcements/$id'
+    | '/{-$locale}/cards/$id'
+    | '/{-$locale}/announcements/'
+    | '/{-$locale}/cards/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/message'
-    | '/shops'
-    | '/announcements/$id'
-    | '/cards/$id'
-    | '/announcements'
-    | '/cards'
+    | '/{-$locale}/message'
+    | '/{-$locale}/shops'
+    | '/{-$locale}'
+    | '/{-$locale}/announcements/$id'
+    | '/{-$locale}/cards/$id'
+    | '/{-$locale}/announcements'
+    | '/{-$locale}/cards'
   id:
     | '__root__'
-    | '/'
-    | '/announcements'
-    | '/cards'
-    | '/message'
-    | '/shops'
-    | '/announcements/$id'
-    | '/cards/$id'
-    | '/announcements/'
-    | '/cards/'
+    | '/{-$locale}'
+    | '/{-$locale}/announcements'
+    | '/{-$locale}/cards'
+    | '/{-$locale}/message'
+    | '/{-$locale}/shops'
+    | '/{-$locale}/'
+    | '/{-$locale}/announcements/$id'
+    | '/{-$locale}/cards/$id'
+    | '/{-$locale}/announcements/'
+    | '/{-$locale}/cards/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AnnouncementsRoute: typeof AnnouncementsRouteWithChildren
-  CardsRoute: typeof CardsRouteWithChildren
-  MessageRoute: typeof MessageRoute
-  ShopsRoute: typeof ShopsRoute
+  Char123LocaleChar125Route: typeof Char123LocaleChar125RouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/{-$locale}': {
+      id: '/{-$locale}'
+      path: '/{-$locale}'
+      fullPath: '/{-$locale}'
+      preLoaderRoute: typeof Char123LocaleChar125RouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/announcements': {
-      id: '/announcements'
+    '/{-$locale}/': {
+      id: '/{-$locale}/'
+      path: '/'
+      fullPath: '/{-$locale}/'
+      preLoaderRoute: typeof Char123LocaleChar125IndexRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/announcements': {
+      id: '/{-$locale}/announcements'
       path: '/announcements'
-      fullPath: '/announcements'
-      preLoaderRoute: typeof AnnouncementsRouteImport
-      parentRoute: typeof rootRouteImport
+      fullPath: '/{-$locale}/announcements'
+      preLoaderRoute: typeof Char123LocaleChar125AnnouncementsRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
     }
-    '/cards': {
-      id: '/cards'
+    '/{-$locale}/cards': {
+      id: '/{-$locale}/cards'
       path: '/cards'
-      fullPath: '/cards'
-      preLoaderRoute: typeof CardsRouteImport
-      parentRoute: typeof rootRouteImport
+      fullPath: '/{-$locale}/cards'
+      preLoaderRoute: typeof Char123LocaleChar125CardsRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
     }
-    '/message': {
-      id: '/message'
+    '/{-$locale}/message': {
+      id: '/{-$locale}/message'
       path: '/message'
-      fullPath: '/message'
-      preLoaderRoute: typeof MessageRouteImport
-      parentRoute: typeof rootRouteImport
+      fullPath: '/{-$locale}/message'
+      preLoaderRoute: typeof Char123LocaleChar125MessageRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
     }
-    '/shops': {
-      id: '/shops'
+    '/{-$locale}/shops': {
+      id: '/{-$locale}/shops'
       path: '/shops'
-      fullPath: '/shops'
-      preLoaderRoute: typeof ShopsRouteImport
-      parentRoute: typeof rootRouteImport
+      fullPath: '/{-$locale}/shops'
+      preLoaderRoute: typeof Char123LocaleChar125ShopsRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
     }
-    '/announcements/': {
-      id: '/announcements/'
+    '/{-$locale}/announcements/': {
+      id: '/{-$locale}/announcements/'
       path: '/'
-      fullPath: '/announcements/'
-      preLoaderRoute: typeof AnnouncementsIndexRouteImport
-      parentRoute: typeof AnnouncementsRoute
+      fullPath: '/{-$locale}/announcements/'
+      preLoaderRoute: typeof Char123LocaleChar125AnnouncementsIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125AnnouncementsRoute
     }
-    '/announcements/$id': {
-      id: '/announcements/$id'
+    '/{-$locale}/announcements/$id': {
+      id: '/{-$locale}/announcements/$id'
       path: '/$id'
-      fullPath: '/announcements/$id'
-      preLoaderRoute: typeof AnnouncementsIdRouteImport
-      parentRoute: typeof AnnouncementsRoute
+      fullPath: '/{-$locale}/announcements/$id'
+      preLoaderRoute: typeof Char123LocaleChar125AnnouncementsIdRouteImport
+      parentRoute: typeof Char123LocaleChar125AnnouncementsRoute
     }
-    '/cards/': {
-      id: '/cards/'
+    '/{-$locale}/cards/': {
+      id: '/{-$locale}/cards/'
       path: '/'
-      fullPath: '/cards/'
-      preLoaderRoute: typeof CardsIndexRouteImport
-      parentRoute: typeof CardsRoute
+      fullPath: '/{-$locale}/cards/'
+      preLoaderRoute: typeof Char123LocaleChar125CardsIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125CardsRoute
     }
-    '/cards/$id': {
-      id: '/cards/$id'
+    '/{-$locale}/cards/$id': {
+      id: '/{-$locale}/cards/$id'
       path: '/$id'
-      fullPath: '/cards/$id'
-      preLoaderRoute: typeof CardsIdRouteImport
-      parentRoute: typeof CardsRoute
+      fullPath: '/{-$locale}/cards/$id'
+      preLoaderRoute: typeof Char123LocaleChar125CardsIdRouteImport
+      parentRoute: typeof Char123LocaleChar125CardsRoute
     }
   }
 }
 
-interface AnnouncementsRouteChildren {
-  AnnouncementsIdRoute: typeof AnnouncementsIdRoute
-  AnnouncementsIndexRoute: typeof AnnouncementsIndexRoute
+interface Char123LocaleChar125AnnouncementsRouteChildren {
+  Char123LocaleChar125AnnouncementsIdRoute: typeof Char123LocaleChar125AnnouncementsIdRoute
+  Char123LocaleChar125AnnouncementsIndexRoute: typeof Char123LocaleChar125AnnouncementsIndexRoute
 }
 
-const AnnouncementsRouteChildren: AnnouncementsRouteChildren = {
-  AnnouncementsIdRoute: AnnouncementsIdRoute,
-  AnnouncementsIndexRoute: AnnouncementsIndexRoute,
+const Char123LocaleChar125AnnouncementsRouteChildren: Char123LocaleChar125AnnouncementsRouteChildren =
+  {
+    Char123LocaleChar125AnnouncementsIdRoute:
+      Char123LocaleChar125AnnouncementsIdRoute,
+    Char123LocaleChar125AnnouncementsIndexRoute:
+      Char123LocaleChar125AnnouncementsIndexRoute,
+  }
+
+const Char123LocaleChar125AnnouncementsRouteWithChildren =
+  Char123LocaleChar125AnnouncementsRoute._addFileChildren(
+    Char123LocaleChar125AnnouncementsRouteChildren,
+  )
+
+interface Char123LocaleChar125CardsRouteChildren {
+  Char123LocaleChar125CardsIdRoute: typeof Char123LocaleChar125CardsIdRoute
+  Char123LocaleChar125CardsIndexRoute: typeof Char123LocaleChar125CardsIndexRoute
 }
 
-const AnnouncementsRouteWithChildren = AnnouncementsRoute._addFileChildren(
-  AnnouncementsRouteChildren,
-)
+const Char123LocaleChar125CardsRouteChildren: Char123LocaleChar125CardsRouteChildren =
+  {
+    Char123LocaleChar125CardsIdRoute: Char123LocaleChar125CardsIdRoute,
+    Char123LocaleChar125CardsIndexRoute: Char123LocaleChar125CardsIndexRoute,
+  }
 
-interface CardsRouteChildren {
-  CardsIdRoute: typeof CardsIdRoute
-  CardsIndexRoute: typeof CardsIndexRoute
+const Char123LocaleChar125CardsRouteWithChildren =
+  Char123LocaleChar125CardsRoute._addFileChildren(
+    Char123LocaleChar125CardsRouteChildren,
+  )
+
+interface Char123LocaleChar125RouteChildren {
+  Char123LocaleChar125AnnouncementsRoute: typeof Char123LocaleChar125AnnouncementsRouteWithChildren
+  Char123LocaleChar125CardsRoute: typeof Char123LocaleChar125CardsRouteWithChildren
+  Char123LocaleChar125MessageRoute: typeof Char123LocaleChar125MessageRoute
+  Char123LocaleChar125ShopsRoute: typeof Char123LocaleChar125ShopsRoute
+  Char123LocaleChar125IndexRoute: typeof Char123LocaleChar125IndexRoute
 }
 
-const CardsRouteChildren: CardsRouteChildren = {
-  CardsIdRoute: CardsIdRoute,
-  CardsIndexRoute: CardsIndexRoute,
+const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
+  Char123LocaleChar125AnnouncementsRoute:
+    Char123LocaleChar125AnnouncementsRouteWithChildren,
+  Char123LocaleChar125CardsRoute: Char123LocaleChar125CardsRouteWithChildren,
+  Char123LocaleChar125MessageRoute: Char123LocaleChar125MessageRoute,
+  Char123LocaleChar125ShopsRoute: Char123LocaleChar125ShopsRoute,
+  Char123LocaleChar125IndexRoute: Char123LocaleChar125IndexRoute,
 }
 
-const CardsRouteWithChildren = CardsRoute._addFileChildren(CardsRouteChildren)
+const Char123LocaleChar125RouteWithChildren =
+  Char123LocaleChar125Route._addFileChildren(Char123LocaleChar125RouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AnnouncementsRoute: AnnouncementsRouteWithChildren,
-  CardsRoute: CardsRouteWithChildren,
-  MessageRoute: MessageRoute,
-  ShopsRoute: ShopsRoute,
+  Char123LocaleChar125Route: Char123LocaleChar125RouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

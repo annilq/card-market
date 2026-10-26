@@ -8,9 +8,11 @@ import {
   getIps,
 } from '~/lib/directus'
 import { CardCard } from '~/components/CardCard'
+import { localizeHref } from '~/lib/i18n/locales'
+import { formatDate, useLocale, useT } from '~/lib/i18n/react'
 import type { Announcement, Banner, Ip } from '~/lib/types'
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute('/{-$locale}/')({
   loader: async (): Promise<{
     banners: Banner[]
     announcements: Announcement[]
@@ -31,47 +33,49 @@ export const Route = createFileRoute('/')({
 function Home() {
   const { banners, announcements, ips, featured } = Route.useLoaderData()
   const navigate = useNavigate()
+  const t = useT()
+  const locale = useLocale()
   const [q, setQ] = useState('')
   const [idx, setIdx] = useState(0)
 
   useEffect(() => {
     if (banners.length <= 1) return
-    const t = setInterval(
+    const timer = setInterval(
       () => setIdx((i) => (i + 1) % banners.length),
       5000,
     )
-    return () => clearInterval(t)
+    return () => clearInterval(timer)
   }, [banners.length])
 
   return (
     <div className="space-y-10">
       {/* 搜索框 */}
-      <section className="bg-white rounded-2xl border border-slate-200 p-5">
+      <section className="bg-surface rounded-2xl border border-border p-5">
         <form
           onSubmit={(e) => {
             e.preventDefault()
-            navigate({ to: '/cards', search: { q: q || undefined } })
+            navigate({ to: '/{-$locale}/cards', search: { q: q || undefined } })
           }}
           className="flex gap-2"
         >
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="搜索卡名或编号，如 皮卡丘 / 197"
-            className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-slate-500"
+            placeholder={t('searchPlaceholder')}
+            className="flex-1 rounded-lg border border-border-strong px-4 py-2.5 outline-none focus:border-muted bg-surface text-fg placeholder:text-faint"
           />
           <button
             type="submit"
-            className="rounded-lg bg-slate-900 text-white px-5 py-2.5 hover:bg-slate-700"
+            className="rounded-lg bg-accent text-on-accent px-5 py-2.5 hover:bg-accent/90"
           >
-            搜索
+            {t('search')}
           </button>
         </form>
       </section>
 
       {/* Banner 轮播 */}
       {banners.length > 0 && (
-        <section className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 aspect-[21/9]">
+        <section className="relative rounded-2xl overflow-hidden border border-border bg-slate-900 aspect-[21/9]">
           {banners.map((b, i) => {
             const src = assetUrl(b.image, { width: 1280, format: 'webp' })
             const inner = (
@@ -104,7 +108,8 @@ function Home() {
             )
             return b.link ? (
               b.link.startsWith('/') ? (
-                <Link key={b.id} to={b.link as '/cards'}>
+                // b.link 来自后台内容，绕过路由类型，需补语言段，否则会掉回默认语言。
+                <Link key={b.id} to={localizeHref(b.link, locale) as '/{-$locale}/cards'}>
                   {el}
                 </Link>
               ) : (
@@ -127,7 +132,7 @@ function Home() {
                 <button
                   key={b.id}
                   onClick={() => setIdx(i)}
-                  aria-label={`banner ${i + 1}`}
+                  aria-label={t('bannerAria', { n: i + 1 })}
                   className={`w-2 h-2 rounded-full ${
                     i === idx ? 'bg-white' : 'bg-white/40'
                   }`}
@@ -140,20 +145,20 @@ function Home() {
 
       {/* 分类入口 */}
       <section>
-        <h2 className="text-lg font-semibold mb-3">按 IP 浏览</h2>
+        <h2 className="text-lg font-semibold mb-3">{t('browseByIp')}</h2>
         <div className="flex flex-wrap gap-2">
           {ips.map((ip) => (
             <Link
               key={ip.id}
-              to="/cards"
+              to="/{-$locale}/cards"
               search={{ ip: ip.id }}
-              className="rounded-full border border-slate-300 bg-white px-4 py-1.5 text-sm hover:border-slate-500"
+              className="rounded-full border border-border-strong bg-surface px-4 py-1.5 text-sm hover:border-muted text-muted hover:text-fg"
             >
               {ip.name}
             </Link>
           ))}
           {ips.length === 0 && (
-            <span className="text-sm text-slate-400">暂无分类</span>
+            <span className="text-sm text-faint">{t('noCategories')}</span>
           )}
         </div>
       </section>
@@ -162,31 +167,29 @@ function Home() {
       {announcements.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">最新公告</h2>
-            <Link to="/announcements" className="text-sm text-slate-500 hover:underline">
-              全部 →
+            <h2 className="text-lg font-semibold">{t('latestAnnouncements')}</h2>
+            <Link to="/{-$locale}/announcements" className="text-sm text-muted hover:underline">
+              {t('viewAll')}
             </Link>
           </div>
           <ul className="space-y-2">
             {announcements.slice(0, 3).map((a) => (
               <li key={a.id}>
                 <Link
-                  to="/announcements/$id"
+                  to="/{-$locale}/announcements/$id"
                   params={{ id: String(a.id) }}
-                  className="block rounded-lg border border-slate-200 bg-white px-4 py-3 hover:shadow-sm"
+                  className="block rounded-lg border border-border bg-surface px-4 py-3 hover:shadow-sm"
                 >
                   <div className="flex items-center gap-2">
                     {a.is_pinned && (
-                      <span className="text-[10px] bg-rose-100 text-rose-700 rounded px-1.5 py-0.5">
-                        置顶
+                      <span className="text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 rounded px-1.5 py-0.5">
+                        {t('pinned')}
                       </span>
                     )}
-                    <span className="font-medium text-slate-900">{a.title}</span>
+                    <span className="font-medium text-fg">{a.title}</span>
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">
-                    {a.published_at
-                      ? new Date(a.published_at).toLocaleDateString('zh-CN')
-                      : '—'}
+                  <div className="text-xs text-faint mt-1">
+                    {formatDate(a.published_at, locale)}
                   </div>
                 </Link>
               </li>
@@ -197,7 +200,7 @@ function Home() {
 
       {/* 精选卡牌 */}
       <section>
-        <h2 className="text-lg font-semibold mb-3">最新上架</h2>
+        <h2 className="text-lg font-semibold mb-3">{t('latestCards')}</h2>
         {featured.items.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {featured.items.map((c) => (
@@ -205,7 +208,7 @@ function Home() {
             ))}
           </div>
         ) : (
-          <div className="text-sm text-slate-400">暂无卡牌</div>
+          <div className="text-sm text-faint">{t('noCards')}</div>
         )}
       </section>
     </div>

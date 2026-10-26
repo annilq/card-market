@@ -1,29 +1,90 @@
 @import 'tailwindcss';
 
+/* 手动切换 dark 模式：以 html.dark 类为唯一真相来源（配合无闪烁脚本与切换按钮）。
+   默认跟随系统偏好，用户手动选择后用 localStorage 覆盖。 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ===== 语义化设计令牌（Design Tokens）=====
+   组件只使用以下语义色，主题切换在单一处完成，便于长期维护。 */
+@theme {
+  --color-bg: #f8fafc; /* 页面底色 */
+  --color-surface: #ffffff; /* 卡片 / 头部 / 底部 / 输入框 */
+  --color-surface-2: #f1f5f9; /* 次级填充（原 slate-100） */
+
+  --color-fg: #0f172a; /* 主文字（原 slate-900） */
+  --color-body: #334155; /* 正文（原 slate-700） */
+  --color-muted: #475569; /* 次要文字（原 slate-600） */
+  --color-subtle: #64748b; /* 三级文字（原 slate-500） */
+  --color-faint: #94a3b8; /* 最弱文字 / 占位（原 slate-400） */
+  --color-ghost: #cbd5e1; /* 极弱（原 slate-300，如空状态） */
+
+  --color-border: #e2e8f0; /* 主边框（原 slate-200） */
+  --color-border-strong: #cbd5e1; /* 强边框 / 输入框（原 slate-300） */
+
+  --color-accent: #0f172a; /* 主按钮底色（原 slate-900） */
+  --color-on-accent: #ffffff; /* 主按钮文字 */
+}
+
+/* 浅色为默认（:root 已由 @theme 注入对应值），这里只显式声明 color-scheme。 */
 :root {
   color-scheme: light;
 }
 
-html,
-body {
-  margin: 0;
-  padding: 0;
+/* 深色主题：覆盖语义令牌。html.dark 比 :root 特异性更高，确保覆盖生效。 */
+html.dark {
+  color-scheme: dark;
+
+  --color-bg: #0b1120;
+  --color-surface: #1e293b;
+  --color-surface-2: #0f172a;
+
+  --color-fg: #f8fafc;
+  --color-body: #e2e8f0;
+  --color-muted: #cbd5e1;
+  --color-subtle: #94a3b8;
+  --color-faint: #64748b;
+  --color-ghost: #475569;
+
+  --color-border: #334155;
+  --color-border-strong: #475569;
+
+  --color-accent: #e2e8f0;
+  --color-on-accent: #0f172a;
 }
 
-body {
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    'PingFang SC',
-    'Hiragino Sans GB',
-    'Microsoft YaHei',
-    sans-serif;
-  background: #f8fafc;
-  color: #0f172a;
+/* 基础样式放进 @layer base：确保 Tailwind 的 utilities 层（如 text-on-accent）
+   优先级高于这些全局规则，否则 unlayered 的 `a{color:inherit}` 会覆盖工具类，
+   导致强调链接（<a>）文字继承 body 深色而“看不见”。 */
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      'PingFang SC',
+      'Hiragino Sans GB',
+      'Microsoft YaHei',
+      sans-serif;
+    background: var(--color-bg);
+    color: var(--color-fg);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/* 富文本（公告正文）：限制最大宽度并让链接/图片在深色下协调 */
+.prose {
+  line-height: 1.75;
+}
+.prose img {
+  max-width: 100%;
 }

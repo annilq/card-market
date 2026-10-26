@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { postMessage } from '~/lib/directus'
+import { useT } from '~/lib/i18n/react'
 
-export const Route = createFileRoute('/message')({
+export const Route = createFileRoute('/{-$locale}/message')({
   component: MessageForm,
 })
 
 function MessageForm() {
+  const t = useT()
   const [content, setContent] = useState('')
   const [name, setName] = useState('')
   const [info, setInfo] = useState('')
@@ -39,69 +41,67 @@ function MessageForm() {
 
   return (
     <div className="max-w-xl mx-auto space-y-5">
-      <h1 className="text-xl font-bold">留言咨询</h1>
-      <p className="text-sm text-slate-500">
-        留下您的问题或收购意向，管理员会在后台处理。联系方式选填，便于我们回复。
-      </p>
+      <h1 className="text-xl font-bold">{t('contactTitle')}</h1>
+      <p className="text-sm text-muted">{t('contactIntro')}</p>
 
       {status?.ok && (
-        <div className="rounded-lg bg-emerald-50 text-emerald-700 px-4 py-3 text-sm">
-          提交成功，感谢您的留言！
+        <div className="rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-4 py-3 text-sm">
+          {t('submitOk')}
         </div>
       )}
       {status && !status.ok && (
-        <div className="rounded-lg bg-rose-50 text-rose-700 px-4 py-3 text-sm">
-          提交失败：{status.msg}
+        <div className="rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 px-4 py-3 text-sm">
+          {t('submitFail', { msg: status.msg ?? '' })}
         </div>
       )}
 
       <form onSubmit={submit} className="space-y-4">
         <div>
-          <label className="block text-sm text-slate-600 mb-1">
-            留言内容 <span className="text-rose-500">*</span>
+          <label className="block text-sm text-muted mb-1">
+            {t('messageContent')} <span className="text-rose-500 dark:text-rose-400">*</span>
           </label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={5}
             required
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
-            placeholder="例如：想收购某张卡，或咨询回购价格…"
+            className="w-full rounded-lg border border-border-strong px-3 py-2 text-sm outline-none focus:border-muted bg-surface text-fg placeholder:text-faint"
+            placeholder={t('messagePlaceholder')}
           />
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-slate-600 mb-1">联系人</label>
+            <label className="block text-sm text-muted mb-1">{t('contactName')}</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
-              placeholder="选填"
+              className="w-full rounded-lg border border-border-strong px-3 py-2 text-sm outline-none focus:border-muted bg-surface text-fg placeholder:text-faint"
+              placeholder={t('optional')}
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-600 mb-1">
-              联系方式
+            <label className="block text-sm text-muted mb-1">
+              {t('contactInfo')}
             </label>
             <input
               value={info}
               onChange={(e) => setInfo(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
-              placeholder="邮箱 / 电话 / 微信（选填）"
+              className="w-full rounded-lg border border-border-strong px-3 py-2 text-sm outline-none focus:border-muted bg-surface text-fg placeholder:text-faint"
+              placeholder={t('contactInfoPlaceholder')}
             />
           </div>
         </div>
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-lg bg-slate-900 text-white px-5 py-2.5 text-sm hover:bg-slate-700 disabled:opacity-50"
+          className="rounded-lg bg-accent text-on-accent px-5 py-2.5 text-sm hover:bg-accent/90 disabled:opacity-50"
         >
-          {submitting ? '提交中…' : '提交留言'}
+          {submitting ? t('submitting') : t('submitMessage')}
         </button>
       </form>
 
-      <Link to="/" className="text-sm text-slate-500 hover:underline">
-        ← 返回首页
+      <Link to="/{-$locale}" className="text-sm text-muted hover:underline">
+        {t('backHomeArrow')}
       </Link>
     </div>
   )
