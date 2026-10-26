@@ -340,6 +340,18 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
      **建表顺序不能颠倒**：建关联表 → 迁移旧数据 → 删旧 json 列 → 建两条 relations → 建 alias 字段。
      Directus 的 Files 接口只支持 alias 字段（`types: ['alias']`），挂在真实 json 列上会出现
      「同一字段返回两条（一条真实、一条 alias）」或 `column does not exist`。
+   - **M2M 的 `junction_field` 是必需元数据**（`directus_relations.meta.junction_field`，两条关系互为对方字段）。
+     后台 `list-m2m` 用 `useRelationM2M()` 找关系，条件是
+     `related_collection === 当前集合 && one_field === 当前字段 && junction_field 非空`；
+     缺这一项 → 找不到关系 → 字段位置只剩一条警告
+     `The relationship is not configured properly or you don't have permission to access it`，
+     「新建 / 添加现有 / 上传」按钮全部消失。此时**接口层仍完全正常**（`cards.images` 仍能读写），
+     所以症状只出现在后台界面，别误判成权限问题。
+     `bootstrap` 的 `ensureJunctionSide()` 会同时校验 `junction_field` 与外键约束并按需修复。
+   - ⚠ 修 M2M 元数据**不能用 `/relations` 的裸 PATCH**：Directus 的 `updateOne` 会先 DROP 外键、
+     改列类型、再 ADD 外键，`schema.on_delete` 只从请求体里取。漏传 `schema` 会让外键直接消失
+     （是真实踩过的坑）。`ensureJunctionSide()` 始终带上 `schema: { on_delete: 'NO ACTION' }`，
+     并额外检查 `pg_constraint`，外键丢了会一并补回。
 3. **字段接口约定（重要）**：多对一下拉必须用 `interface: 'select-dropdown-m2o'`（配 `options.template = '{{name}}'`）。
    `relational` 只是展示方式（display），若误写成 interface，后台会退化成「手输主键」的文本框，
    且 `/relations` 端点会忽略 filter 导致关系建不起来——两者叠加就是"后台只能输入 ID"的根因。

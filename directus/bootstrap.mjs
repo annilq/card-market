@@ -555,6 +555,53 @@ async function relationExists(collection, field) {
   }
 }
 
+// M2M 关系的 junction_field 是必需元数据（见 ensureM2M 注释）。
+// 存量环境可能缺这一列，也可能缺 FK 约束（PATCH /relations 会 DROP 外键后重建，
+// 早期实现漏传 schema 就会让外键消失）。这里把「元数据 + 外键」一起校验，
+// 任一不对才发一次 PATCH；都已正确则完全不写库（幂等）。
+//
+// ⚠ PATCH /relations 的实现是「先 DROP 外键 → 改类型 → 再 ADD 外键」，
+// 外键的 on_delete 只能从请求体的 schema 里拿，所以请求必须带上 schema。
+async function ensureJunctionSide(side, onDelete = 'NO ACTION') {
+  const want = side.meta.junction_field
+  const pool = new Pool(DB)
+  let current = null
+  let hasFk = false
+  try {
+    const r = await pool.query(
+      'SELECT junction_field FROM directus_relations WHERE many_collection = $1 AND many_field = $2 LIMIT 1',
+      [side.collection, side.field],
+    )
+    current = r.rows[0]?.junction_field ?? null
+    const fk = await pool.query(
+      `SELECT 1 FROM pg_constraint
+        WHERE contype = 'f' AND conrelid = $1::regclass
+          AND conkey = ARRAY[(
+            SELECT attnum FROM pg_attribute
+             WHERE attrelid = $1::regclass AND attname = $2
+          )]`,
+      [side.collection, side.field],
+    )
+    hasFk = (fk.rowCount ?? 0) > 0
+  } finally {
+    await pool.end()
+  }
+  if (current === want && hasFk) return null
+  await api('PATCH', `/relations/${side.collection}/${side.field}`, {
+    collection: side.collection,
+    field: side.field,
+    related_collection: side.related_collection,
+    schema: { on_delete: onDelete },
+    meta: {
+      many_collection: side.collection,
+      many_field: side.field,
+      one_collection: side.related_collection,
+      ...side.meta,
+    },
+  })
+  return { junctionFieldFixed: current !== want, foreignKeyRestored: !hasFk }
+}
+
 async function ensureRelation(collection, field, related, required) {
   if (await relationExists(collection, field)) return
   await api('POST', '/relations', {
@@ -902,30 +949,50 @@ async function ensureM2M(def) {
   }
 
   // 4. 两条关系（必须早于 alias 字段）
-  if (!(await relationExists(def.junction, def.junctionField))) {
-    await api('POST', '/relations', {
-      collection: def.junction,
-      field: def.junctionField,
-      related_collection: def.aliasCollection,
-      schema: { on_delete: 'NO ACTION' },
-      meta: {
-        one_field: def.aliasField,
-        one_deselect_action: 'nullify',
-        sort_field: def.sortField,
-      },
-    })
-    console.log(
-      `+ M2M 关系：${def.junction}.${def.junctionField} ⇄ ${def.aliasCollection}.${def.aliasField}`,
-    )
+  // junction_field 是 M2M 的**必需元数据**，不是可选装饰：
+  // 后台 list-m2m 用 useRelationM2M() 找关系时，条件是
+  //   related_collection === 当前集合 && one_field === 当前字段 && **meta.junction_field 非空**
+  // 缺 junction_field 就找不到关系 → relationInfo 为 undefined → 界面退化成
+  // 一条警告「The relationship is not configured properly or you don't have permission to access it」。
+  // 两条关系各自指向对方字段，互为 junction_field（Directus 后台建 M2M 时也是这么写的）。
+  const junctionSide = {
+    collection: def.junction,
+    field: def.junctionField,
+    related_collection: def.aliasCollection,
+    schema: { on_delete: 'NO ACTION' },
+    meta: {
+      one_field: def.aliasField,
+      one_deselect_action: 'nullify',
+      sort_field: def.sortField,
+      junction_field: def.relatedField,
+    },
   }
-  if (!(await relationExists(def.junction, def.relatedField))) {
-    await api('POST', '/relations', {
-      collection: def.junction,
-      field: def.relatedField,
-      related_collection: def.relatedCollection,
-      schema: { on_delete: 'NO ACTION' },
-      meta: {},
-    })
+  const relatedSide = {
+    collection: def.junction,
+    field: def.relatedField,
+    related_collection: def.relatedCollection,
+    schema: { on_delete: 'NO ACTION' },
+    meta: {
+      one_deselect_action: 'nullify',
+      junction_field: def.junctionField,
+    },
+  }
+  for (const side of [junctionSide, relatedSide]) {
+    if (await relationExists(side.collection, side.field)) {
+      // 存量修复：早期版本建关系时漏了 junction_field，这里补上（幂等）
+      const fixed = await ensureJunctionSide(side)
+      if (fixed?.junctionFieldFixed) {
+        console.log(
+          `✓ 修复 M2M 元数据：${side.collection}.${side.field}.junction_field = ${side.meta.junction_field}`,
+        )
+      }
+      if (fixed?.foreignKeyRestored) {
+        console.log(`✓ 补建外键：${side.collection}.${side.field} → ${side.related_collection}`)
+      }
+      continue
+    }
+    await api('POST', '/relations', side)
+    console.log(`+ M2M 关系：${side.collection}.${side.field} → ${side.related_collection}`)
   }
 
   // 5. alias 字段（M2M 在 cards 上的虚拟字段，后台可上传/多选/排序）
