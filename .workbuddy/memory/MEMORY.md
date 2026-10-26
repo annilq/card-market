@@ -3,7 +3,11 @@
 ## 技术栈与运行
 - 前端：TanStack Start（SSR）+ React，`src/routes/*`、`src/lib/directus.ts`（公开角色直连 Directus REST）。
 - 后端：Directus 11（容器 `cardmarket-directus`，:8055）+ 本机原生 PostgreSQL（:5432, directus/directus）。
-- 开发：`npm run dev` → 127.0.0.1:3001；生产：`npm run build` + `node prod-server.mjs` → :3000。
+- 开发：`npm run dev` → :3000（与 prod 同端口，二者不要同时起）；生产：`npm run build` + `node prod-server.mjs` → :3000。
+- **改完前端必须 `vite build` 后重启 prod 进程**：运行中的进程在启动时缓存了
+  `dist/server/assets/router-*.js` 的 chunk 清单；构建会用新哈希重写并清空旧文件，
+  旧进程随后 SSR 动态 import 旧哈希会报 `ERR_MODULE_NOT_FOUND`（页面 500/流中断）。
+  同理 `dist` 被删空时进程仍会「已启动」但所有路由失败，务必先确认 `dist/server/assets` 非空再启动。
 - 数据模型脚本：`npm run directus:bootstrap`（幂等，含集合/字段/关系/索引/权限/语言）、`npm run directus:seed`（有数据则跳过）。
 - 后台账号：admin@example.com / admin12345。
 
