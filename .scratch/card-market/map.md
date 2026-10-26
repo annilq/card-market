@@ -19,6 +19,8 @@
 - 技术选型：前端 TanStack Start、后台 Directus、数据库 PostgreSQL、图片存储为海外 S3 兼容对象存储或 Directus 本地文件（部署于日本/美国）、前后端经 Directus API 通信。
 - 图片统一走后台上传，存海外对象存储或 Directus 本地文件；不重复开发后台 CRUD，复用 Directus。
 - [图片存储方案：海外 S3 兼容存储 或 Directus 本地文件](issues/04-oss-integration.md)：弃用阿里云 OSS，按部署规模二选一（R2/S3+CloudFront 或本地文件）。
+- [前端界面多语言（i18n）](issues/10-frontend-i18n.md)：可选路径段 `/ja`、`/en`（默认 zh 无前缀），手写类型化字典零依赖，URL 派生 locale，未知语言段 404。
+- [审核信息页](issues/11-audit-info-pages.md)：新增 `info_pages` 集合（`page_key/title/body/sort/status`），公共 footer 常驻四个固定入口（运营信息/个人信息收集/利用规则/数据使用），前端固定入口与顺序、后台只管内容；已登记 key 恒 200、未登记 key 404。
 - [卡牌分类建模](issues/01-classification-model.md)：多 IP 集市 → 两层 类别→系列；类型/稀有程度为独立维度集合+关系（非 cards 属性列）；四个维度均后台配置化。状态/排序不计入分类。
 
 ## Not yet specified

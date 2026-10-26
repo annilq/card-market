@@ -35,6 +35,44 @@
 - 新增字段后 bootstrap 会打印缺失日文标签的清单（`checkTranslationCoverage`）。
 - `select-dropdown` 的 choices 文本是固定字符串，不随界面语言切换（如需多语言选项要改数据模型）。
 
+## 界面多语言（i18n，易踩坑）
+- 语言是 URL 的**可选第一段**：`/cards`（中文默认，无前缀）、`/ja/cards`、`/en/cards`；未知语言段 404。
+  页面文件形如 `src/routes/{-$locale}.cards.index.tsx`，`routeTree.gen.ts` 由构建自动生成（不要手改）。
+- 文案在 `src/lib/i18n/messages.ts`：`zh` 是唯一键来源，`ja`/`en` 为 `Record<MessageKey,string>`，
+  少翻/多写一条键直接 typecheck 报错。
+- 运行时 `useLocale()` 从 pathname 派生（无 Provider、无 locale state），`useT()` 按 locale 缓存。
+- **所有 `<Link to>` 必须带 `/{-$locale}` 前缀**：裸 `to="/message"` 会丢语言段；语言段由当前路由自动继承，
+  不要传 `params={{locale}}`（无效）。索引路由用 `to="/{-$locale}"`（无尾斜杠，带斜杠是类型错误）。
+- 切到默认语言必须 `locale: undefined`，传 `'zh'` 会生成 404 的 `/zh/...`。
+- 后台内容里的站内路径（`banners.link`）须过 `localizeHref()` 补前缀。
+- 不翻译 Directus 内容（界面语言 ≠ 内容语言）。
+- 验收：`node scripts/check-i18n.mjs http://localhost:3000`。
+
 ## 前端取图
 - `CARD_FIELDS` 请求 `images.directus_files_id`，`normalizeCard()` 归一化为 `string[]`；
   组件层（CardCard / cards.$id）只认 `card.images` 的 id 数组。
+
+## 深色主题 / 样式约定（易踩坑）
+- 设计令牌在 `styles.css` 的 `@theme`（bg-surface/text-fg/border-border/bg-accent/text-on-accent 等），
+  `html.dark` 覆盖变量；`@custom-variant dark` 以 `html.dark` 类为唯一真相。
+- **自定义全局基础样式（html/body/a 等）必须包进 `@layer base`**：Tailwind v4 中 unlayered CSS
+  优先级高于 `@layer utilities`，unlayered 的 `a{color:inherit}` 会压过 `.text-on-accent` 等工具类，
+  导致强调链接文字与背景同色（隐形）。
+- 无闪烁主题脚本**不要**以 `<script dangerouslySetInnerHTML>` 写在 JSX `<head>` 里——React 19 会报
+  "script tag in component" 并级联 hydration failed，`suppressHydrationWarning` 压不住；正确做法是
+  root route `head()` 返回 `scripts: [{ dangerouslySetInnerHTML: {...} }]` 交给 `<HeadContent />` 渲染。
+- `<link rel="icon" href="data:," />` 压掉 favicon 404 控制台报错。
+
+## 审核信息页（info_pages）
+- 集合 `info_pages`：`page_key`(唯一索引 uniq_info_pages_page_key) / `title` / `body`(rich) / `sort` / `status`(Directus)。
+  Public 角色只读且 `status=published`。四个 key：`operation` / `personal-info` / `terms` / `data-usage`。
+- **入口与内容分离**：四个 key 与页脚顺序硬编码在 `src/lib/info-pages.ts`（`INFO_PAGE_KEYS` / `INFO_PAGE_LABEL_KEY` /
+  `resolveInfoPageKey`），页脚与路由共用；后台只管 `title` + `body`。审计要求入口必须常在，不能因后台删记录而变空链接。
+- 路由 `src/routes/{-$locale}.info.$key.tsx`：`beforeLoad` 用 `resolveInfoPageKey()` 收窄，**未登记 key 404**；
+  已登记 key 但后台未发布时 **仍 200** + 「尚未发布」提示（不是 404）。
+- 页脚入口文案走**界面语言**（`messages.ts` 的 `infoNavTitle/infoOperation/infoPersonalInfo/infoTerms/infoDataUsage/
+  infoPageNotFound`），不取后台 title。「不翻译 Directus 内容」只针对正文与详情页标题。
+- 路由 `to="/{-$locale}/info/$key"` + `params={{ key }}`；新路由加完必须 `vite build` 让 `routeTree.gen.ts` 重生成，
+  否则 tsc 报 `to` 不在联合类型里。
+- seed 的 `seedInfoPages()` 可独立补种（ips 非空时也执行），同 key 已存在则跳过。
+- 验收：`scripts/check-i18n.mjs` 已覆盖三语页脚文案/href/顺序 + 三语×四页 200 + 未登记 key 404。
