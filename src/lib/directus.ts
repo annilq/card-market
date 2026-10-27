@@ -115,6 +115,8 @@ function cardSortValue(sort: CardQuery['sort']): string {
     // “最新上架”按真实创建时间倒序（cards.date_created 现已由系统自动维护）
     case 'newest':
       return '-date_created'
+    case 'oldest':
+      return 'date_created'
     case 'price_desc':
     default:
       return '-price'
@@ -130,6 +132,7 @@ function buildCardFilter(
   if (q.seriesIds?.length) filter.series_id = { _in: q.seriesIds }
   if (q.subSeriesIds?.length) filter.sub_series_id = { _in: q.subSeriesIds }
   if (q.rarityIds?.length) filter.rarity_id = { _in: q.rarityIds }
+  if (q.cardStatus?.length) filter.card_status = { _in: q.cardStatus }
   if (q.highValueOnly) filter.is_high_value = { _eq: true }
   if (q.minPrice != null || q.maxPrice != null) {
     filter.price = {

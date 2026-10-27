@@ -130,14 +130,25 @@ export interface CardQuery {
   seriesIds?: number[]
   subSeriesIds?: number[]
   rarityIds?: number[]
+  /** 卡品状态：裸卡 / 有包装。首页「类型」下拉用。 */
+  cardStatus?: CardStatus[]
   highValueOnly?: boolean
   minPrice?: number
   maxPrice?: number
   q?: string
-  sort?: 'price_desc' | 'price_asc' | 'newest'
+  sort?: CardSort
   page?: number
   limit?: number
 }
+
+/**
+ * 排序维度。价格升降是回购站的默认视角（列表页默认 price_desc），
+ * oldest 只在首页「排序」下拉里出现，用来把上架时间正序翻一遍。
+ */
+export type CardSort = 'price_desc' | 'price_asc' | 'newest' | 'oldest'
+
+/** 排序维度的运行时清单：路由校验与下拉选项都从这里取，避免两处各写一份。 */
+export const CARD_SORTS: CardSort[] = ['price_desc', 'price_asc', 'newest', 'oldest']
 
 export interface CardListResult {
   items: Card[]
