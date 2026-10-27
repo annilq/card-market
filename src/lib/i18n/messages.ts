@@ -28,8 +28,6 @@ const zh = {
   switchLanguage: '切换语言',
   notFoundBody: '页面不存在或已被删除。',
   errorBody: '页面加载出错了，请稍后重试。',
-  emailLabel: '邮箱：{email}',
-  shopsHint: '店铺地址与营业时间见「店铺」页',
   copyright: '© {year} {site} · 内容由 Directus 驱动',
 
   // 信息页（审核用：运营信息 / 个人信息收集 / 利用规则 / 数据使用）
@@ -148,8 +146,6 @@ const ja: Record<MessageKey, string> = {
   switchLanguage: '言語を切り替え',
   notFoundBody: 'ページが存在しないか、削除されました。',
   errorBody: 'ページの読み込みに失敗しました。時間をおいて再度お試しください。',
-  emailLabel: 'メール：{email}',
-  shopsHint: '店舗の住所と営業時間は「店舗」ページをご覧ください',
   copyright: '© {year} {site} · コンテンツは Directus で管理しています',
 
   infoNavTitle: 'サイト情報',
@@ -260,8 +256,6 @@ const en: Record<MessageKey, string> = {
   switchLanguage: 'Switch language',
   notFoundBody: 'This page does not exist or has been removed.',
   errorBody: 'Something went wrong while loading this page. Please try again.',
-  emailLabel: 'Email: {email}',
-  shopsHint: 'See the Stores page for addresses and opening hours',
   copyright: '© {year} {site} · Content powered by Directus',
 
   infoNavTitle: 'Site information',

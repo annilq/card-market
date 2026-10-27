@@ -10,7 +10,7 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import type { ErrorComponentProps } from '@tanstack/react-router'
-import { getSiteSettings } from '~/lib/directus'
+import { assetUrl, getSiteSettings } from '~/lib/directus'
 import type { SiteSettings } from '~/lib/types'
 import { INFO_PAGE_KEYS, INFO_PAGE_LABEL_KEY } from '~/lib/info-pages'
 import { DEFAULT_LOCALE, LOCALES, isDefaultLocale, resolveLocaleParam } from '~/lib/i18n/locales'
@@ -198,6 +198,32 @@ const iconBtn =
   'inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted hover:bg-surface-2 hover:text-fg transition'
 
 const iconBtnSquare = `${iconBtn} w-9`
+
+// 页脚 logo：site_settings.logo 是 Directus 文件 id，走后台上传。
+// 未上传时占住同样的尺寸（h-16 w-40）而不是整块消失，否则后台一传 logo，
+// 版权区高度会跳一下。占位不画虚线框、不写「LOGO」字样：那两种画法
+// 对访客都像「图片挂了」，而这里只是运营还没传图。
+// 图片按高度优先缩放：竖版素材会自己缩窄，不会把版权区撑高。
+function FooterLogo({
+  logo,
+  name,
+}: {
+  logo: string | number | null
+  name: string
+}) {
+  const src = assetUrl(logo, { height: 64, format: 'webp' })
+  if (!src) return <div aria-hidden="true" className="h-16 w-40" />
+  return (
+    <div className="flex h-16 w-40 items-center justify-center">
+      <img
+        src={src}
+        alt={name}
+        className="max-h-16 w-auto max-w-40 object-contain"
+        loading="lazy"
+      />
+    </div>
+  )
+}
 
 // 后台没配 x_account 时整颗按钮不渲染：宁可少一个图标，也不给死链。
 function SocialIcon({ href, label }: { href: string | null; label: string }) {
@@ -492,37 +518,15 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         </main>
 
         <footer className="border-t border-border bg-surface mt-10">
-          <div className="mx-auto max-w-6xl px-4 py-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-sm text-muted">
-            <div>
-              <div className="font-semibold text-fg mb-1">{siteName}</div>
-              {site?.intro && <p className="text-subtle">{site.intro}</p>}
-            </div>
-            <div className="space-y-1">
-              {site?.contact_email && (
-                <div>{t('emailLabel', { email: site.contact_email })}</div>
-              )}
-              <div className="text-faint">{t('shopsHint')}</div>
-            </div>
-            <div className="space-y-1">
-              {site?.data_notice && <div>{site.data_notice}</div>}
-              {site?.privacy_policy && (
-                <div
-                  className="text-subtle"
-                  dangerouslySetInnerHTML={{ __html: site.privacy_policy }}
-                />
-              )}
-            </div>
-          </div>
-
           {/* 站内入口：留言咨询 + 审核要求的四个信息页。
               留言从 header 移到这里，与其余站内链接同一行，顺序前端固定。
               入口文字走界面语言翻译（与头部导航一致）：不翻译 Directus 内容这条边界
               只针对正文与标题，页脚的链接文字属于界面 chrome。
-              用 inline-flex + py-1.5 把关照到的点击高度抬到 28px：
+              用 inline-flex + py-1.5 把点击高度抬到 28px：
               纯文本行只有 16px，低于 WCAG 2.5.8 的 24px。 */}
           <nav
             aria-label={t('footerNavTitle')}
-            className="mx-auto max-w-6xl px-4 py-2 border-t border-border flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted"
+            className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-5 gap-y-1 px-4 py-6 text-xs text-muted"
           >
             <Link
               to="/{-$locale}/message"
@@ -543,11 +547,19 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
             ))}
           </nav>
 
-          <div className="text-center text-xs text-faint py-4">
-            {t('copyright', {
-              year: new Date().getFullYear(),
-              site: siteName,
-            })}
+          {/* 版权区与上面链接区用一道分割线隔开，中间是 logo 与版权。
+              logo 读 site_settings.logo（Directus 文件 id），后台没传时退化成
+              同尺寸的占位框，不塌成 0 高，保证换 logo 前后版面不跳。 */}
+          <div className="border-t border-border">
+            <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 py-8">
+              <FooterLogo logo={site?.logo ?? null} name={siteName} />
+              <p className="text-center text-xs text-faint">
+                {t('copyright', {
+                  year: new Date().getFullYear(),
+                  site: siteName,
+                })}
+              </p>
+            </div>
           </div>
         </footer>
         <Scripts />
