@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   assetUrl,
   getAnnouncements,
@@ -8,8 +8,10 @@ import {
   getIps,
 } from '~/lib/directus'
 import { CardCard } from '~/components/CardCard'
+import { HighValueStrip } from '~/components/HighValueStrip'
+import { HomeNotices } from '~/components/HomeNotices'
 import { localizeHref } from '~/lib/i18n/locales'
-import { formatDate, useLocale, useT } from '~/lib/i18n/react'
+import { useLocale, useT } from '~/lib/i18n/react'
 import type { Announcement, Banner, Ip } from '~/lib/types'
 
 export const Route = createFileRoute('/{-$locale}/')({
@@ -17,25 +19,28 @@ export const Route = createFileRoute('/{-$locale}/')({
     banners: Banner[]
     announcements: Announcement[]
     ips: Ip[]
+    highValue: Awaited<ReturnType<typeof getCards>>
     featured: Awaited<ReturnType<typeof getCards>>
   }> => {
-    const [banners, announcements, ips, featured] = await Promise.all([
-      getBanners(),
-      getAnnouncements(),
-      getIps(),
-      getCards({ sort: 'newest', limit: 8 }),
-    ])
-    return { banners, announcements, ips, featured }
+    const [banners, announcements, ips, highValue, featured] = await Promise.all(
+      [
+        getBanners(),
+        getAnnouncements(),
+        getIps(),
+        getCards({ highValueOnly: true, sort: 'price_desc', limit: 8 }),
+        getCards({ sort: 'newest', limit: 8 }),
+      ],
+    )
+    return { banners, announcements, ips, highValue, featured }
   },
   component: Home,
 })
 
 function Home() {
-  const { banners, announcements, ips, featured } = Route.useLoaderData()
-  const navigate = useNavigate()
+  const { banners, announcements, ips, highValue, featured } =
+    Route.useLoaderData()
   const t = useT()
   const locale = useLocale()
-  const [q, setQ] = useState('')
   const [idx, setIdx] = useState(0)
 
   useEffect(() => {
@@ -49,30 +54,6 @@ function Home() {
 
   return (
     <div className="space-y-10">
-      {/* 搜索框 */}
-      <section className="bg-surface rounded-2xl border border-border p-5">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            navigate({ to: '/{-$locale}/cards', search: { q: q || undefined } })
-          }}
-          className="flex gap-2"
-        >
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={t('searchPlaceholder')}
-            className="flex-1 rounded-lg border border-border-strong px-4 py-2.5 outline-none focus:border-muted bg-surface text-fg placeholder:text-faint"
-          />
-          <button
-            type="submit"
-            className="rounded-lg bg-accent text-on-accent px-5 py-2.5 hover:bg-accent/90"
-          >
-            {t('search')}
-          </button>
-        </form>
-      </section>
-
       {/* Banner 轮播 */}
       {banners.length > 0 && (
         <section className="relative rounded-2xl overflow-hidden border border-border bg-slate-900 aspect-[21/9]">
@@ -143,6 +124,14 @@ function Home() {
         </section>
       )}
 
+      {/* 通知公告 */}
+      {announcements.length > 0 && <HomeNotices items={announcements} />}
+
+      {/* 高价买取 */}
+      {highValue.items.length > 0 && (
+        <HighValueStrip items={highValue.items} />
+      )}
+
       {/* 分类入口 */}
       <section>
         <h2 className="text-lg font-semibold mb-3">{t('browseByIp')}</h2>
@@ -162,41 +151,6 @@ function Home() {
           )}
         </div>
       </section>
-
-      {/* 公告 */}
-      {announcements.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">{t('latestAnnouncements')}</h2>
-            <Link to="/{-$locale}/announcements" className="text-sm text-muted hover:underline">
-              {t('viewAll')}
-            </Link>
-          </div>
-          <ul className="space-y-2">
-            {announcements.slice(0, 3).map((a) => (
-              <li key={a.id}>
-                <Link
-                  to="/{-$locale}/announcements/$id"
-                  params={{ id: String(a.id) }}
-                  className="block rounded-lg border border-border bg-surface px-4 py-3 hover:shadow-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    {a.is_pinned && (
-                      <span className="text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 rounded px-1.5 py-0.5">
-                        {t('pinned')}
-                      </span>
-                    )}
-                    <span className="font-medium text-fg">{a.title}</span>
-                  </div>
-                  <div className="text-xs text-faint mt-1">
-                    {formatDate(a.published_at, locale)}
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
       {/* 精选卡牌 */}
       <section>
