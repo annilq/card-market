@@ -150,6 +150,9 @@ export type CardSort = 'price_desc' | 'price_asc' | 'newest' | 'oldest'
 /** 排序维度的运行时清单：路由校验与下拉选项都从这里取，避免两处各写一份。 */
 export const CARD_SORTS: CardSort[] = ['price_desc', 'price_asc', 'newest', 'oldest']
 
+/** 默认排序。首页与列表页都以价格降序开场，重置也回到这里。 */
+export const DEFAULT_CARD_SORT: CardSort = 'price_desc'
+
 export interface CardListResult {
   items: Card[]
   total: number

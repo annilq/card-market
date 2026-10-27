@@ -16,6 +16,7 @@ import { HomeNotices } from '~/components/HomeNotices'
 import { isDefaultLocale, localizeHref } from '~/lib/i18n/locales'
 import { useLocale, useT } from '~/lib/i18n/react'
 import { buildHead, localeFromMatches, ogImage, ogImageFromFile, siteFromMatches, siteNameOf } from '~/lib/seo'
+import { DEFAULT_CARD_SORT } from '~/lib/types'
 import type { Announcement, Banner, CardSort, Ip, Series } from '~/lib/types'
 
 /** 首页卡牌列表每页数量。首页要露出 banner 与公告，因此比列表页的 24 少。 */
@@ -126,8 +127,11 @@ function Home() {
     ipId: search.ip,
     seriesId: search.series,
     cardStatus: search.type,
-    sort: search.sort ?? 'price_desc',
+    sort: search.sort ?? DEFAULT_CARD_SORT,
   }
+
+  // 重置 = 把查询串整个清空，回到默认排序与全部卡牌。
+  const onReset = () => navigate({ to: '/{-$locale}', search: {} })
 
   // 改任一筛选都写回 URL。换 IP 时顺手清掉系列：新 IP 下可能没有原系列，
   // 留着会是「已选但下拉里没有」的旧值，界面与结果对不上。
@@ -244,6 +248,7 @@ function Home() {
           ips={ips}
           series={series}
           onChange={onFilterChange}
+          onReset={onReset}
           localeParams={{ locale: isDefaultLocale(locale) ? undefined : locale }}
         />
 
