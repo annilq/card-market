@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { assetUrl, getCard, postMessage } from '~/lib/directus'
+import { formatYen } from '~/lib/format'
 import { useT } from '~/lib/i18n/react'
 import { translate } from '~/lib/i18n/messages'
 import { buildHead, localeFromMatches, ogImage, siteFromMatches, siteNameOf } from '~/lib/seo'
@@ -69,8 +70,12 @@ function MessageForm() {
   const successRef = useRef<HTMLDivElement>(null)
 
   // 提交成功后把焦点移到回执上：屏幕阅读器会读到，键盘用户也不会停在已清空的表单里。
+  // 同时滚动到它：手机上回执在表单上方，而提交时用户已经滚到按钮处，
+  // 只 focus() 不滚动的话焦点会落在屏幕外——看起来像「什么都没发生」。
   useEffect(() => {
-    if (result === 'ok') successRef.current?.focus()
+    if (result !== 'ok') return
+    successRef.current?.focus({ preventScroll: true })
+    successRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }, [result])
 
   const attachedCard = dismissed ? null : card
@@ -101,9 +106,9 @@ function MessageForm() {
   }
 
   return (
-    <div className="max-w-xl mx-auto space-y-5">
-      <h1 className="text-xl font-bold">{t('contactTitle')}</h1>
-      <p className="text-sm text-muted">{t('contactIntro')}</p>
+    <div className="max-w-xl mx-auto">
+      <h1 className="text-2xl font-bold">{t('contactTitle')}</h1>
+      <p className="mt-2 text-sm text-muted leading-relaxed">{t('contactIntro')}</p>
 
       {/* 状态区常驻在 DOM 里（而不是按需插入），aria-live 才有机会播报变化。
           成功用 status（礼貌播报），失败用 alert（立即打断），因为失败需要行动。 */}
@@ -112,7 +117,7 @@ function MessageForm() {
           <div
             ref={successRef}
             tabIndex={-1}
-            className="rounded-lg bg-success/15 text-success px-4 py-3 text-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted"
+            className="banner-enter rounded-lg bg-success/15 text-success px-4 py-3 text-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted"
           >
             {t('submitOk')}
           </div>
@@ -120,18 +125,18 @@ function MessageForm() {
       </div>
       <div role="alert">
         {result === 'error' && (
-          <div className="rounded-lg bg-danger-bg text-danger px-4 py-3 text-sm">
+          <div className="banner-enter rounded-lg bg-danger-bg text-danger px-4 py-3 text-sm">
             {t('submitFail')}
           </div>
         )}
       </div>
 
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submit} className="mt-6 space-y-5">
         {/* 咨询对象：从卡牌详情「咨询此卡」进来时显示，可移除。
             没有它，用户在详情页点「咨询」后必须手打一遍卡名——全站唯一转化路径丢上下文。 */}
         {attachedCard && (
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3">
-            <div className="h-14 w-11 shrink-0 overflow-hidden rounded bg-surface-2">
+          <div className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3">
+            <div className="h-[72px] w-14 shrink-0 overflow-hidden rounded-lg bg-surface-2">
               {assetUrl(attachedCard.images?.[0], { width: 88, format: 'webp' }) ? (
                 <img
                   src={assetUrl(attachedCard.images?.[0], { width: 88, format: 'webp' }) as string}
@@ -143,13 +148,19 @@ function MessageForm() {
             <div className="min-w-0 flex-1">
               <div className="text-xs text-faint">{t('cardContextLabel')}</div>
               <div className="truncate text-sm font-medium text-fg">{attachedCard.name}</div>
-              <div className="text-xs text-muted">
-                {[
-                  attachedCard.code ? t('cardCodeShort', { code: attachedCard.code }) : '',
-                  attachedCard.price != null ? t('priceTag', { price: attachedCard.price }) : '',
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs">
+                {attachedCard.code && (
+                  <span className="text-faint">
+                    {t('cardCodeShort', { code: attachedCard.code })}
+                  </span>
+                )}
+                {attachedCard.price != null && (
+                  // 价格在这一块里也用价格的令牌与字重：用户要确认的正是
+                  // 「我咨询的是这张、这个价」，压成一行灰色小字等于把答案藏起来。
+                  <span className="text-price font-semibold tabular-nums">
+                    {t('priceTag', { price: formatYen(attachedCard.price) })}
+                  </span>
+                )}
               </div>
             </div>
             <button
@@ -170,7 +181,12 @@ function MessageForm() {
           {/* label 用 htmlFor 关联：之前只有视觉相邻，读屏软件听到的是 placeholder。 */}
           <label htmlFor="message-content" className="mb-1 block text-sm text-muted">
             {t('messageContent')}{' '}
-            <span className="text-danger">{t('requiredMark')}</span>
+            {/* 必填标记不用红：红在这个系统里是钱与错误。必填是中性信息，
+                用墨色 + 星号即可，留给错误信息一点颜色余量。 */}
+            <span className="text-faint text-xs">
+              <span aria-hidden="true" className="mr-0.5">*</span>
+              {t('requiredMark')}
+            </span>
           </label>
           <textarea
             id="message-content"
@@ -227,8 +243,20 @@ function MessageForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-lg bg-accent px-5 py-2.5 text-sm text-on-accent hover:bg-accent/90 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted"
+            aria-busy={submitting}
+            // 锁定宽度：文案从「提交留言」变「提交中…」时按钮不该跟着变宽，
+            // 否则旁边那个次要动作会横向跳一格。
+            className="inline-flex min-w-32 items-center justify-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm text-on-accent transition-colors duration-150 hover:bg-accent/90 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted"
           >
+            {submitting && (
+              <svg
+                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                className="animate-spin motion-reduce:hidden" aria-hidden="true"
+              >
+                <path d="M12 3a9 9 0 1 0 9 9" />
+              </svg>
+            )}
             {submitting ? t('submitting') : t('submitMessage')}
           </button>
           <button
@@ -241,9 +269,16 @@ function MessageForm() {
         </div>
       </form>
 
-      <Link to="/{-$locale}" className="text-sm text-muted hover:underline">
-        {t('backHomeArrow')}
-      </Link>
+      {/* 返回首页与提交区分开：它和「浏览卡牌」同属次要出口，但不在同一个
+          动作组里，挤在提交按钮下方 8px 会读成表单的一部分。 */}
+      <div className="mt-8 border-t border-border pt-5">
+        <Link
+          to="/{-$locale}"
+          className="inline-flex items-center py-1 text-sm text-muted transition-colors duration-150 hover:text-fg hover:underline"
+        >
+          {t('backHomeArrow')}
+        </Link>
+      </div>
     </div>
   )
 }

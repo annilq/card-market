@@ -15,7 +15,7 @@ colors:
   hairline-strong: "#cbd5e1"
   seal: "#0f172a"
   on-seal: "#ffffff"
-  price-tag-red: "#ec003f"
+  price-tag-red: "#dc0a3c"
   price-tag-red-lifted: "#ff637e"
   high-value-amber: "#9a5b00"
   high-value-amber-lifted: "#ffb900"
@@ -33,6 +33,9 @@ colors:
   night-on-seal: "#0f172a"
   night-price-tag-red: "#ff637e"
   night-high-value-amber: "#ffb900"
+  vault-purple: "#7c3aed"
+  vault-purple-lifted: "#c4b5fd"
+  night-vault-purple: "#c4b5fd"
 typography:
   headline:
     fontFamily: "system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
@@ -146,12 +149,13 @@ components:
 
 This interface is a card catalogue you can flip through: entries on cool paper, one hairline per boundary, and a price tag that is the only warm thing on the page. It does not sell with decoration — it sells by being legible. Every screen answers the same three questions in the same order: which card is this, what does it cost, what condition is it in. Ornament that does not serve those three answers is not part of the system.
 
-The palette is deliberately cold: slate paper, white card stock, slate ink, and a single red reserved for money. Because there is no second warm hue anywhere, the price is impossible to miss without being loud — the restraint is what makes it work. Dark mode is not an inverted theme bolted on; it is the same catalogue read under a lamp, with the same hairline logic and the same single red, lifted one step to stay readable on night paper.
+The palette is deliberately cold: slate paper, white card stock, slate ink, and a single red reserved for money. Because there is no second warm hue anywhere, the price is impossible to miss without being loud — the restraint is what makes it work. One cool accent exists and is spent entirely on status: a purple strip that marks a card as being in the case rather than in the bulk box. It never touches money. Dark mode is not an inverted theme bolted on; it is the same catalogue read under a lamp, with the same hairline logic and the same single red, lifted one step to stay readable on night paper.
 
 The build is dense but never cramped: 14px UI type carries most of the interface, containers step to 16px only where a card is a real destination, and the whole grid breathes at 16px gutters. Density is honest here — a buyer scanning forty cards does not want whitespace theatre. What keeps that density from feeling cheap is total consistency: one radius for controls, one for containers, one border weight, one shadow that only appears on hover.
 
 **Key Characteristics:**
-- One accent family (red) used only for money and "pinned"; everything else is slate.
+- One warm accent family (red) used only for money and "pinned"; one cool accent (purple) used only for "in the case".
+- Rarity is ranked by weight, never by hue: the rarity dictionary is client-editable, so a hardcoded colour ramp would break the first time a new tier is added.
 - Flat at rest. No shadow, no gradient, no glow as decoration.
 - Two radius steps (8px controls, 12px containers) plus pills for chips and full-round for small badges.
 - System font stack; hierarchy built from weight and size, never from a second typeface.
@@ -164,10 +168,11 @@ A cold slate ledger, interrupted exactly twice: red for price, amber for "high v
 
 ### Primary
 - **Seal** (`--color-accent`, `#0f172a` / dark `#e2e8f0`): the fill of every primary action. In light mode it is the same near-black as the headline ink, so the primary button reads as "the most solid object on screen" rather than as a branded hue. In dark mode it inverts to near-white. Search submit, "inquire", "contact us", the active page number, and the primary button on error pages all use it.
-- **Price-Tag Red** (`#ec003f` light / `#ff637e` dark): money, and pinned announcements. Nothing else. It is the only warm color permitted on more than one screen.
+- **Price-Tag Red** (`#dc0a3c` light / `#ff637e` dark): money, and pinned announcements. Nothing else. It is the only warm color permitted on more than one screen. The light value was darkened from `#ec003f`, which measured 4.53:1 on card stock and 4.33:1 on the page — the latter fails AA for body-size text, and the price now also appears on a sticky bar and on tinted surfaces. The step is nearly invisible by eye but moves the floor from "just clearing" to "clears with margin" (5.06:1 / 4.83:1).
 
 ### Secondary
 - **High-Value Amber** (`#9a5b00` light / `#ffb900` dark): the "高价买取 / high value buyback" badge and its tinted background at 15% alpha. Signals a card the shop pays premium for; never used for ordinary prices. The light-mode value is darker than the raw amber because the badge text sits on that same amber at 15% — the original `#e17100` measured 2.85:1 there.
+- **Vault Purple** (`#7c3aed` light / `#c4b5fd` dark): the "柜藏级" signature — `card_status = packaged`, i.e. graded, sealed, or otherwise in the case rather than in the bulk box. It exists because a buyer's first question at a buyback counter is "is this worth the trip", and the catalogue previously answered it only inside the detail page, in 14px grey text. Dosage is deliberately tiny: a 4px signature strip on the card's image well plus one badge. 5.7:1 on card stock (5.06:1 on its own 8% tint), 7.9:1 on the night card (5.8:1 on its tint). It is the only cool accent in the system, which is exactly why it reads as "status" and not as "money".
 
 ### Tertiary
 - **Prose-Link Sky** (`#0084d1` light / `#00bcff` dark): links inside admin-authored rich text only. Exists so a link inside an announcement body is distinguishable from body copy without borrowing the price red.
@@ -192,9 +197,11 @@ Dark mode re-points the same names: Night Paper `#0b1120`, Night Card `#1e293b`,
 
 **The One Warm Colour Rule.** Red appears only for money and for "pinned". If a red element is not a price, a pinned badge, or an error, it is a bug. Amber is its only sanctioned companion, and only on the high-value badge.
 
+**The Third Accent Is Cool Rule.** Vault Purple is the system's only cool accent and carries exactly one meaning: this card is in the case. It never touches a price, a button, a link, or a status message. Any purple that is not on a `packaged` card's signature strip or its badge is a bug in the same way a stray red is.
+
 **The Ink-Is-The-Button Rule.** Primary actions fill with ink, never with a brand hue. There is no brand color to spend on a button — the catalogue's authority comes from black type, not from a colored pill.
 
-**The Two-Theme Rule.** Every color decision is made twice, from the same token names, in `@theme` and in `html.dark`. A raw Tailwind color name (`text-slate-500`, `bg-white`) inside a component is a defect: it will not follow the theme. For the accent family this is now structural — `text-price`, `text-high-value`, `text-pinned`, `text-link`, `text-success`, `text-danger` — so the component never writes a `dark:` colour variant at all.
+**The Two-Theme Rule.** Every color decision is made twice, from the same token names, in `@theme` and in `html.dark`. A raw Tailwind color name (`text-slate-500`, `bg-white`) inside a component is a defect: it will not follow the theme. For the accent family this is now structural — `text-price`, `text-high-value`, `text-pinned`, `text-vault`, `text-link`, `text-success`, `text-danger` — so the component never writes a `dark:` colour variant at all.
 
 ## Typography
 
@@ -207,10 +214,12 @@ Dark mode re-points the same names: Night Paper `#0b1120`, Night Card `#1e293b`,
 - **Numeral Display** (900, 60px/1, tabular): only on the 404 and 500 pages, in Weak Text. A deliberate single moment of scale in an otherwise 14–24px product; it must read as a number, not as a ghost.
 - **Headline** (700, 24px/32px): page titles — card name on the detail page, announcement title, info-page title, section title on the shops page.
 - **Title** (600, 18px/28px): section headings inside the home page ("通知公告", "高价买取", "最新上架"), the site name in the header.
-- **Body** (400, 16px/24px): rich-text announcement and info-page copy at `line-height: 1.75` inside `.prose`, card descriptions, the footer's data notice.
+- **Body** (400, 16px/24px): rich-text announcement and info-page copy at `line-height: 1.75` inside `.prose`, card descriptions, the footer's data notice. The **first paragraph** of an announcement body steps up to the Title size (18px/1.7) and Ink, because it is where the reader actually starts; it does not introduce a new step.
 - **UI** (400–600, 14px/20px): the workhorse. Nav links, buttons, inputs, filter labels, table-ish metadata, announcement rows. This is the size most of the interface is set in.
 - **Caption** (400, 12px/16px): card numbers, dates, counts, footer legal links, the shop address line.
-- **Micro** (400–500, 11px/15px): the two badges only — "置顶" and "高价买取". Nothing else may be smaller than 12px.
+- **Micro** (400–500, 11px/15px): the three badges only — "置顶", "高价买取", and "有包装". Nothing else may be smaller than 12px.
+
+Rarity names are the one place where **weight ranks, not size and not hue**: SSR and UR render at 600, HR and N at 400, all at Caption size in Weak Text. The rarity set is a client-editable dictionary, so a hardcoded colour ramp would mislabel the first new tier the client adds; weight degrades gracefully (an unknown tier simply gets the regular weight).
 
 ### Named Rules
 
@@ -226,9 +235,11 @@ A single 1152px (`max-w-6xl`) column with 16px side padding, on every page. The 
 
 The home page is a vertical rhythm of `space-y-10` (40px) sections, each led by a Title-weight heading with a "全部 →" link pushed right. The banner is the only element with a large radius (16px) and the only element that bleeds to a fixed 21:9 aspect.
 
-List pages use a two-column split: a 260px filter rail that becomes sticky at `lg` and collapses behind an "展开/收起" button below it, plus a `minmax(0,1fr)` content column. The product grid inside is 2 columns on phones, 3 at `sm`, 4 at `lg`, with `gap-4` (16px). Cards are `aspect-[3/4]` images over a 12px-padded text block.
+List pages use a two-column split at `lg`: a 260px sticky filter rail plus a `minmax(0,1fr)` content column. **Below `lg` the rail is not rendered at all** — the content column opens with a 36px toolbar (filter button carrying the active-filter count, result count, sort select) and the facets appear in a bordered panel only when the button is pressed. The earlier version collapsed the rail behind a button but left the collapsed body in flow, so a phone's first card started ~300px down; it now starts at ~190px. The product grid is 2 columns on phones, 3 at `sm`, 4 at `lg`, with `gap-4` (16px). Cards are `aspect-[3/4]` images over a 12px-padded text block.
 
-Detail pages are a 1:1 split from `md` up, with the image column in a 3:4 well and the text column carrying the breadcrumb, name, code, price row, a two-up definition list, description, and two actions.
+Detail pages are a 1:1 split from `md` up, with the image column in a 3:4 well and the text column carrying the breadcrumb, name, code, price row, a four-up definition list (status, rarity, card number, listed date), description, and actions.
+
+**The price and its action never scroll away.** From `md` up the price block and its buttons are `sticky top-20` inside the text column. On phones, where there is no second column to stick, the same pair is a `fixed` bottom bar with the card's name and price on the left and "咨询此卡" on the right, inside `env(safe-area-inset-bottom)`. The page reserves matching bottom padding so the bar never covers the last line of the description. This is the product's only conversion path; it should not require scrolling past the description to find.
 
 The shops page is `minmax(280px,380px)` list + `minmax(0,1fr)` map from `lg`; on phones the map comes first, then the rows. Both columns carry `min-w-0` — without it, a long unbroken address or card name pushes the grid wider than the viewport.
 
@@ -242,7 +253,7 @@ The header is the one exception that is not depth but translucency: `bg-surface/
 
 ### Shadow Vocabulary
 - **Hover Lift** (`hover:shadow-md`, Tailwind default `0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)`): product cards only, on hover. Confirms "this is a link" without lifting anything at rest.
-- **Selected Row** (`shadow-sm`): the currently selected shop row, paired with a border that shifts to Ink. The shadow is a secondary cue; the border is the real signal.
+- **Selected Row** (no shadow): the currently selected shop row is marked by a 2px ink signature bar on its left edge plus one step of background tint. The bar is a border, not elevation — an earlier `shadow-sm` here contradicted Flat-At-Rest and was the only shadow in the product not attached to a link.
 
 ### Named Rules
 
@@ -250,13 +261,41 @@ The header is the one exception that is not depth but translucency: `bg-surface/
 
 **The Border-Or-Tint Rule.** Every "these are separate things" moment resolves to either a 1px hairline or one step of background tint. Never both, never a shadow.
 
+## Motion
+
+**The catalogue turns one page, once.** The whole motion language is a single authored moment — a card's image travelling from the grid into the detail page — plus fast state feedback. There is no entrance choreography, no scroll reveal, and no stagger: this is an Operate/Read surface, and a buyer scanning forty cards does not want to wait for the page to finish performing.
+
+### Tokens
+- **`--ease-out-quart`** `cubic-bezier(0.16, 1, 0.3, 1)`: confident arrivals. The cross-page transition.
+- **`--ease-out-soft`** `cubic-bezier(0.22, 0.61, 0.36, 1)`: routine state changes.
+- **`--dur-feedback`** `140ms`: hover, press, focus. Must read as immediate.
+- **`--dur-state`** `220ms`: selection, disclosure, thumbnail change.
+- **`--dur-continuity`** `380ms`: the cross-page transition, and nothing else.
+
+### The Shared-Element Transition
+A card's image well carries `view-transition-name: card-<id>`, set through `--vt-name` on `.vt-card`. The same name exists on the grid thumbnail and on the detail page's main image, so pressing a card morphs the thumbnail into the large image instead of swapping two pages. Navigation opts in per link (`viewTransition` on the `Link`), not globally: paging, filtering, and language switching must not animate a shape that has no counterpart.
+
+**The Name-Is-Unique Rule.** `view-transition-name` must be unique within a document. The home page's high-value strip passes `vt={false}` to `CardCard` because the same card can also appear in the grid below it, and a duplicate name makes the browser abandon the entire transition. Anything that renders a card outside its primary grid slot opts out.
+
+### Feedback and Continuity
+- **Card hover:** image `scale(1.03)` over `200ms`, border to Hairline Strong, Hover Lift. The price line never moves — a grid that shifts under the cursor reads as instability.
+- **Grid change:** the result grid re-mounts on a filter or page change and plays `grid-enter` (`opacity 0→1`, `translateY(6px→0)`, `240ms`). It runs once for the grid, not per cell.
+- **Row hover:** a 2px signature bar fades from transparent to Ink. The bar is always present at 2px; only its colour changes, so no text shifts sideways.
+- **Status banners:** `banner-enter` (`200ms`, `-4px`), so a success or failure message does not shove the form down in one frame.
+- **Submit:** the button locks its width and shows a spinner, so "提交中…" does not resize the row.
+
+### Reduced Motion
+`@media (prefers-reduced-motion: reduce)` removes displacement and duration everywhere, keeps colour and opacity feedback, and disables the view transition outright (a cross-page morph carries no information that survives without motion). `useReducedMotion` additionally stops the banner carousel's `setInterval`, which CSS cannot reach — an autoplaying loop is the one motion a media query cannot switch off. The carousel also pauses on hover and focus, and its dots remain a manual control in every mode.
+
+**The No-Choreography Rule.** No section entrance, no scroll-driven parallax, no staggered list. If a screen needs motion to be understood, the layout is wrong first.
+
 ## Shapes
 
 Two radius steps carry the whole interface: **8px** (`rounded-lg`) for every control — buttons, inputs, selects, pagination cells, icon buttons — and **12px** (`rounded-xl`) for every container that holds content: product cards, list containers, shop rows, empty-state boxes, the horizontal scroll strip. The banner steps up once to 16px (`rounded-2xl`) because it is a single large image. Small badges use 4px; filter chips and the rarity chip on detail pages use full-round pills. Image thumbnails inside cards use 8px.
 
 Borders are always 1px, always a token, and always present on containers. There is no borderless card in this system — the hairline is what makes the white card readable against the near-white page.
 
-The one recurring silhouette worth naming: the product card is a strict rectangle with a top image occupying exactly 3:4 and a text block beneath, nothing overlapping, nothing floating over the image except the banner's gradient scrim.
+The one recurring silhouette worth naming: the product card is a strict rectangle with a top image occupying exactly 3:4 and a text block beneath, nothing overlapping, nothing floating over the image except the banner's gradient scrim and — on a packaged card — the vault strip and its badge. The strip sits inside the image well's left edge, 4px wide, full height; it is the one element allowed to sit on top of a card photo.
 
 ### Named Rules
 
@@ -270,10 +309,11 @@ The one recurring silhouette worth naming: the product card is a strict rectangl
 - **Shape:** 8px radius (36px tall for icon and search buttons, auto-height with 8px/16px padding for text buttons). Full-round is reserved for the hero-adjacent CTA on the 404 page and filter chips, not for ordinary actions.
 - **Primary:** Seal fill, on-seal text, 14px UI type, `hover:bg-accent/90`. Used for search submit, "咨询此卡", "给我们留言", "提交留言", the active pagination cell, and error-page recovery.
 - **Secondary / Outline:** Card Stock fill with a Hairline Strong border and Secondary Ink text, `hover:bg-surface-2`. Used for "返回列表", pagination arrows, and the theme/locale icon buttons.
-- **Hover / Focus:** transitions are the default 150ms `cubic-bezier(0.4,0,0.2,1)` on color and background only. Focus on inputs shifts the border to Secondary Ink (`focus:border-muted`) and removes the native outline; the one explicit focus ring in the product is the `focus-visible:outline-2` on the horizontal high-value strip, because it is a scroll region keyboard users must reach first.
+- **Hover / Focus:** transitions are `--dur-feedback` (140ms) on color, border, and background only. Focus on inputs shifts the border to Secondary Ink (`focus:border-muted`) and removes the native outline. Explicit `focus-visible:outline-2` rings are reserved for controls a keyboard user reaches *before* they can act — the horizontal high-value strip (a scroll region), the card links in the grid, and the primary CTAs. The ring is Ink at 2px with a 2px offset, never a colour.
 
 ### Chips
-- **Filter chip (unselected):** pill, Card Stock fill, Hairline Strong border, Secondary Ink, 14px. Used for the IP shortcuts on the home page.
+- **Filter chip (unselected):** pill, Card Stock fill, Hairline Strong border, Secondary Ink, 14px.
+- **Active filter chip:** pill, Card Stock fill, Hairline Strong border, Secondary Ink, 12px, with a 10px × glyph. Appears in the result header on the home page, one per active filter, and removes exactly that filter when pressed. It exists because the four selects each show only their own current value; after two changes the user cannot see what is combining to produce a short list. The result count sits in the same row, so the answer is next to the number it explains.
 - **Rarity chip (detail page):** pill, Recessed Panel fill, no border, Secondary Ink, 14px.
 - **State:** the filter rail itself uses native checkboxes rather than toggle chips — multi-select facets read faster as a checklist than as pills.
 
@@ -290,25 +330,31 @@ The one recurring silhouette worth naming: the product card is a strict rectangl
 - **Focus:** border shifts to Secondary Ink. No glow, no ring, no color change. The absence of a focus color is deliberate — the whole system has no brand hue to glow with.
 - **Search field:** the placeholder is a real `<span>` layered over the input, not a `placeholder` attribute, so the hint can swap to a shorter string below `xl` instead of being clipped mid-word.
 - **Error / Status:** a 15%-alpha tinted banner with matching solid text (emerald for success, red for failure), 12px radius, 14px type.
+- **Required / optional marks:** 12px Weak Text with a leading `*`, never red. Red in this system means money or a failure; "required" is neither, and spending red on it leaves the error state with less contrast budget than it needs.
 
 ### Navigation
 - **Header:** sticky, translucent Card Stock over a Hairline bottom border. Site name at 18px/600; nav links at 14px in Secondary Ink, `py-2` so their hit area reaches 32px, active state at Ink/600. A single search field with a Seal submit button, then two icon-only shortcuts (X, shop), then locale and theme controls pushed to the far right and visually de-emphasized.
-- **Mobile:** below `sm` the nav and both preference controls collapse into a hamburger drawer, and the search field moves to its own full-width row. The drawer's rows are 40px tall with hairline dividers.
+- **Mobile:** below `sm` the nav collapses into a hamburger drawer and the search field moves to its own full-width row. **The language switcher stays in the top bar** — the launch market is Japan and the default language is Chinese, so hiding the one control that fixes that in a drawer is the same as not shipping it. The theme toggle stays in the drawer. The drawer's rows are 40px tall with hairline dividers.
 - **Footer:** three text blocks at `lg` (intro, contact, data notice), collapsing to one column on phones; then a hairline-separated row of site links (contact + the four compliance info pages) with `py-1.5` to lift each link to a 28px hit area, then a centered 12px copyright line.
 
 ### Badges
 - **Pinned:** 4px radius, Price-Tag Red at 15% alpha, red text, 11px.
 - **High-value:** 4px radius, High-Value Amber at 15% alpha, amber text, 11px (12px on the detail page where it sits beside the price).
-- Both are label-sized and never contain an icon. Both sit on the 11px Micro step rather than 10px, because 10px CJK text loses stroke detail; the contrast floor (4.8:1 on their own tinted background) matters more than the extra compactness.
+- **Vault (柜藏级 / packaged):** 4px radius, Vault Purple text, 11px. On the detail page it uses the purple tint at 8% alpha, because it sits on card stock. **On a card's image well it uses a solid Card Stock fill instead** — a translucent badge over a photograph lets the photo decide the contrast, and on a pale card scan the purple text fell to about 2:1. Solid fill pins it at the token's measured 5.7:1 / 7.9:1.
+- All are label-sized and never contain an icon. All sit on the 11px Micro step rather than 10px, because 10px CJK text loses stroke detail; the contrast floor (4.8:1 on their own tinted background) matters more than the extra compactness.
 
 ### The Price
 The most repeated custom pattern in the system: price renders at 16px/600 in Price-Tag Red with tabular numerals (detail page: 24px/600), currency symbol included, right-aligned against its row's end where a rarity label sits opposite. "面议" (price on request) occupies the same slot in the same weight but in Weak Text — a card without a price must not look like a card with one.
 
+**Yen are integers here.** Directus stores `decimal(10,2)` and the seed data arrives as `880.00`; rendering it verbatim produced `¥880.00` on every surface, which asks a buyer to strip two decimal places off every card in a grid of forty. Trading cards have no subunit in use, so all price rendering goes through `formatYen` (`lib/format.ts`), which formats with `maximumFractionDigits: 0` and thousands separators. This is display only — the stored value keeps its precision for any future averaging or fee calculation.
+
 ### The Accent Tokens
-The four semantic colours that used to be written as raw Tailwind palette names (`text-rose-600 dark:text-rose-400`, and so on) are now tokens — `price`, `high-value`, `pinned`, `link`, `success`, `danger` — each with a light and dark value in one place. A component writes the token once and never repeats a `dark:` variant. That is what the Two-Theme Rule was always asking for; it is now enforced by the token set rather than by discipline.
+The semantic colours that used to be written as raw Tailwind palette names (`text-rose-600 dark:text-rose-400`, and so on) are now tokens — `price`, `high-value`, `pinned`, `vault`, `link`, `success`, `danger` — each with a light and dark value in one place. A component writes the token once and never repeats a `dark:` variant. That is what the Two-Theme Rule was always asking for; it is now enforced by the token set rather than by discipline.
 
 ### Announcement Surfaces
-Two shapes exist, and they are deliberately different. On the home page, notices sit in **one** 12px container divided by hairlines, each row 16px-padded — a short list read as a single object. On the announcements index page, each announcement is its own 8px-radius card with 16px/12px padding and `hover:shadow-sm`, because that page is a browsable archive where entries are independent destinations. Neither is a mistake; the difference tracks "summary of three" versus "list of many".
+Both surfaces are now **one 12px container divided by hairlines**, and the difference between them is density rather than shape. The home page shows three rows at 44px, no trailing chevron, dates in a fixed 96px column — a short list read as a single object. The announcements index shows every row at 56px with a chevron and a hover lift on the arrow, because it is a browsable archive and every row is a destination. An earlier version gave the index one card per announcement with `hover:shadow-sm`; that made two announcements look like two unrelated objects floating on the page and contradicted Flat-At-Rest. The single container also makes the pinned bar read as a property of the list rather than of one card.
+
+**The No-Empty-Date Rule.** A date that does not exist is not rendered as `—`. `published_at` is nullable by design (an announcement can be published immediately without a scheduled time), and a column of em dashes reads as broken data. The row simply drops the date slot; the layout does not shift because the title takes the space.
 
 ## Do's and Don'ts
 
@@ -320,14 +366,19 @@ Two shapes exist, and they are deliberately different. On the home page, notices
 - **Do** keep filters, sort, and page in the URL so a filtered view can be shared and returns intact.
 - **Do** use `min-w-0` on grid and flex children that hold text; `break-words` alone does not reduce a min-content width.
 - **Do** give the three language versions the same structure and the same terminology, even where a translation would be shorter.
+- **Do** route every price through `formatYen`; a raw `price` value renders two decimal places the buyer has to discard.
+- **Do** give a card's image well a `view-transition-name` when it appears in a grid, and pass `vt={false}` wherever the same card renders a second time on the same page.
 
 ### Don't:
-- **Don't** introduce a second warm color, a gradient, or a colored glow. Price-Tag Red and High-Value Amber are the entire permission.
+- **Don't** introduce a second warm color, a gradient, or a colored glow. Price-Tag Red and High-Value Amber are the entire permission; Vault Purple is the only other accent and it may only mark `packaged` cards.
+- **Don't** put a badge with a translucent background on top of a photograph. The photo decides the contrast; use a solid Card Stock fill.
 - **Don't** add a shadow at rest, or a radius outside the 8/12/16/4/full set.
 - **Don't** use `bg-white`, `text-slate-900`, or any raw palette name in a component — it will break dark mode.
-- **Don't** shrink text below 12px except the two 11px badges.
+- **Don't** shrink text below 12px except the three 11px badges.
 - **Don't** use a de-emphasised colour for anything a user must read to understand why a container is empty — "暂无图片" is text, not decoration, and sits at the same value as Weak Text.
 - **Don't** let a fifth type size onto a screen to solve a hierarchy problem.
 - **Don't** hardcode client content (site name, shop details, announcement text, card copy) into components; the current values are placeholders and will be replaced.
 - **Don't** fabricate product imagery, testimonials, or review scores to fill a layout — the page must survive with "暂无图片" in every image well.
 - **Don't** reintroduce a cart, checkout, price comparison, or account surface. This is a catalogue, not a store.
+- **Don't** add an entrance animation to a section, stagger a list on scroll, or animate anything on page load. The only authored motion is the card image crossing from grid to detail.
+- **Don't** render a `—` for a nullable field. Drop the slot instead.

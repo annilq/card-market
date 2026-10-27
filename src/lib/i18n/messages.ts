@@ -103,6 +103,10 @@ const zh = {
   inquireCard: '咨询此卡',
   statusRaw: '裸卡',
   statusPackaged: '有包装',
+  galleryLabel: '卡牌图片，可用左右方向键切换',
+  galleryThumb: '第 {n} 张图片',
+  cardCodeLabel: '收藏编号',
+  listedAt: '上架时间',
 
   // 店铺
   shopsTitle: '店铺',
@@ -146,6 +150,7 @@ const zh = {
   announcementNotFound: '未找到该公告。',
   backToAnnouncements: '返回公告列表',
   backToAnnouncementsArrow: '← 公告列表',
+  otherAnnouncements: '其他公告',
 } as const
 
 export type MessageKey = keyof typeof zh
@@ -244,6 +249,10 @@ const ja: Record<MessageKey, string> = {
   inquireCard: 'このカードについて問い合わせ',
   statusRaw: '生カード',
   statusPackaged: 'パッケージあり',
+  galleryLabel: 'カード画像（左右キーで切り替え）',
+  galleryThumb: '{n} 枚目の画像',
+  cardCodeLabel: 'コレクション番号',
+  listedAt: '出品日',
 
   shopsTitle: '店舗',
   shopsIntro:
@@ -281,6 +290,7 @@ const ja: Record<MessageKey, string> = {
   announcementNotFound: 'お知らせが見つかりません。',
   backToAnnouncements: 'お知らせ一覧へ戻る',
   backToAnnouncementsArrow: '← お知らせ一覧',
+  otherAnnouncements: 'ほかのお知らせ',
 }
 
 const en: Record<MessageKey, string> = {
@@ -377,6 +387,10 @@ const en: Record<MessageKey, string> = {
   inquireCard: 'Ask about this card',
   statusRaw: 'Raw card',
   statusPackaged: 'In packaging',
+  galleryLabel: 'Card images, use the arrow keys to switch',
+  galleryThumb: 'Image {n}',
+  cardCodeLabel: 'Card number',
+  listedAt: 'Listed',
 
   shopsTitle: 'Stores',
   shopsIntro:
@@ -414,6 +428,7 @@ const en: Record<MessageKey, string> = {
   announcementNotFound: 'This announcement was not found.',
   backToAnnouncements: 'Back to news list',
   backToAnnouncementsArrow: '← News list',
+  otherAnnouncements: 'More news',
 }
 
 export const CATALOGUES = { zh, ja, en } as const

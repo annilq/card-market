@@ -12,11 +12,15 @@ type MapInstance = {
 }
 type MarkerInstance = { on: (e: string, cb: () => void) => void }
 
+// marker 用语义令牌取色，而不是写死 #0f172a：
+// 深色主题下瓦片被反转成深色（见 styles.css `.map-tiles`），
+// 一支近黑的针在那上面几乎看不见，只剩中间那个白点。
+// 令牌让针在两套主题下都跟着「主按钮」的墨/白走。
 const PIN_HTML = `
   <div style="transform:translate(-50%,-100%)">
     <svg width="28" height="36" viewBox="0 0 28 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M14 0C6.27 0 0 6.27 0 14c0 9.5 12.1 20.4 12.7 20.9a2 2 0 0 0 2.6 0C15.9 34.4 28 23.5 28 14 28 6.27 21.73 0 14 0Z" fill="#0f172a"/>
-      <circle cx="14" cy="14" r="5.5" fill="#fff"/>
+      <path d="M14 0C6.27 0 0 6.27 0 14c0 9.5 12.1 20.4 12.7 20.9a2 2 0 0 0 2.6 0C15.9 34.4 28 23.5 28 14 28 6.27 21.73 0 14 0Z" fill="var(--color-accent)"/>
+      <circle cx="14" cy="14" r="5.5" fill="var(--color-on-accent)"/>
     </svg>
   </div>`
 
@@ -63,9 +67,12 @@ export function MapView({
       if (!mapRef.current || initKey !== key) {
         el.innerHTML = ''
         const map = L.map(el, { scrollWheelZoom: true }) as unknown as MapInstance
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // className 让瓦片层能在深色主题下被 CSS 反转（见 styles.css `.map-tiles`）。
+        // OSM 只有浅色瓦片；深色页里它是一块亮斑，且抢走 marker 的注意力。
+        const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
           attribution: '&copy; OpenStreetMap',
+          className: 'map-tiles',
         }).addTo(map as unknown as MapInstance)
         mapRef.current = map
         markersRef.current = {}

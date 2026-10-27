@@ -1,14 +1,26 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { getAnnouncement } from '~/lib/directus'
+import { getAnnouncement, getAnnouncements } from '~/lib/directus'
 import { formatDate, useLocale, useT } from '~/lib/i18n/react'
 import { translate } from '~/lib/i18n/messages'
 import { buildHead, localeFromMatches, ogImage, plainText, siteFromMatches, siteNameOf } from '~/lib/seo'
 import type { Announcement } from '~/lib/types'
 
 export const Route = createFileRoute('/{-$locale}/announcements/$id')({
+  // 同时取回公告列表：正文底部要给出「其他公告」，让读到最后的人有下一步。
+  // 列表本身很小（客户一个人运营），多这一个请求换来一条真实的续读路径。
   loader: async ({ params }): Promise<{
     item: Awaited<ReturnType<typeof getAnnouncement>>
-  }> => ({ item: await getAnnouncement(params.id) }),
+    others: Awaited<ReturnType<typeof getAnnouncements>>
+  }> => {
+    const [item, all] = await Promise.all([
+      getAnnouncement(params.id),
+      getAnnouncements(),
+    ])
+    return {
+      item,
+      others: all.filter((a) => String(a.id) !== String(params.id)).slice(0, 2),
+    }
+  },
   // 公告详情：标题用公告标题，描述取正文前 140 字纯文本。
   head: async ({ matches, params }) => {
     const locale = localeFromMatches(matches)
@@ -40,7 +52,7 @@ export const Route = createFileRoute('/{-$locale}/announcements/$id')({
 })
 
 function AnnouncementDetail() {
-  const { item } = Route.useLoaderData()
+  const { item, others } = Route.useLoaderData()
   const t = useT()
   const locale = useLocale()
   if (!item) {
@@ -54,20 +66,64 @@ function AnnouncementDetail() {
     )
   }
   return (
-    <article className="max-w-2xl mx-auto">
-      <Link to="/{-$locale}/announcements" className="text-sm text-muted hover:underline">
+    // max-w-[68ch]：当前 max-w-2xl（672px）在 16px 正文下约 75ch，CJK 更宽。
+    // 68ch 是长文阅读的常规上限，再宽眼睛回扫就费力。
+    <article className="mx-auto max-w-[68ch]">
+      <Link
+        to="/{-$locale}/announcements"
+        className="inline-flex items-center py-1 text-xs text-muted transition-colors duration-150 hover:text-fg hover:underline"
+      >
         {t('backToAnnouncementsArrow')}
       </Link>
-      <h1 className="text-2xl font-bold mt-3 break-words">{item.title}</h1>
-      <div className="text-xs text-faint mt-1">
-        {formatDate(item.published_at, locale)}
-      </div>
+      <h1 className="text-2xl font-bold mt-2 break-words">{item.title}</h1>
+      {/* 未设发布时间就不渲染日期行：一排「—」比没有日期更吵。 */}
+      {item.published_at && (
+        <div className="mt-1.5 flex items-center gap-2 text-xs text-faint tabular-nums">
+          <time dateTime={item.published_at}>
+            {formatDate(item.published_at, locale)}
+          </time>
+          {item.is_pinned && (
+            <span className="rounded bg-pinned-bg px-1.5 py-0.5 text-[11px] text-pinned">
+              {t('pinned')}
+            </span>
+          )}
+        </div>
+      )}
       {item.body && (
-        // 富文本由管理员在后台维护（受信任来源）；XSS 防护见 development.md §4.4 次要项
+        // 富文本由管理员在后台维护（受信任来源）；XSS 防护见 development.md §4.4 次要项。
+        // 首段由 `.prose > p:first-of-type` 提到 17px——读者真正开始读的地方。
         <div
-          className="prose mt-4 text-body [&_a]:text-link [&_a]:underline [&_a]:underline-offset-2 [&_img]:rounded-lg"
+          className="prose mt-6 text-body [&_a]:text-link [&_a]:underline [&_a]:underline-offset-2 [&_img]:rounded-lg [&_h2]:text-fg [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-1.5 [&_h3]:text-fg [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
           dangerouslySetInnerHTML={{ __html: item.body }}
         />
+      )}
+
+      {/* 其他公告：读到最后的人需要下一步，而不是只剩页脚。 */}
+      {others.length > 0 && (
+        <section className="mt-12 border-t border-border pt-5">
+          <h2 className="text-sm font-semibold text-muted">
+            {t('otherAnnouncements')}
+          </h2>
+          <ul className="mt-2 divide-y divide-border">
+            {others.map((a) => (
+              <li key={a.id}>
+                <Link
+                  to="/{-$locale}/announcements/$id"
+                  params={{ id: String(a.id) }}
+                  viewTransition
+                  className="flex min-h-11 items-center gap-3 py-2.5 text-sm text-fg transition-colors duration-150 hover:text-muted"
+                >
+                  <span className="min-w-0 flex-1 truncate">{a.title}</span>
+                  {a.published_at && (
+                    <span className="shrink-0 text-xs text-faint tabular-nums">
+                      {formatDate(a.published_at, locale)}
+                    </span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </article>
   )

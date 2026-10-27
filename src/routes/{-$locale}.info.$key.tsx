@@ -44,20 +44,25 @@ function InfoPage() {
   // 而不是把整个页面变成 404——页脚入口必须始终能落到一个有效页面（审计要求）。
   const title = page?.title || t(INFO_PAGE_LABEL_KEY[infoKey])
   return (
-    <article className="max-w-2xl mx-auto">
-      <div className="text-xs text-faint mb-1">{t('infoNavTitle')}</div>
-      <h1 className="text-2xl font-bold break-words">{title}</h1>
+    // 与公告详情同一套阅读栏宽（68ch）：信息页也是长文，75ch 的 2xl 太宽。
+    <article className="mx-auto max-w-[68ch]">
+      <div className="text-xs text-faint">{t('infoNavTitle')}</div>
+      <h1 className="mt-1 text-2xl font-bold break-words">{title}</h1>
       {page?.body ? (
-        // 富文本由管理员在后台维护（受信任来源），与公告详情一致
+        // 富文本由管理员在后台维护（受信任来源），与公告详情一致。
+        // h2 从 16px 提到 18px：审核类长文靠小标题分段，16px 与正文同尺寸时分不出层级。
         <div
-          className="prose mt-4 text-body [&_a]:text-link [&_a]:underline [&_a]:underline-offset-2 [&_h2]:text-fg [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-1 [&_h3]:text-fg [&_img]:rounded-lg"
+          className="prose mt-6 text-body [&_a]:text-link [&_a]:underline [&_a]:underline-offset-2 [&_h2]:text-fg [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-7 [&_h2]:mb-2 [&_h3]:text-fg [&_h3]:font-semibold [&_h3]:mt-5 [&_ul]:list-disc [&_ul]:pl-5 [&_img]:rounded-lg"
           dangerouslySetInnerHTML={{ __html: page.body }}
         />
       ) : (
         <p className="mt-4 text-sm text-muted">{t('infoPageNotFound')}</p>
       )}
-      <div className="mt-8">
-        <Link to="/{-$locale}" className="text-sm text-muted hover:underline">
+      <div className="mt-10 border-t border-border pt-5">
+        <Link
+          to="/{-$locale}"
+          className="inline-flex items-center py-1 text-sm text-muted transition-colors duration-150 hover:text-fg hover:underline"
+        >
           {t('backHomeArrow')}
         </Link>
       </div>

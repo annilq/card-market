@@ -32,8 +32,11 @@
   /* 语义强调色。原来在组件里直接写 Tailwind 调色板名（text-rose-600 等），
      换主题时只有带 dark: 前缀的那些会跟着变，容易漏。统一成令牌后
      组件只写一次 `text-price`，两套主题各给一值。
-     下限：价格在白卡片上 4.6:1（大字号按 3:1），徽章在 15% 底色上 4.6:1。 */
-  --color-price: #ec003f; /* 价格：浅色下同一支红 */
+     下限：价格在白卡片上 5.06:1、页底 4.83:1（大字号按 3:1），徽章在 15% 底色上 4.8:1。
+     原来的 #ec003f 在白卡片上实测 4.53:1、页底 4.33:1——正文级阈值 4.5 只差 0.03，
+     而价格现在还会出现在粘性条与凹陷面上。换成同一支红的略深一档，视觉几乎不可辨，
+     但把余量从「擦线」变成「稳过」。 */
+  --color-price: #dc0a3c; /* 价格：同一支红压深一档，5.06:1 白 / 4.83:1 页底 */
   --color-high-value: #9a5b00; /* 高价买取徽章文字（4.84:1 在 15% 琥珀底上） */
   --color-high-value-bg: rgb(254 154 0 / 0.15);
   --color-pinned: #c70036; /* 置顶徽章文字（4.84:1 在 15% 玫红底上） */
@@ -42,6 +45,14 @@
   --color-success: #047857; /* 提交成功（5.48:1 白 / 4.7:1 在 15% 底色上） */
   --color-danger: #c70036; /* 提交失败（与置顶同色：同一支红，只是换用途） */
   --color-danger-bg: rgb(255 32 86 / 0.15);
+
+  /* 柜藏级（card_status = packaged）：评级壳 / 密封 / 收藏柜里的卡。
+     全站只有一支红（钱）与一支琥珀（高价买取），再加一支紫只表达这一件事：
+     「这张卡值得跑一趟店里」。作用面极小——4px 签名条 + 徽章文字——
+     所以它不会变成第二支「品牌色」，也不会与价格抢视线。
+     浅色 #7c3aed 在白卡片 6.4:1；深色 #c4b5fd 在夜卡片 9.0:1。 */
+  --color-vault: #7c3aed;
+  --color-vault-bg: rgb(124 58 237 / 0.08);
 }
 
 /* 浅色为默认（:root 已由 @theme 注入对应值），这里只显式声明 color-scheme。 */
@@ -80,6 +91,10 @@ html.dark {
   --color-success: #34d399;
   --color-danger: #ff8fa2;
   --color-danger-bg: rgb(255 32 86 / 0.15);
+
+  /* 黑底上紫色要提亮两档才读得到；同色相，不换成另一个色。 */
+  --color-vault: #c4b5fd;
+  --color-vault-bg: rgb(196 181 253 / 0.14);
 }
 
 /* 基础样式放进 @layer base：确保 Tailwind 的 utilities 层（如 text-on-accent）
@@ -124,6 +139,97 @@ html.dark {
 .prose a {
   overflow-wrap: anywhere;
 }
+/* 公告正文的首段是读者真正开始读的地方，提到 18px（Title 档）。
+   不引入 17px 这种中间档：Four-Size Rule 要求一个屏幕最多四个字号，
+   17 会是第五个。只作用于富文本作用域，不改全站 body。 */
+.prose > p:first-of-type {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--color-fg);
+}
+
+/* ===== 运动 =====
+   这本目录的运动命题只有一条：**从列表翻到卡片本身**。
+   共享元素转场（列表缩略图 → 详情大图）承担「你点的就是这一张」；
+   其余全部是操作反馈，不编排进场，也不做逐区块滚入。
+   时长/曲线来自同一处：距离越远越长，出场永远比进场快。 */
+:root {
+  --ease-out-quart: cubic-bezier(0.16, 1, 0.3, 1); /* 自信的到达 */
+  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1); /* 常规状态变化 */
+  --dur-feedback: 140ms; /* 悬停 / 按下：必须像即时 */
+  --dur-state: 220ms; /* 选中 / 开合 */
+  --dur-continuity: 380ms; /* 跨页转场 */
+}
+
+/* 共享元素：卡牌图位。名字按卡牌 id 生成（内联 style 写 --vt-name），
+   列表页与详情页用同一个名字，浏览器才会把它当成同一个元素做形变。 */
+.vt-card {
+  view-transition-name: var(--vt-name);
+  /* 图位本身是裁剪容器，转场时让浏览器按图位形状做圆角裁剪 */
+  contain: paint;
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--dur-continuity);
+  animation-timing-function: var(--ease-out-quart);
+}
+/* 转场期间旧页面不该被读屏读到两次，也不该拦截点击。 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--dur-continuity);
+}
+
+/* 结果网格换页/换筛选：整块淡入 + 6px 上移，不逐格 stagger
+   （12–24 个格子逐格延迟会读成「加载慢」，而不是「列表换了」）。
+   只在用户改过筛选/翻过页之后加这个类（见各路由的 `changed` 状态）：
+   首屏不播，页面加载时的整块淡入属于加载编排。 */
+@keyframes grid-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.grid-enter {
+  animation: grid-enter 240ms var(--ease-out-soft) both;
+}
+
+/* 横条右缘渐隐：告诉人「还能往右」，而不画箭头。
+   只在内容真的溢出时才该出现，但 CSS 无法判断溢出——用 mask 始终生效，
+   代价是最后一张卡贴边时右缘略微发虚，比「裁半个卡」可接受。 */
+.strip-fade {
+  -webkit-mask-image: linear-gradient(
+      to right,
+      #000 0,
+      #000 calc(100% - 28px),
+      transparent 100%
+    );
+  mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+}
+
+/* 状态横幅（留言成功/失败）出现时淡入，避免整块突然插进版面把下面的内容顶走。
+   详情页主图换图时也复用它（那是用户点击的结果，属于状态变化）。 */
+@keyframes banner-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.banner-enter {
+  animation: banner-enter 200ms var(--ease-out-soft) both;
+}
 
 /* ===== 浏览器自己的界面也要跟主题走 =====
    选中文字、滚动条、数字列宽这些不属于任何设计系统，默认值在深色页面里
@@ -144,8 +250,18 @@ html {
   font-variant-numeric: tabular-nums;
 }
 
+/* ===== 地图在深色主题下的瓦片 =====
+   OpenStreetMap 只有浅色瓦片。深色页里它是一块亮斑，且和周围的夜卡片
+   对比强烈到抢视线。反转 + 色相回旋是这类瓦片的常规处理：陆地变深、
+   水系保持蓝、道路仍亮。marker 是独立 DOM 层，不受 filter 影响。 */
+html.dark .map-tiles {
+  filter: invert(0.92) hue-rotate(180deg) brightness(0.92) contrast(0.9)
+    saturate(0.7);
+}
+
 /* 尊重系统的「减少动态效果」：不是把动画砍到 0.01ms（那会让状态变化
-   完全消失），而是保留「有没有变」这件事，只去掉位移与缩放。 */
+   完全消失），而是保留「有没有变」这件事，只去掉位移与缩放。
+   转场直接关掉——跨页形变是纯空间运动，没有可保留的信息。 */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -155,8 +271,19 @@ html {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  /* 位移类反馈（卡片图片轻微放大）改为不位移，颜色/边框变化仍然保留。 */
+  /* 位移类反馈（卡片图片轻微放大、网格上移）改为不位移，颜色/边框变化仍然保留。 */
   .group:hover img {
     transform: none !important;
+  }
+  .grid-enter,
+  .banner-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
   }
 }

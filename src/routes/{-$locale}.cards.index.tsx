@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCards, getIps, getRarities, getSeries, getSubSeries } from '~/lib/directus'
 import { CardCard } from '~/components/CardCard'
@@ -133,11 +133,23 @@ function CardList() {
   const subSel = new Set(toArr(search.sub))
   const raritySel = new Set(toArr(search.rarity))
 
-  const patch = (p: Partial<CardSearch>) =>
+  const patch = (p: Partial<CardSearch>) => {
+    setChanged(true)
     navigate({ to: '/{-$locale}/cards', search: { ...search, ...p, page: 1 } })
+  }
 
-  const patchPage = (page: number) =>
+  // 切页后把视口带回网格顶端：`scrollRestoration` 只在「后退/前进」时恢复，
+  // 向前翻页会停在页脚，键盘用户下一次 Tab 会落在页脚链接上。
+  // 同时把焦点交给网格容器（tabIndex=-1），读屏会从「共 N 张」重新读起。
+  const gridTopRef = useRef<HTMLElement>(null)
+  const patchPage = (page: number) => {
+    setChanged(true)
     navigate({ to: '/{-$locale}/cards', search: { ...search, page } })
+    requestAnimationFrame(() => {
+      gridTopRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' })
+      gridTopRef.current?.focus({ preventScroll: true })
+    })
+  }
 
   const toggleMulti = (
     key: 'ip' | 'series' | 'sub' | 'rarity',
@@ -192,6 +204,10 @@ function CardList() {
   }
 
   const [filtersOpen, setFiltersOpen] = useState(false)
+  // 只在「用户改过筛选/翻过页」之后才播入场动画。
+  // 首屏不播：页面加载时整块淡入属于「加载编排」，Read/Operate 面不该有；
+  // 而且 SSR 首帧若先透明再淡入，慢网络上会读成内容在闪。
+  const [changed, setChanged] = useState(false)
   const total = result.total
   const page = search.page ?? 1
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
@@ -206,111 +222,175 @@ function CardList() {
     search.max != null ||
     !!search.q
 
+  // 活跃筛选总数：筛选栏收起来时，这个数字是唯一的线索。
+  const activeCount =
+    toArr(search.ip).length +
+    toArr(search.series).length +
+    toArr(search.sub).length +
+    toArr(search.rarity).length +
+    (search.hv ? 1 : 0) +
+    (search.min != null || search.max != null ? 1 : 0) +
+    (search.q ? 1 : 0)
+
+  // facet 上的计数：客户最常问的是「这一档到底有几张」。
+  // 计数来自当前结果集不方便（Directus 不返回分面统计），所以这里不做，
+  // 只显示「已选 n」——不编造数字比显示一个错数字重要。
+  const facetBody = (
+    <div className="space-y-5">
+      <Facet title={t('facetIp')} items={ips} sel={ipSel} onToggle={(id) => toggleMulti('ip', id)} />
+      <Facet
+        title={t('facetSeries')}
+        items={series}
+        sel={seriesSel}
+        enabled={seriesEnabled}
+        onToggle={(id) => toggleMulti('series', id)}
+      />
+      <Facet
+        title={t('facetSubSeries')}
+        items={subSeries}
+        sel={subSel}
+        enabled={subEnabled}
+        onToggle={(id) => toggleMulti('sub', id)}
+      />
+      <Facet
+        title={t('facetRarity')}
+        items={rarities}
+        sel={raritySel}
+        onToggle={(id) => toggleMulti('rarity', id)}
+      />
+
+      <label className="flex min-h-9 items-center gap-2 text-sm text-muted">
+        <input
+          type="checkbox"
+          checked={!!search.hv}
+          onChange={(e) => patch({ hv: e.target.checked ? true : undefined })}
+        />
+        {t('highValueOnly')}
+      </label>
+
+      <div className="space-y-1 text-sm">
+        <div className="font-medium">{t('priceRange')}</div>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            inputMode="numeric"
+            placeholder={t('minPrice')}
+            defaultValue={search.min}
+            onBlur={(e) => patch({ min: e.target.value ? Number(e.target.value) : undefined })}
+            className="w-full rounded-lg border border-border-strong px-2 py-1.5 bg-surface text-fg placeholder:text-faint outline-none transition-colors duration-150 focus:border-muted"
+          />
+          <span className="text-faint">—</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            placeholder={t('maxPrice')}
+            defaultValue={search.max}
+            onBlur={(e) => patch({ max: e.target.value ? Number(e.target.value) : undefined })}
+            className="w-full rounded-lg border border-border-strong px-2 py-1.5 bg-surface text-fg placeholder:text-faint outline-none transition-colors duration-150 focus:border-muted"
+          />
+        </div>
+      </div>
+
+      {hasFilter && (
+        <button
+          type="button"
+          onClick={clearAll}
+          className="text-xs text-muted underline-offset-2 hover:text-fg hover:underline"
+        >
+          {t('clearAll')}
+        </button>
+      )}
+    </div>
+  )
+
+  const sortSelect = (
+    <select
+      value={search.sort ?? 'price_desc'}
+      onChange={(e) => patch({ sort: e.target.value as CardSearch['sort'] })}
+      aria-label={t('filterSort')}
+      className="h-9 rounded-lg border border-border-strong bg-surface px-2 text-sm text-fg outline-none transition-colors duration-150 hover:border-muted focus:border-muted"
+    >
+      <option value="price_desc">{t('sortPriceDesc')}</option>
+      <option value="price_asc">{t('sortPriceAsc')}</option>
+      <option value="newest">{t('sortNewest')}</option>
+      <option value="oldest">{t('sortOldest')}</option>
+    </select>
+  )
+
   return (
     // 右侧内容列用 minmax(0,1fr)：否则超长卡名/编号的 min-content 会顶宽整列。
     <div className="grid lg:grid-cols-[260px_minmax(0,1fr)] gap-6">
-      <aside className="min-w-0 lg:sticky lg:top-20 lg:self-start">
-        <div className="flex items-center justify-between mb-4 lg:mb-0">
+      {/* 桌面筛选栏：常驻、粘在头部下方。手机上整条轨道不渲染，
+          改由内容列顶部的工具条承担（见下）——否则「筛选 / 展开」那两行
+          会在首屏占掉 ~120px，把第一张卡推到折线以下。 */}
+      <aside className="hidden min-w-0 lg:sticky lg:top-20 lg:block lg:self-start">
+        <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold">{t('filters')}</h2>
-          <div className="flex items-center gap-3">
-            {hasFilter && (
-              <button onClick={clearAll} className="text-xs text-muted hover:underline">
-                {t('clearAll')}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setFiltersOpen((v) => !v)}
-              className="lg:hidden rounded-lg border border-border-strong px-3 py-1.5 text-sm text-muted"
-            >
-              {filtersOpen ? t('collapse') : t('expand')}
-            </button>
-          </div>
+          {hasFilter && (
+            <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted tabular-nums">
+              {activeCount}
+            </span>
+          )}
         </div>
-
-        <div
-          className={`${filtersOpen ? 'block' : 'hidden'} lg:block lg:mt-4 space-y-5 mt-4`}
-        >
-          <Facet title={t('facetIp')} items={ips} sel={ipSel} onToggle={(id) => toggleMulti('ip', id)} />
-          <Facet
-            title={t('facetSeries')}
-            items={series}
-            sel={seriesSel}
-            enabled={seriesEnabled}
-            onToggle={(id) => toggleMulti('series', id)}
-          />
-          <Facet
-            title={t('facetSubSeries')}
-            items={subSeries}
-            sel={subSel}
-            enabled={subEnabled}
-            onToggle={(id) => toggleMulti('sub', id)}
-          />
-          <Facet
-            title={t('facetRarity')}
-            items={rarities}
-            sel={raritySel}
-            onToggle={(id) => toggleMulti('rarity', id)}
-          />
-
-          <label className="flex items-center gap-2 text-sm text-muted">
-            <input
-              type="checkbox"
-              checked={!!search.hv}
-              onChange={(e) => patch({ hv: e.target.checked ? true : undefined })}
-            />
-            {t('highValueOnly')}
-          </label>
-
-          <div className="space-y-1 text-sm">
-            <div className="font-medium">{t('priceRange')}</div>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                placeholder={t('minPrice')}
-                defaultValue={search.min}
-                onBlur={(e) => patch({ min: e.target.value ? Number(e.target.value) : undefined })}
-                className="w-full rounded border border-border-strong px-2 py-1 bg-surface text-fg placeholder:text-faint outline-none focus:border-muted"
-              />
-              <span className="text-faint">—</span>
-              <input
-                type="number"
-                placeholder={t('maxPrice')}
-                defaultValue={search.max}
-                onBlur={(e) => patch({ max: e.target.value ? Number(e.target.value) : undefined })}
-                className="w-full rounded border border-border-strong px-2 py-1 bg-surface text-fg placeholder:text-faint outline-none focus:border-muted"
-              />
-            </div>
-          </div>
-        </div>
+        {facetBody}
       </aside>
 
-      <section className="min-w-0">
-        {/* 关键词输入已移到公共 header，这里只留排序，避免同一页面两套搜索框 */}
-        <div className="flex flex-wrap items-center gap-3 mb-4">
-          <select
-            value={search.sort ?? 'price_desc'}
-            onChange={(e) => patch({ sort: e.target.value as CardSearch['sort'] })}
-            className="ml-auto rounded-lg border border-border-strong px-3 py-2 text-sm bg-surface text-fg outline-none focus:border-muted"
+      <section
+        ref={gridTopRef}
+        tabIndex={-1}
+        className="min-w-0 scroll-mt-20 outline-none"
+      >
+        {/* 工具条：筛选开关 + 结果计数 + 排序，一行 36px。
+            手机首屏的第一张卡因此从约 300px 提到约 130px。 */}
+        <div className="mb-4 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((v) => !v)}
+            aria-expanded={filtersOpen}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border-strong px-3 text-sm text-muted transition-colors duration-150 hover:bg-surface-2 hover:text-fg lg:hidden"
           >
-            <option value="price_desc">{t('sortPriceDesc')}</option>
-            <option value="price_asc">{t('sortPriceAsc')}</option>
-            <option value="newest">{t('sortNewest')}</option>
-            <option value="oldest">{t('sortOldest')}</option>
-          </select>
+            {t('filters')}
+            {activeCount > 0 && (
+              <span className="rounded-full bg-accent px-1.5 text-[11px] font-semibold text-on-accent tabular-nums">
+                {activeCount}
+              </span>
+            )}
+          </button>
+          <span className="text-sm text-muted tabular-nums">
+            {t('totalCount', { total })}
+          </span>
+          <div className="ml-auto">{sortSelect}</div>
         </div>
 
-        <div className="text-sm text-muted mb-3">{t('totalCount', { total })}</div>
+        {/* 手机折叠体：默认不占位（连 `mt` 也不占），展开后才插入。 */}
+        {filtersOpen && (
+          <div className="mb-4 rounded-xl border border-border bg-surface p-4 lg:hidden">
+            {facetBody}
+          </div>
+        )}
 
         {result.items.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          // key 跟着筛选与页码走：换页/换筛选时网格重挂载，`grid-enter` 播一次。
+          <div
+            key={`${search.page ?? 1}-${search.ip}-${search.series}-${search.sub}-${search.rarity}-${search.hv}-${search.min}-${search.max}-${search.q}-${search.sort}`}
+            className={`grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 ${changed ? 'grid-enter' : ''}`}
+          >
             {result.items.map((c) => (
               <CardCard key={c.id} card={c} />
             ))}
           </div>
         ) : (
-          <div className="text-sm text-faint py-16 text-center border border-dashed border-border rounded-xl">
-            {t('emptyFiltered')}
+          <div className="rounded-xl border border-dashed border-border py-16 text-center">
+            <p className="text-sm text-faint">{t('emptyFiltered')}</p>
+            {hasFilter && (
+              <button
+                type="button"
+                onClick={clearAll}
+                className="mt-4 inline-flex items-center rounded-lg border border-border-strong px-3 py-1.5 text-sm text-muted transition-colors duration-150 hover:bg-surface-2 hover:text-fg"
+              >
+                {t('clearAll')}
+              </button>
+            )}
           </div>
         )}
 

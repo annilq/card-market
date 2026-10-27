@@ -14,6 +14,7 @@ import type { CatalogFilterValue } from '~/components/CatalogFilters'
 import { HighValueStrip } from '~/components/HighValueStrip'
 import { HomeNotices } from '~/components/HomeNotices'
 import { isDefaultLocale, localizeHref } from '~/lib/i18n/locales'
+import { useReducedMotion } from '~/lib/use-reduced-motion'
 import { useLocale, useT } from '~/lib/i18n/react'
 import { buildHead, localeFromMatches, ogImage, ogImageFromFile, siteFromMatches, siteNameOf } from '~/lib/seo'
 import { DEFAULT_CARD_SORT } from '~/lib/types'
@@ -113,15 +114,22 @@ function Home() {
   const t = useT()
   const locale = useLocale()
   const [idx, setIdx] = useState(0)
+  // 轮播的三个开关：只在能自动动、鼠标没停在上面、也没被用户手动停掉时才走。
+  // 自动轮播是「无用户操作就改变内容」，无障碍上必须能被停住——悬停暂停、
+  // 减少动态时干脆不走、点圆点后重新计时。
+  const [paused, setPaused] = useState(false)
+  // 同列表页：首屏不播网格入场，只在用户改过筛选之后播。
+  const [changed, setChanged] = useState(false)
+  const reduced = useReducedMotion()
 
   useEffect(() => {
-    if (banners.length <= 1) return
+    if (banners.length <= 1 || paused || reduced) return
     const timer = setInterval(
       () => setIdx((i) => (i + 1) % banners.length),
       5000,
     )
     return () => clearInterval(timer)
-  }, [banners.length])
+  }, [banners.length, paused, reduced])
 
   const filterValue: CatalogFilterValue = {
     ipId: search.ip,
@@ -131,11 +139,17 @@ function Home() {
   }
 
   // 重置 = 把查询串整个清空，回到默认排序与全部卡牌。
-  const onReset = () => navigate({ to: '/{-$locale}', search: {} })
+  // 与筛选区的「重置」按钮共用同一个动作；它也标记 changed，
+  // 让结果网格播一次入场（这是用户操作的结果，不是页面加载）。
+  const onReset = () => {
+    setChanged(true)
+    navigate({ to: '/{-$locale}', search: {} })
+  }
 
   // 改任一筛选都写回 URL。换 IP 时顺手清掉系列：新 IP 下可能没有原系列，
   // 留着会是「已选但下拉里没有」的旧值，界面与结果对不上。
   const onFilterChange = (next: Partial<CatalogFilterValue>) => {
+    setChanged(true)
     const merged: HomeSearch = {
       ip: next.ipId !== undefined ? next.ipId : search.ip,
       series: next.seriesId !== undefined ? next.seriesId : search.series,
@@ -151,11 +165,47 @@ function Home() {
     navigate({ to: '/{-$locale}', search: merged })
   }
 
+  // 活跃筛选：把 URL 里的选择摊成可逐个移除的 chip。
+  // 四个下拉本身只显示「当前值」，不显示「还剩几项在生效」；用户改了两处之后
+  // 很难一眼看出结果为什么少了。chips 与结果计数同一行，答案就在结果旁边。
+  const activeChips: { key: string; label: string; clear: HomeSearch }[] = []
+  if (search.ip != null) {
+    const ip = ips.find((v) => v.id === search.ip)
+    if (ip)
+      activeChips.push({
+        key: 'ip',
+        label: ip.name,
+        clear: { ...search, ip: undefined, series: undefined },
+      })
+  }
+  if (search.series != null) {
+    const s = series.find((v) => v.id === search.series)
+    if (s)
+      activeChips.push({
+        key: 'series',
+        label: s.name,
+        clear: { ...search, series: undefined },
+      })
+  }
+  if (search.type) {
+    activeChips.push({
+      key: 'type',
+      label: search.type === 'raw' ? t('typeRaw') : t('typePackaged'),
+      clear: { ...search, type: undefined },
+    })
+  }
   return (
     <div className="space-y-10">
-      {/* Banner 轮播 */}
+      {/* Banner 轮播。悬停暂停（鼠标停在图上时不该被换走），
+          减少动态时完全不自动，只保留手动圆点。 */}
       {banners.length > 0 && (
-        <section className="relative rounded-2xl overflow-hidden border border-border bg-accent aspect-[21/9]">
+        <section
+          className="relative rounded-2xl overflow-hidden border border-border bg-accent aspect-[21/9]"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onFocus={() => setPaused(true)}
+          onBlur={() => setPaused(false)}
+        >
           {banners.map((b, i) => {
             const src = assetUrl(b.image, { width: 1280, format: 'webp' })
             const inner = (
@@ -171,14 +221,14 @@ function Home() {
                     之前是 from-black/60，深色主题下与图片的深色区域叠在一起，
                     实测对比度只有 1.23:1——文字几乎消失。改成底部实心、向上渐隐。 */}
                 {(b.title || b.description) && (
-                  <div className="absolute inset-0 flex flex-col justify-end p-6 text-white bg-gradient-to-t from-black/85 via-black/55 to-transparent">
+                  <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 text-white bg-gradient-to-t from-black/85 via-black/55 to-transparent">
                     {b.title && (
-                      <div className="text-xl font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                      <div className="text-lg sm:text-xl font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
                         {b.title}
                       </div>
                     )}
                     {b.description && (
-                      <div className="text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                      <div className="text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] line-clamp-2">
                         {b.description}
                       </div>
                     )}
@@ -191,6 +241,7 @@ function Home() {
                 className={`absolute inset-0 transition-opacity duration-500 ${
                   i === idx ? 'opacity-100' : 'opacity-0'
                 }`}
+                aria-hidden={i !== idx}
               >
                 {inner}
               </div>
@@ -216,16 +267,30 @@ function Home() {
             )
           })}
           {banners.length > 1 && (
-            <div className="absolute bottom-3 right-4 flex gap-1.5">
+            // 圆点从 8px 视觉尺寸扩到 24px 触控区（WCAG 2.5.8）：
+            // 视觉上仍是小点，但热区覆盖整块 24×24。当前项用宽度而非颜色区分，
+            // 灰度或色觉差异下同样可辨。
+            <div className="absolute bottom-1 right-2 flex">
               {banners.map((b, i) => (
                 <button
                   key={b.id}
-                  onClick={() => setIdx(i)}
+                  type="button"
+                  onClick={() => {
+                    setIdx(i)
+                    setPaused(true)
+                  }}
                   aria-label={t('bannerAria', { n: i + 1 })}
-                  className={`w-2 h-2 rounded-full ${
-                    i === idx ? 'bg-white' : 'bg-white/40'
-                  }`}
-                />
+                  aria-current={i === idx ? 'true' : undefined}
+                  className="group/dot flex h-6 w-6 items-center justify-center"
+                >
+                  <span
+                    className={`h-1.5 rounded-full transition-all duration-200 ${
+                      i === idx
+                        ? 'w-4 bg-white'
+                        : 'w-1.5 bg-white/50 group-hover/dot:bg-white/80'
+                    }`}
+                  />
+                </button>
               ))}
             </div>
           )}
@@ -252,19 +317,52 @@ function Home() {
           localeParams={{ locale: isDefaultLocale(locale) ? undefined : locale }}
         />
 
-        <div className="mt-4 mb-3 text-sm text-muted">
-          {t('catalogCount', { total: catalog.total })}
+        {/* 结果头：计数 + 活跃筛选 chips 同一行。 */}
+        <div className="mt-4 mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="text-sm text-muted">
+            {t('catalogCount', { total: catalog.total })}
+          </span>
+          {activeChips.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => {
+                setChanged(true)
+                navigate({ to: '/{-$locale}', search: c.clear })
+              }}
+              className="inline-flex items-center gap-1 rounded-full border border-border-strong bg-surface px-2.5 py-1 text-xs text-muted transition-colors duration-150 hover:border-fg hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted"
+            >
+              {c.label}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          ))}
         </div>
 
         {catalog.items.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          // key 跟着筛选走：换筛选时网格重新挂载，`grid-enter` 才播一次。
+          // 不逐格 stagger——12 个格子逐格延迟会读成「加载慢」而不是「列表换了」。
+          <div
+            key={`${search.ip}-${search.series}-${search.type}-${search.sort}`}
+            className={`grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 ${changed ? 'grid-enter' : ''}`}
+          >
             {catalog.items.map((c) => (
               <CardCard key={c.id} card={c} />
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-border py-16 text-center text-sm text-faint">
-            {t('catalogEmpty')}
+          <div className="rounded-xl border border-dashed border-border py-16 text-center">
+            <p className="text-sm text-faint">{t('catalogEmpty')}</p>
+            {activeChips.length > 0 && (
+              <button
+                type="button"
+                onClick={onReset}
+                className="mt-4 inline-flex items-center rounded-lg border border-border-strong px-3 py-1.5 text-sm text-muted transition-colors duration-150 hover:bg-surface-2 hover:text-fg"
+              >
+                {t('catalogReset')}
+              </button>
+            )}
           </div>
         )}
       </section>

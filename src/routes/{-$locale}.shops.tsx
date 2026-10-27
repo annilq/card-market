@@ -32,34 +32,46 @@ function ShopRow({
   active: boolean
   onClick: () => void
 }) {
-  const img = assetUrl(shop.image, { width: 200, height: 140, format: 'webp' })
+  const img = assetUrl(shop.image, { width: 240, height: 180, format: 'webp' })
   const t = useT()
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left rounded-xl border bg-surface p-3 flex gap-3 transition ${
-        active ? 'border-fg shadow-sm' : 'border-border hover:border-border-strong'
+      aria-pressed={active}
+      // 选中态用左侧 2px 墨色签名条 + 浅表面，而不是阴影：
+      // 系统是「静止时无阴影」（Flat-At-Rest），阴影在这里只是第二重提示。
+      // 签名条常驻 2px，只换颜色——若让宽度从 0 长出来，整行文字会左右跳。
+      className={`group relative flex w-full gap-3 rounded-xl border bg-surface p-3 text-left transition-colors duration-150 ${
+        active
+          ? 'border-fg bg-surface-2'
+          : 'border-border hover:border-border-strong'
       }`}
     >
-      <div className="w-24 h-20 shrink-0 rounded-lg overflow-hidden bg-surface-2">
+      <span
+        aria-hidden="true"
+        className={`absolute inset-y-3 left-0 w-0.5 rounded-full transition-colors duration-150 ${
+          active ? 'bg-fg' : 'bg-transparent'
+        }`}
+      />
+      <div className="h-[72px] w-24 shrink-0 overflow-hidden rounded-lg bg-surface-2">
         {img ? (
-          <img src={img} alt={shop.name} className="w-full h-full object-cover" />
+          <img src={img} alt={shop.name} className="h-full w-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-surface-2 text-hint text-xs">
+          <div className="flex h-full w-full items-center justify-center text-hint text-xs">
             {t('noImageShort')}
           </div>
         )}
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="font-medium text-fg break-words">{shop.name}</div>
         {shop.address && (
-          <div className="text-xs text-muted mt-0.5 truncate">{shop.address}</div>
+          <div className="mt-0.5 truncate text-xs text-muted">{shop.address}</div>
         )}
-        <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted mt-1">
-          {shop.phone && <span>{t('phoneLabel', { phone: shop.phone })}</span>}
+        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted">
+          {shop.phone && <span className="tabular-nums">{t('phoneLabel', { phone: shop.phone })}</span>}
           {shop.business_hours && (
-            <span>{t('hoursLabel', { hours: shop.business_hours })}</span>
+            <span className="tabular-nums">{t('hoursLabel', { hours: shop.business_hours })}</span>
           )}
         </div>
       </div>
@@ -72,23 +84,36 @@ function ShopsPage() {
   const t = useT()
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
+  const leaveMessageLink = (
+    <Link
+      to="/{-$locale}/message"
+      className="inline-flex items-center rounded-lg bg-accent px-5 py-2.5 text-sm text-on-accent transition-colors duration-150 hover:bg-accent/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted"
+    >
+      {t('leaveMessage')}
+    </Link>
+  )
+
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-bold">{t('shopsTitle')}</h1>
-        <p className="text-sm text-muted mt-1">{t('shopsIntro')}</p>
+        <h1 className="text-2xl font-bold">{t('shopsTitle')}</h1>
+        <p className="mt-1 text-sm text-muted">{t('shopsIntro')}</p>
       </div>
 
       {shops.length === 0 ? (
-        <div className="text-sm text-faint py-16 text-center border border-dashed border-border rounded-xl">
-          {t('noShops')}
+        <div className="rounded-xl border border-dashed border-border py-16 text-center">
+          <p className="text-sm text-faint">{t('noShops')}</p>
+          <div className="mt-4">{leaveMessageLink}</div>
         </div>
       ) : (
         // 列宽用 minmax(0, …)：grid 子项默认 min-width:auto，会被店铺行的
         // min-content（长地址那一行）顶宽，320 视口下整页横向溢出。
         // 两个子项都加 min-w-0 是同一件事的另一半保险。
         <div className="grid lg:grid-cols-[minmax(280px,380px)_minmax(0,1fr)] gap-6">
-          <div className="space-y-3 order-2 lg:order-1 min-w-0">
+          <div className="order-2 min-w-0 space-y-3 lg:order-1">
+            {/* 手机端「给我们留言」放在列表之前：原来在三条店铺之后，
+                要滚过整列才看得到——而这是这一页唯一的主行动。 */}
+            <div className="lg:hidden">{leaveMessageLink}</div>
             {shops.map((s) => (
               <ShopRow
                 key={s.id}
@@ -97,16 +122,11 @@ function ShopsPage() {
                 onClick={() => setSelectedId(s.id)}
               />
             ))}
-            <Link
-              to="/{-$locale}/message"
-              className="inline-block rounded-lg bg-accent text-on-accent px-5 py-2.5 text-sm hover:bg-accent/90"
-            >
-              {t('leaveMessage')}
-            </Link>
+            <div className="hidden lg:block">{leaveMessageLink}</div>
           </div>
 
-          <div className="order-1 lg:order-2 min-w-0">
-            <div className="lg:sticky lg:top-20 h-[320px] sm:h-[420px] lg:h-[520px] rounded-xl overflow-hidden border border-border bg-surface-2">
+          <div className="order-1 min-w-0 lg:order-2">
+            <div className="h-[320px] overflow-hidden rounded-xl border border-border bg-surface-2 sm:h-[420px] lg:sticky lg:top-20 lg:h-[520px]">
               <MapView
                 shops={shops}
                 selectedId={selectedId}
