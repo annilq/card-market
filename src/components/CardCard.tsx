@@ -3,10 +3,20 @@ import { assetUrl } from '~/lib/directus'
 import { useT } from '~/lib/i18n/react'
 import type { Card } from '~/lib/types'
 
-export function CardCard({ card }: { card: Card }) {
+/**
+ * 卡牌卡片。`compact` 用于首页高价买取横条：窄卡位只保留图片、卡名与价格，
+ * 类目/稀有度/编号在小宽度下会截成噪声，故隐藏。
+ */
+export function CardCard({
+  card,
+  compact = false,
+}: {
+  card: Card
+  compact?: boolean
+}) {
   const t = useT()
   const img = assetUrl(card.images?.[0], {
-    width: 400,
+    width: compact ? 240 : 400,
     format: 'webp',
   })
   return (
@@ -29,21 +39,25 @@ export function CardCard({ card }: { card: Card }) {
           </div>
         )}
       </div>
-      <div className="p-3">
-        <div className="text-xs text-faint truncate">
-          {card.ip?.name} · {card.series?.name}
-        </div>
+      <div className={compact ? 'p-2' : 'p-3'}>
+        {!compact && (
+          <div className="text-xs text-faint truncate">
+            {card.ip?.name} · {card.series?.name}
+          </div>
+        )}
         <div className="font-medium text-fg truncate">{card.name}</div>
         <div className="mt-2 flex items-center justify-between">
           <span className="text-rose-600 dark:text-rose-400 font-semibold">
             {card.price != null ? t('priceTag', { price: card.price }) : t('priceOnRequest')}
           </span>
-          <span className="text-xs text-faint">{card.rarity?.name}</span>
+          {!compact && (
+            <span className="text-xs text-faint">{card.rarity?.name}</span>
+          )}
         </div>
-        {card.code && (
+        {!compact && card.code && (
           <div className="text-xs text-faint mt-1">{t('cardCodeShort', { code: card.code })}</div>
         )}
-        {card.is_high_value && (
+        {!compact && card.is_high_value && (
           <span className="inline-block mt-1 text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded px-1.5 py-0.5">
             {t('highValue')}
           </span>
