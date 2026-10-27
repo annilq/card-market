@@ -61,11 +61,17 @@ async function dGet<T>(path: string): Promise<T | null> {
 // cards.images 是 M2M（junction: cards_images → directus_files），
 // 请求 images.directus_files_id 拿到 [{ directus_files_id: 'uuid' }]，
 // normalizeCard 再归一化为 id 数组，页面组件无需感知关联结构。
+// 关联字段按外键列名展开（ip_id.name），Directus 只在 ip_id 上返回对象；
+// normalizeCard 再摊平成 ip/series/rarity，页面组件只认这个形状。
 const CARD_FIELDS =
-  '*,ip.name,series.name,sub_series.name,rarity.name,images.directus_files_id'
+  '*,ip_id.name,series_id.name,sub_series_id.name,rarity_id.name,images.directus_files_id'
 
 interface CardImageJunction {
   directus_files_id?: string | { id?: string } | null
+}
+
+interface NamedRef {
+  name: string
 }
 
 function normalizeCard(raw: Card): Card {
@@ -81,7 +87,18 @@ function normalizeCard(raw: Card): Card {
       return rel?.id ?? null
     })
     .filter((v): v is string => typeof v === 'string' && v.length > 0)
-  return { ...raw, images }
+  const asNamed = (v: unknown): NamedRef | undefined =>
+    v && typeof v === 'object' && typeof (v as NamedRef).name === 'string'
+      ? { name: (v as NamedRef).name as string }
+      : undefined
+  return {
+    ...raw,
+    images,
+    ip: asNamed(raw.ip_id),
+    series: asNamed(raw.series_id),
+    sub_series: asNamed(raw.sub_series_id),
+    rarity: asNamed(raw.rarity_id),
+  }
 }
 
 function cardSortValue(sort: CardQuery['sort']): string {
@@ -97,7 +114,10 @@ function cardSortValue(sort: CardQuery['sort']): string {
   }
 }
 
-function buildCardFilter(q: CardQuery): Record<string, unknown> {
+function buildCardFilter(
+  q: CardQuery,
+  rarityIds: number[] = [],
+): Record<string, unknown> {
   const filter: Record<string, unknown> = { status: { _eq: 'published' } }
   if (q.ipIds?.length) filter.ip_id = { _in: q.ipIds }
   if (q.seriesIds?.length) filter.series_id = { _in: q.seriesIds }
@@ -111,12 +131,27 @@ function buildCardFilter(q: CardQuery): Record<string, unknown> {
   }
   if (q.q && q.q.trim()) {
     const term = q.q.trim()
-    filter._or = [
+    // 关键词覆盖卡名、编号与稀有度名。稀有度名要转成 id 才能参与过滤：
+    // Directus 不支持对关联字段做 _icontains（实测 403 does not exist）。
+    const terms: Record<string, unknown>[] = [
       { name: { _icontains: term } },
       { code: { _icontains: term } },
     ]
+    if (rarityIds.length) terms.push({ rarity_id: { _in: rarityIds } })
+    filter._or = terms
   }
   return filter
+}
+
+/** 稀有度名里命中关键词的 id（如搜「HR」）。没有关键词或没命中返回空数组。 */
+async function rarityIdsMatching(term: string | undefined): Promise<number[]> {
+  const keyword = term?.trim()
+  if (!keyword) return []
+  const params = new URLSearchParams()
+  params.set('fields', 'id')
+  params.set('filter', JSON.stringify({ name: { _icontains: keyword } }))
+  const res = await dGet<DirectusList<{ id: number }>>(`/items/rarities?${params}`)
+  return (res?.data ?? []).map((r) => r.id)
 }
 
 export async function getCards(q: CardQuery): Promise<CardListResult> {
@@ -126,7 +161,9 @@ export async function getCards(q: CardQuery): Promise<CardListResult> {
   params.set('page', String(q.page ?? 1))
   params.set('limit', String(q.limit ?? 24))
   params.set('sort', cardSortValue(q.sort))
-  params.set('filter', JSON.stringify(buildCardFilter(q)))
+
+  const rarityIds = await rarityIdsMatching(q.q)
+  params.set('filter', JSON.stringify(buildCardFilter(q, rarityIds)))
 
   const res = await dGet<DirectusList<Card>>(`/items/cards?${params}`)
   if (!res) return { items: [], total: 0 }
