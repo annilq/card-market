@@ -26,7 +26,7 @@ function InfoPage() {
   return (
     <article className="max-w-2xl mx-auto">
       <div className="text-xs text-faint mb-1">{t('infoNavTitle')}</div>
-      <h1 className="text-2xl font-bold">{title}</h1>
+      <h1 className="text-2xl font-bold break-words">{title}</h1>
       {page?.body ? (
         // 富文本由管理员在后台维护（受信任来源），与公告详情一致
         <div

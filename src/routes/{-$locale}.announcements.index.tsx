@@ -30,7 +30,7 @@ function Announcements() {
                 {t('pinned')}
               </span>
             )}
-            <span className="font-medium text-fg">{a.title}</span>
+            <span className="font-medium text-fg min-w-0 break-words">{a.title}</span>
           </div>
           <div className="text-xs text-faint mt-1">
             {formatDate(a.published_at, locale)}

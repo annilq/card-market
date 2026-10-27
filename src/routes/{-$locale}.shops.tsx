@@ -39,7 +39,7 @@ function ShopRow({
         )}
       </div>
       <div className="min-w-0">
-        <div className="font-medium text-fg">{shop.name}</div>
+        <div className="font-medium text-fg break-words">{shop.name}</div>
         {shop.address && (
           <div className="text-xs text-muted mt-0.5 truncate">{shop.address}</div>
         )}
@@ -71,8 +71,11 @@ function ShopsPage() {
           {t('noShops')}
         </div>
       ) : (
-        <div className="grid lg:grid-cols-[minmax(280px,380px)_1fr] gap-6">
-          <div className="space-y-3 order-2 lg:order-1">
+        // 列宽用 minmax(0, …)：grid 子项默认 min-width:auto，会被店铺行的
+        // min-content（长地址那一行）顶宽，320 视口下整页横向溢出。
+        // 两个子项都加 min-w-0 是同一件事的另一半保险。
+        <div className="grid lg:grid-cols-[minmax(280px,380px)_minmax(0,1fr)] gap-6">
+          <div className="space-y-3 order-2 lg:order-1 min-w-0">
             {shops.map((s) => (
               <ShopRow
                 key={s.id}
@@ -89,7 +92,7 @@ function ShopsPage() {
             </Link>
           </div>
 
-          <div className="order-1 lg:order-2">
+          <div className="order-1 lg:order-2 min-w-0">
             <div className="lg:sticky lg:top-20 h-[320px] sm:h-[420px] lg:h-[520px] rounded-xl overflow-hidden border border-border bg-surface-2">
               <MapView
                 shops={shops}

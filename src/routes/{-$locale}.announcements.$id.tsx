@@ -28,7 +28,7 @@ function AnnouncementDetail() {
       <Link to="/{-$locale}/announcements" className="text-sm text-muted hover:underline">
         {t('backToAnnouncementsArrow')}
       </Link>
-      <h1 className="text-2xl font-bold mt-3">{item.title}</h1>
+      <h1 className="text-2xl font-bold mt-3 break-words">{item.title}</h1>
       <div className="text-xs text-faint mt-1">
         {formatDate(item.published_at, locale)}
       </div>

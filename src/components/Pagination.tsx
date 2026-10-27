@@ -18,12 +18,17 @@ export function Pagination({
   if (totalPages <= 1) return null
 
   const slots = pageWindow(page, totalPages)
+  // 窄屏（<390）放不下「9 个 36px 控件 + 间距」共 372px。两种处理方式：
+  // 换行（325 时两行）或收缩。选收缩：分页是一条整体语义，换行会读成两组页码。
+  // 最窄 28px（320 时），仍高于 WCAG 2.5.8 的 24px 最小点击尺寸；360 以上回到 32/36px。
   const arrow =
-    'inline-flex h-9 min-w-9 items-center justify-center rounded-lg border border-border-strong px-3 text-sm text-muted hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:hover:bg-transparent transition'
+    'inline-flex h-9 min-w-7 min-[360px]:min-w-8 sm:min-w-9 items-center justify-center rounded-lg border border-border-strong px-1.5 min-[360px]:px-2 sm:px-3 text-sm text-muted hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:hover:bg-transparent transition'
+  const pageBtn =
+    'inline-flex h-9 min-w-7 min-[360px]:min-w-8 sm:min-w-9 items-center justify-center rounded-lg px-1.5 min-[360px]:px-2 sm:px-3 text-sm transition'
 
   return (
     <nav aria-label={t('paginationAria')} className="mt-8 flex justify-center">
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-center gap-1 max-w-full">
         <button
           type="button"
           onClick={() => onPage(page - 1)}
@@ -52,8 +57,8 @@ export function Pagination({
               aria-current={n === page ? 'page' : undefined}
               className={
                 n === page
-                  ? 'inline-flex h-9 min-w-9 items-center justify-center rounded-lg bg-accent text-on-accent px-3 text-sm font-semibold'
-                  : 'inline-flex h-9 min-w-9 items-center justify-center rounded-lg border border-border-strong px-3 text-sm text-muted hover:bg-surface-2 hover:text-fg transition'
+                  ? `${pageBtn} bg-accent text-on-accent font-semibold`
+                  : `${pageBtn} border border-border-strong text-muted hover:bg-surface-2 hover:text-fg`
               }
             >
               {n}

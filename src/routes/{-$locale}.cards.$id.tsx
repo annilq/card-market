@@ -36,8 +36,10 @@ function CardDetail() {
   const main = imgs[active] ?? null
 
   return (
-    <div className="grid md:grid-cols-2 gap-8">
-      <div>
+    // min-w-0：grid 子项默认 min-width:auto，一张超长无空格的卡名会把整列顶宽，
+    // 进而撑破视口（break-words 只影响换行，不降低 min-content）。
+    <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-8">
+      <div className="min-w-0">
         <div className="aspect-[3/4] bg-surface-2 rounded-xl overflow-hidden border border-border">
           {main ? (
             <img src={main} alt={card.name} className="w-full h-full object-contain" />
@@ -64,12 +66,12 @@ function CardDetail() {
         )}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 min-w-0">
         <div>
           <div className="text-xs text-faint">
             {card.ip?.name} · {card.series?.name} · {card.sub_series?.name}
           </div>
-          <h1 className="text-2xl font-bold mt-1">{card.name}</h1>
+          <h1 className="text-2xl font-bold mt-1 break-words">{card.name}</h1>
           {card.code && (
             <div className="text-sm text-muted mt-1">{t('cardCode', { code: card.code })}</div>
           )}

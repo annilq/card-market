@@ -190,8 +190,9 @@ function CardList() {
     !!search.q
 
   return (
-    <div className="grid lg:grid-cols-[260px_1fr] gap-6">
-      <aside className="lg:sticky lg:top-20 lg:self-start">
+    // 右侧内容列用 minmax(0,1fr)：否则超长卡名/编号的 min-content 会顶宽整列。
+    <div className="grid lg:grid-cols-[260px_minmax(0,1fr)] gap-6">
+      <aside className="min-w-0 lg:sticky lg:top-20 lg:self-start">
         <div className="flex items-center justify-between mb-4 lg:mb-0">
           <h2 className="font-semibold">{t('filters')}</h2>
           <div className="flex items-center gap-3">
@@ -267,7 +268,7 @@ function CardList() {
         </div>
       </aside>
 
-      <section>
+      <section className="min-w-0">
         {/* 关键词输入已移到公共 header，这里只留排序，避免同一页面两套搜索框 */}
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <select

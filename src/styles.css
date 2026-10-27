@@ -84,7 +84,13 @@ html.dark {
 /* 富文本（公告正文）：限制最大宽度并让链接/图片在深色下协调 */
 .prose {
   line-height: 1.75;
+  /* 后台正文里的超长 URL / 无空格串不应该把整页撑宽 */
+  overflow-wrap: break-word;
 }
 .prose img {
   max-width: 100%;
+}
+/* 富文本里的裸链接同理：允许在任意位置断行 */
+.prose a {
+  overflow-wrap: anywhere;
 }

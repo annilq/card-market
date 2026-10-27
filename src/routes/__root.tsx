@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   Outlet,
@@ -7,6 +7,7 @@ import {
   Link,
   Scripts,
   useRouter,
+  useRouterState,
 } from '@tanstack/react-router'
 import type { ErrorComponentProps } from '@tanstack/react-router'
 import { getSiteSettings } from '~/lib/directus'
@@ -74,7 +75,7 @@ export const Route = createRootRoute({
       ],
       // 首屏前同步主题，避免闪烁。通过 head().scripts 注入，
       // 由 <HeadContent /> 渲染，React 19 不会报 “script in component” 的 hydration 错误。
-      scripts: [{ dangerouslySetInnerHTML: { __html: NO_FLASH_SCRIPT } }],
+      scripts: [{ children: NO_FLASH_SCRIPT }],
     }
   },
   loader: async (): Promise<{ site: SiteSettings | null }> => {
@@ -82,96 +83,106 @@ export const Route = createRootRoute({
     return { site }
   },
   component: RootComponent,
+  // 文档外壳（<html>/<head>/<body>）只在这一层渲染一次。
+  // 404 与 500 也走这里，因此它们只需给出「main 里的内容」，
+  // 不能再自己套一层文档——否则 SSR 会输出两份 <html>，
+  // 水合失败后 main 被清空，页面只剩 header/footer。
+  shellComponent: RootDocument,
   notFoundComponent: NotFoundPage,
   errorComponent: ErrorPage,
 })
 
 function RootComponent() {
-  const { site } = Route.useLoaderData()
-  return (
-    <RootDocument site={site}>
-      <Outlet />
-    </RootDocument>
-  )
+  return <Outlet />
 }
 
 // 未匹配路由（含爬虫乱扫的路径、以及不支持的语言段）：给出站内 404，而不是默认的裸 "Not Found"
 function NotFoundPage() {
-  const { site } = Route.useLoaderData()
   const t = useT()
+  // 404 也可能是「未知语言段」造成的（如 /nope、/de/cards）。此时 params.locale
+  // 是那个非法值，直接用它生成链接会得到 /nope/cards 这类二次 404。
+  // 这里把非法/缺失的语言段归一成 undefined（默认语言），链接才会回到站内真实页面。
+  const locale = useLocale()
+  const localeParam = isDefaultLocale(locale) ? undefined : locale
   return (
-    <RootDocument site={site ?? null}>
-      <div className="text-center py-24">
-        <div className="text-6xl font-black text-slate-200 dark:text-slate-800 tracking-tight">
-          404
-        </div>
-        <p className="mt-4 text-muted">{t('notFoundBody')}</p>
-        <div className="mt-6 flex items-center justify-center gap-4 text-sm">
-          <Link
-            to="/{-$locale}"
-            className="inline-flex items-center rounded-full bg-accent text-on-accent px-4 py-1.5 hover:bg-accent/90"
-          >
-            {t('backHome')}
-          </Link>
-          <Link to="/{-$locale}/cards" className="text-muted underline">
-            {t('browseCards')}
-          </Link>
-        </div>
+    <div className="text-center py-24">
+      <div className="text-6xl font-black text-slate-200 dark:text-slate-800 tracking-tight">
+        404
       </div>
-    </RootDocument>
+      <p className="mt-4 text-muted">{t('notFoundBody')}</p>
+      <div className="mt-6 flex items-center justify-center gap-4 text-sm">
+        <Link
+          to="/{-$locale}"
+          params={{ locale: localeParam }}
+          className="inline-flex items-center rounded-full bg-accent text-on-accent px-4 py-1.5 hover:bg-accent/90"
+        >
+          {t('backHome')}
+        </Link>
+        <Link
+          to="/{-$locale}/cards"
+          params={{ locale: localeParam }}
+          className="text-muted underline"
+        >
+          {t('browseCards')}
+        </Link>
+      </div>
+    </div>
   )
 }
 
 // 渲染/加载异常兜底，避免整页白屏
 function ErrorPage({ error, reset }: ErrorComponentProps) {
-  const { site } = Route.useLoaderData()
   const t = useT()
   const message = error instanceof Error ? error.message : String(error)
+  const locale = useLocale()
+  const localeParam = isDefaultLocale(locale) ? undefined : locale
   return (
-    <RootDocument site={site ?? null}>
-      <div className="text-center py-24">
-        <div className="text-6xl font-black text-slate-200 dark:text-slate-800 tracking-tight">
-          500
-        </div>
-        <p className="mt-4 text-muted">{t('errorBody')}</p>
-        <p className="mt-2 text-xs text-faint break-all max-w-xl mx-auto">
-          {message}
-        </p>
-        <div className="mt-6 flex items-center justify-center gap-4 text-sm">
-          <button
-            onClick={reset}
-            className="inline-flex items-center rounded-full bg-accent text-on-accent px-4 py-1.5 hover:bg-accent/90"
-          >
-            {t('reload')}
-          </button>
-          <Link to="/{-$locale}" className="text-muted underline">
-            {t('backHome')}
-          </Link>
-        </div>
+    <div className="text-center py-24">
+      <div className="text-6xl font-black text-slate-200 dark:text-slate-800 tracking-tight">
+        500
       </div>
-    </RootDocument>
+      <p className="mt-4 text-muted">{t('errorBody')}</p>
+      <p className="mt-2 text-xs text-faint break-all max-w-xl mx-auto">
+        {message}
+      </p>
+      <div className="mt-6 flex items-center justify-center gap-4 text-sm">
+        <button
+          onClick={reset}
+          className="inline-flex items-center rounded-full bg-accent text-on-accent px-4 py-1.5 hover:bg-accent/90"
+        >
+          {t('reload')}
+        </button>
+        <Link
+          to="/{-$locale}"
+          params={{ locale: localeParam }}
+          className="text-muted underline"
+        >
+          {t('backHome')}
+        </Link>
+      </div>
+    </div>
   )
 }
 
 function ThemeToggle({ className = '' }: { className?: string }) {
-  const [dark, setDark] = useState(false)
   const t = useT()
+  // 仅用于 aria-label。服务端与首帧都取 false，挂载后再从 DOM 读真实值，
+  // 因此不会出现「渲染期读 document」导致的水合不一致。
+  const [dark, setDark] = useState(false)
 
-  // 以当前 DOM 上的 .dark 类为准初始化（无闪烁脚本已先设置好）
-  if (typeof document !== 'undefined') {
-    const isDark = document.documentElement.classList.contains('dark')
-    if (isDark !== dark) setDark(isDark)
-  }
+  useEffect(() => {
+    setDark(document.documentElement.classList.contains('dark'))
+  }, [])
 
   const toggle = () => {
-    const next = !dark
-    setDark(next)
+    const next = !document.documentElement.classList.contains('dark')
     document.documentElement.classList.toggle('dark', next)
     try {
       localStorage.setItem('theme', next ? 'dark' : 'light')
     } catch {
       /* ignore */
     }
+    setDark(next)
   }
 
   return (
@@ -179,20 +190,29 @@ function ThemeToggle({ className = '' }: { className?: string }) {
       type="button"
       onClick={toggle}
       aria-label={dark ? t('themeToLight') : t('themeToDark')}
+      aria-pressed={dark}
       className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted hover:bg-surface-2 hover:text-fg transition ${className}`}
     >
-      {dark ? (
-        // 月亮
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
-        </svg>
-      ) : (
-        // 太阳
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="4" />
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-        </svg>
-      )}
+      {/* 月亮：深色时显示。两个图标同时渲染，由 CSS 决定可见性，
+          因此没有「首帧图标不对、水合后跳变」的问题。 */}
+      <svg
+        width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        className="hidden dark:block"
+        aria-hidden="true"
+      >
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+      </svg>
+      {/* 太阳：浅色时显示 */}
+      <svg
+        width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        className="block dark:hidden"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+      </svg>
     </button>
   )
 }
@@ -234,15 +254,22 @@ function LocaleSwitcher() {
   )
 }
 
-function RootDocument({
-  children,
-  site,
-}: Readonly<{
-  children: ReactNode
-  site: SiteSettings | null
-}>) {
+// 文档外壳：由 shellComponent 调用，`children` 是当前匹配到的页面内容。
+// 它包住的不只是正常页面，也包括 404 / 500，所以这里是唯一渲染 <html> 的地方。
+function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+  // 注意：shellComponent 里不能直接 useLoaderData()——404/500 时根路由的 loader
+  // 数据未必就绪。从 router state 的第一个 match（即根路由）取，取不到就退化成
+  // null（站名与页脚文案都有兜底）。
+  const site = useRouterState({
+    select: (s) =>
+      (s.matches[0]?.loaderData as { site?: SiteSettings | null } | undefined)?.site ?? null,
+  })
   const locale = useLocale()
   const t = useT()
+  // 显式传 locale 参数：`to="/{-$locale}/..."` 默认会从「当前匹配的 params」继承语言段，
+  // 而 404 页（如 /nope、/de/cards）里那个段是非法值，继承下来就会生成 /nope/cards
+  // 这类二次 404 链接。这里统一用已解析出的合法 locale（默认语言为 undefined，不带段）。
+  const localeParams = { locale: isDefaultLocale(locale) ? undefined : locale }
   const siteName = site?.site_name || t('defaultSiteName')
   const nav = [
     { to: '/{-$locale}/cards' as const, label: t('navCards') },
@@ -261,7 +288,7 @@ function RootDocument({
         <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur border-b border-border">
           <div className="mx-auto max-w-6xl px-4">
             <div className="h-14 flex items-center gap-3 sm:gap-6">
-              <Link to="/{-$locale}" className="font-bold text-lg text-fg truncate">
+              <Link to="/{-$locale}" params={localeParams} className="font-bold text-lg text-fg truncate">
                 {siteName}
               </Link>
 
@@ -271,6 +298,7 @@ function RootDocument({
                   <Link
                     key={n.to}
                     to={n.to}
+                    params={localeParams}
                     activeProps={{ className: 'text-fg font-semibold' }}
                     className="hover:text-fg transition"
                   >
@@ -289,6 +317,7 @@ function RootDocument({
                 <ThemeToggle />
                 <Link
                   to="/{-$locale}/message"
+                  params={localeParams}
                   className="hidden sm:inline-flex items-center rounded-full bg-accent text-on-accent text-sm px-4 py-1.5 hover:bg-accent/90 transition"
                 >
                   {t('navContact')}
@@ -327,6 +356,7 @@ function RootDocument({
                   <Link
                     key={n.to}
                     to={n.to}
+                    params={localeParams}
                     onClick={() => setMenuOpen(false)}
                     activeProps={{ className: 'text-fg font-semibold' }}
                       className="py-2.5 text-sm text-muted hover:text-fg border-b border-border last:border-0"
@@ -336,6 +366,7 @@ function RootDocument({
                 ))}
                 <Link
                   to="/{-$locale}/message"
+                  params={localeParams}
                   onClick={() => setMenuOpen(false)}
                   className="mt-2 mb-1 inline-flex items-center justify-center rounded-full bg-accent text-on-accent text-sm px-4 py-2 hover:bg-accent/90"
                 >
@@ -386,7 +417,7 @@ function RootDocument({
               <Link
                 key={key}
                 to="/{-$locale}/info/$key"
-                params={{ key }}
+                params={{ key, ...localeParams }}
                 className="hover:text-fg hover:underline transition"
               >
                 {t(INFO_PAGE_LABEL_KEY[key])}
