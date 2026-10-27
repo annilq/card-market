@@ -15,6 +15,7 @@ import { INFO_PAGE_KEYS, INFO_PAGE_LABEL_KEY } from '~/lib/info-pages'
 import { DEFAULT_LOCALE, LOCALES, isDefaultLocale, resolveLocaleParam } from '~/lib/i18n/locales'
 import type { Locale } from '~/lib/i18n/locales'
 import { useLocale, useT } from '~/lib/i18n/react'
+import { GlobalSearch } from '~/components/GlobalSearch'
 import '../styles.css'
 
 // 在首屏绘制前同步主题，避免浅色闪一下。优先级：localStorage > 系统偏好。
@@ -258,51 +259,63 @@ function RootDocument({
       </head>
       <body className="min-h-screen flex flex-col">
         <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur border-b border-border">
-          <div className="mx-auto max-w-6xl px-4 h-14 flex items-center gap-3 sm:gap-6">
-            <Link to="/{-$locale}" className="font-bold text-lg text-fg truncate">
-              {siteName}
-            </Link>
-
-            {/* 桌面端导航 */}
-            <nav className="hidden sm:flex items-center gap-5 text-sm text-muted">
-              {nav.map((n) => (
-                <Link
-                  key={n.to}
-                  to={n.to}
-                  activeProps={{ className: 'text-fg font-semibold' }}
-                  className="hover:text-fg transition"
-                >
-                  {n.label}
-                </Link>
-              ))}
-            </nav>
-
-            <div className="ml-auto flex items-center gap-2">
-              <LocaleSwitcher />
-              <ThemeToggle />
-              <Link
-                to="/{-$locale}/message"
-                className="hidden sm:inline-flex items-center rounded-full bg-accent text-on-accent text-sm px-4 py-1.5 hover:bg-accent/90 transition"
-              >
-                {t('navContact')}
+          <div className="mx-auto max-w-6xl px-4">
+            <div className="h-14 flex items-center gap-3 sm:gap-6">
+              <Link to="/{-$locale}" className="font-bold text-lg text-fg truncate">
+                {siteName}
               </Link>
 
-              {/* 移动端汉堡按钮 */}
-              <button
-                type="button"
-                aria-label={t('openMenu')}
-                aria-expanded={menuOpen}
-                onClick={() => setMenuOpen((v) => !v)}
-                className="sm:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted hover:bg-surface-2"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  {menuOpen ? (
-                    <path d="M6 6l12 12M18 6L6 18" />
-                  ) : (
-                    <path d="M4 7h16M4 12h16M4 17h16" />
-                  )}
-                </svg>
-              </button>
+              {/* 桌面端导航 */}
+              <nav className="hidden sm:flex items-center gap-5 text-sm text-muted">
+                {nav.map((n) => (
+                  <Link
+                    key={n.to}
+                    to={n.to}
+                    activeProps={{ className: 'text-fg font-semibold' }}
+                    className="hover:text-fg transition"
+                  >
+                    {n.label}
+                  </Link>
+                ))}
+              </nav>
+
+              {/* 宽屏把搜索放在同一行（参考站的头图布局），窄屏落到第二行 */}
+              <div className="ml-auto hidden lg:flex flex-1 min-w-0 max-w-xl">
+                <GlobalSearch />
+              </div>
+
+              <div className="ml-auto flex items-center gap-2">
+                <LocaleSwitcher />
+                <ThemeToggle />
+                <Link
+                  to="/{-$locale}/message"
+                  className="hidden sm:inline-flex items-center rounded-full bg-accent text-on-accent text-sm px-4 py-1.5 hover:bg-accent/90 transition"
+                >
+                  {t('navContact')}
+                </Link>
+
+                {/* 移动端汉堡按钮 */}
+                <button
+                  type="button"
+                  aria-label={t('openMenu')}
+                  aria-expanded={menuOpen}
+                  onClick={() => setMenuOpen((v) => !v)}
+                  className="sm:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted hover:bg-surface-2"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    {menuOpen ? (
+                      <path d="M6 6l12 12M18 6L6 18" />
+                    ) : (
+                      <path d="M4 7h16M4 12h16M4 17h16" />
+                    )}
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* 窄屏把搜索放到第二行：手机上没有下拉菜单也要够得着 */}
+            <div className="py-2 lg:hidden">
+              <GlobalSearch />
             </div>
           </div>
 

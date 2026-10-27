@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCards, getIps, getRarities, getSeries, getSubSeries } from '~/lib/directus'
 import { CardCard } from '~/components/CardCard'
+import { Pagination } from '~/components/Pagination'
 import { useT } from '~/lib/i18n/react'
 import type { CardQuery, Ip, Rarity, Series, SubSeries } from '~/lib/types'
 
@@ -267,20 +268,12 @@ function CardList() {
       </aside>
 
       <section>
+        {/* 关键词输入已移到公共 header，这里只留排序，避免同一页面两套搜索框 */}
         <div className="flex flex-wrap items-center gap-3 mb-4">
-          <input
-            defaultValue={search.q}
-            placeholder={t('keywordPlaceholder')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter')
-                patch({ q: (e.target as HTMLInputElement).value || undefined })
-            }}
-            className="flex-1 min-w-[180px] rounded-lg border border-border-strong px-3 py-2 text-sm outline-none focus:border-muted bg-surface text-fg placeholder:text-faint"
-          />
           <select
             value={search.sort ?? 'price_desc'}
             onChange={(e) => patch({ sort: e.target.value as CardSearch['sort'] })}
-            className="rounded-lg border border-border-strong px-3 py-2 text-sm bg-surface text-fg outline-none focus:border-muted"
+            className="ml-auto rounded-lg border border-border-strong px-3 py-2 text-sm bg-surface text-fg outline-none focus:border-muted"
           >
             <option value="price_desc">{t('sortPriceDesc')}</option>
             <option value="price_asc">{t('sortPriceAsc')}</option>
@@ -302,27 +295,7 @@ function CardList() {
           </div>
         )}
 
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-3 mt-6">
-            <button
-              disabled={page <= 1}
-              onClick={() => patchPage(page - 1)}
-              className="rounded-lg border border-border-strong px-3 py-1.5 text-sm text-muted hover:bg-surface-2 disabled:opacity-40"
-            >
-              {t('prevPage')}
-            </button>
-            <span className="text-sm text-muted">
-              {page} / {totalPages}
-            </span>
-            <button
-              disabled={page >= totalPages}
-              onClick={() => patchPage(page + 1)}
-              className="rounded-lg border border-border-strong px-3 py-1.5 text-sm text-muted hover:bg-surface-2 disabled:opacity-40"
-            >
-              {t('nextPage')}
-            </button>
-          </div>
-        )}
+        <Pagination page={page} totalPages={totalPages} onPage={patchPage} />
       </section>
     </div>
   )
