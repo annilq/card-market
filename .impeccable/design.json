@@ -1,0 +1,498 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-27T07:37:07.482Z",
+  "title": "Design System: card-market",
+  "extensions": {
+    "colorMeta": {
+      "seal": {
+        "role": "primary",
+        "displayName": "Seal",
+        "canonical": "#0f172a",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      },
+      "price-tag-red": {
+        "role": "tertiary",
+        "displayName": "Price-Tag Red",
+        "canonical": "#ec003f",
+        "tonalRamp": [
+          "#4d0218",
+          "#8b0836",
+          "#a50036",
+          "#c70036",
+          "#ec003f",
+          "#ff2056",
+          "#ff637e",
+          "#ffccd3"
+        ]
+      },
+      "high-value-amber": {
+        "role": "secondary",
+        "displayName": "High-Value Amber (text)",
+        "canonical": "#9a5b00",
+        "tonalRamp": [
+          "#461901",
+          "#7b3306",
+          "#973c00",
+          "#bb4d00",
+          "#e17100",
+          "#fe9a00",
+          "#ffb900",
+          "#fee685"
+        ]
+      },
+      "prose-link-sky": {
+        "role": "tertiary",
+        "displayName": "Prose-Link Sky",
+        "canonical": "oklch(0.588 0.158 241.966)",
+        "tonalRamp": [
+          "#052f4a",
+          "#024a70",
+          "#00598a",
+          "#0069a8",
+          "#0084d1",
+          "#00a6f4",
+          "#00bcff",
+          "#b8e6fe"
+        ]
+      },
+      "form-ok-emerald": {
+        "role": "tertiary",
+        "displayName": "Form OK Emerald",
+        "canonical": "#047857",
+        "tonalRamp": [
+          "#002c22",
+          "#004f3b",
+          "#006045",
+          "#007a55",
+          "#009966",
+          "#00bc7d",
+          "#00d492",
+          "#a4f4cf"
+        ]
+      },
+      "cool-paper": {
+        "role": "neutral",
+        "displayName": "Cool Paper",
+        "canonical": "#f8fafc",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      },
+      "card-stock": {
+        "role": "neutral",
+        "displayName": "Card Stock",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      },
+      "recessed-panel": {
+        "role": "neutral",
+        "displayName": "Recessed Panel",
+        "canonical": "#f1f5f9",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#0f172a",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      },
+      "body-ink": {
+        "role": "neutral",
+        "displayName": "Body Ink",
+        "canonical": "#334155",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      },
+      "secondary-ink": {
+        "role": "neutral",
+        "displayName": "Secondary Ink",
+        "canonical": "#475569",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      },
+      "tertiary-ink": {
+        "role": "neutral",
+        "displayName": "Tertiary Ink",
+        "canonical": "#64748b",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      },
+      "whisper": {
+        "role": "neutral",
+        "displayName": "Weak Text",
+        "canonical": "#5b6b82",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      },
+      "empty-slot": {
+        "role": "neutral",
+        "displayName": "Empty Slot",
+        "canonical": "#5b6b82",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e2e8f0",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Hairline Strong",
+        "canonical": "#cbd5e1",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      },
+      "night-paper": {
+        "role": "neutral",
+        "displayName": "Night Paper",
+        "canonical": "#0b1120",
+        "tonalRamp": [
+          "#020618",
+          "#0f172b",
+          "#1d293d",
+          "#314158",
+          "#45556c",
+          "#62748e",
+          "#90a1b9",
+          "#cad5e2"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles on detail, list and info pages."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Home-page section headings and the header site name."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Rich text and card descriptions; .prose runs at line-height 1.75."
+      },
+      "ui": {
+        "displayName": "UI",
+        "purpose": "The workhorse 14px size: nav, buttons, inputs, metadata."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Card numbers, dates, counts, footer links."
+      },
+      "numeral-display": {
+        "displayName": "Numeral Display",
+        "purpose": "404 / 500 numerals only. The single large moment."
+      }
+    },
+    "shadows": [
+      {
+        "name": "hover-lift",
+        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        "purpose": "Product cards on hover only. Nothing floats at rest."
+      },
+      {
+        "name": "selected-row",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Selected shop row, paired with an ink border that carries the real signal."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for color and background transitions."
+      },
+      {
+        "name": "duration-fast",
+        "value": "150ms",
+        "purpose": "All hover and state transitions."
+      },
+      {
+        "name": "duration-banner",
+        "value": "500ms",
+        "purpose": "Banner cross-fade opacity only."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "min-360",
+        "value": "360px"
+      },
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Seal-filled action. Search submit, inquire, contact, active page. Inverts to near-white in dark mode via the token.",
+      "html": "<button class=\"ds-btn-primary\">搜索</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 16px; border: 0; border-radius: 8px; font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size: 14px; line-height: 20px; cursor: pointer; transition: background-color .15s cubic-bezier(.4,0,.2,1), border-color .15s, color .15s; background: var(--color-accent, #0f172a); color: var(--color-on-accent, #ffffff); }\n.ds-btn-primary:hover { background: color-mix(in srgb, var(--color-accent, #0f172a) 90%, transparent); }\n.ds-btn-primary:focus-visible { outline: 2px solid var(--color-muted, #475569); outline-offset: 2px; }\n.ds-btn-primary:active { transform: translateY(1px); }\n.ds-btn-primary[disabled] { opacity: .5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined action on card stock. \"Back to list\", pagination arrows, filter expand toggle.",
+      "html": "<button class=\"ds-btn-secondary\">返回列表</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 16px; border: 0; border-radius: 8px; font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size: 14px; line-height: 20px; cursor: pointer; transition: background-color .15s cubic-bezier(.4,0,.2,1), border-color .15s, color .15s; background: var(--color-surface, #fff); color: var(--color-muted, #475569); border: 1px solid var(--color-border-strong, #cbd5e1); }\n.ds-btn-secondary:hover { background: var(--color-surface-2, #f1f5f9); color: var(--color-fg, #0f172a); }\n.ds-btn-secondary:focus-visible { outline: 2px solid var(--color-muted, #475569); outline-offset: 2px; }"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "button-icon",
+      "description": "36px square control for theme, locale menu and hamburger. Hairline border, no fill change at rest.",
+      "html": "<button class=\"ds-btn-icon\" aria-label=\"切换到深色模式\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41\"/></svg></button>",
+      "css": ".ds-btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e2e8f0); color: var(--color-muted, #475569); cursor: pointer; transition: background-color .15s, color .15s; }\n.ds-btn-icon:hover { background: var(--color-surface-2, #f1f5f9); color: var(--color-fg, #0f172a); }\n.ds-btn-icon:focus-visible { outline: 2px solid var(--color-muted, #475569); outline-offset: 2px; }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Full-width global search. The hint is a layered span, not a placeholder attribute, so it can swap to a shorter string when narrow.",
+      "html": "<div class=\"ds-search\"><div class=\"ds-search-field\"><input type=\"text\" aria-label=\"请输入卡牌名称 / 编号 / 罕见度进行搜索\" placeholder=\" \" /><span class=\"ds-search-hint\" aria-hidden=\"true\">请输入卡牌名称 / 编号 / 罕见度进行搜索</span></div><button class=\"ds-search-submit\" type=\"button\">搜索</button></div>",
+      "css": ".ds-search { display: flex; width: 100%; align-items: center; gap: 8px; font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; }\n.ds-search-field { position: relative; flex: 1; min-width: 0; }\n.ds-search-field input { width: 100%; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--color-border-strong, #cbd5e1); background: var(--color-surface, #fff); color: var(--color-fg, #0f172a); font-size: 14px; font-family: inherit; outline: none; transition: border-color .15s; }\n.ds-search-field input:focus { border-color: var(--color-muted, #475569); }\n.ds-search-field input:focus-visible { outline: 2px solid var(--color-muted, #475569); outline-offset: 1px; }\n.ds-search-hint { position: absolute; inset: 0 12px 0 12px; display: flex; align-items: center; pointer-events: none; font-size: 14px; color: var(--color-faint, #94a3b8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ds-search-field input:not(:placeholder-shown) + .ds-search-hint { display: none; }\n.ds-search-submit { height: 36px; padding: 0 16px; flex-shrink: 0; border-radius: 8px; border: 0; background: var(--color-accent, #0f172a); color: var(--color-on-accent, #fff); font-size: 14px; font-family: inherit; cursor: pointer; }\n.ds-search-submit:hover { background: color-mix(in srgb, var(--color-accent, #0f172a) 90%, transparent); }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip-filter",
+      "description": "IP shortcut on the home page. Pill outline; the filter rail itself uses checkboxes, not these.",
+      "html": "<button class=\"ds-chip\">宝可梦</button>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; height: 32px; padding: 0 16px; border-radius: 9999px; border: 1px solid var(--color-border-strong, #cbd5e1); background: var(--color-surface, #fff); color: var(--color-muted, #475569); font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size: 14px; cursor: pointer; transition: border-color .15s, color .15s; }\n.ds-chip:hover { border-color: var(--color-muted, #475569); color: var(--color-fg, #0f172a); }\n.ds-chip:focus-visible { outline: 2px solid var(--color-muted, #475569); outline-offset: 2px; }"
+    },
+    {
+      "name": "Product Card",
+      "kind": "card",
+      "refersTo": "card-product",
+      "description": "The catalogue entry: 3:4 image well, name, price in Price-Tag Red, rarity opposite, card number, optional high-value badge. Hover lifts shadow only.",
+      "html": "<a class=\"ds-card\" href=\"#\"><div class=\"ds-card-well\">暂无图片</div><div class=\"ds-card-body\"><div class=\"ds-card-meta\">宝可梦 · 朱紫</div><div class=\"ds-card-name\">喷火龙</div><div class=\"ds-card-row\"><span class=\"ds-card-price\">¥880.00</span><span class=\"ds-card-rarity\">UR</span></div><div class=\"ds-card-code\">编号 199/197</div><span class=\"ds-card-badge\">高价买取</span></div></a>",
+      "css": ".ds-card { display: block; border-radius: 12px; border: 1px solid var(--color-border, #e2e8f0); background: var(--color-surface, #fff); overflow: hidden; text-decoration: none; color: inherit; font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; transition: box-shadow .15s, border-color .15s; }\n.ds-card:hover { box-shadow: 0 4px 6px -1px rgb(0 0 0 / .1), 0 2px 4px -2px rgb(0 0 0 / .1); border-color: var(--color-border-strong, #cbd5e1); }\n.ds-card:focus-visible { outline: 2px solid var(--color-muted, #475569); outline-offset: 2px; }\n.ds-card-well { aspect-ratio: 3 / 4; background: var(--color-surface-2, #f1f5f9); display: flex; align-items: center; justify-content: center; color: var(--color-ghost, #cbd5e1); font-size: 14px; }\n.ds-card-body { padding: 12px; }\n.ds-card-meta { font-size: 12px; color: var(--color-faint, #94a3b8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ds-card-name { font-size: 16px; font-weight: 500; color: var(--color-fg, #0f172a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ds-card-row { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }\n.ds-card-price { font-size: 16px; font-weight: 600; color: oklch(0.586 0.253 17.585); }\n.ds-card-rarity { font-size: 12px; color: var(--color-faint, #94a3b8); }\n.ds-card-code { font-size: 12px; color: var(--color-faint, #94a3b8); margin-top: 4px; }\n.ds-card-badge { display: inline-block; margin-top: 4px; font-size: 10px; padding: 2px 6px; border-radius: 4px; color: oklch(0.666 0.179 58.318); background: oklch(0.769 0.188 70.08 / .15); }\n@media (prefers-color-scheme: dark) { .ds-card-price { color: oklch(0.712 0.194 13.428); } .ds-card-badge { color: oklch(0.828 0.189 84.429); } }"
+    },
+    {
+      "name": "Pinned Badge",
+      "kind": "chip",
+      "refersTo": "badge-pinned",
+      "description": "10px tinted label marking a pinned announcement. Shares Price-Tag Red with money — the only other sanctioned use of that hue.",
+      "html": "<span class=\"ds-badge-pinned\">置顶</span>",
+      "css": ".ds-badge-pinned { display: inline-block; flex-shrink: 0; font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size: 10px; line-height: 1.4; padding: 2px 6px; border-radius: 4px; color: oklch(0.586 0.253 17.585); background: oklch(0.645 0.246 16.439 / .15); }\n@media (prefers-color-scheme: dark) { .ds-badge-pinned { color: oklch(0.712 0.194 13.428); } }"
+    },
+    {
+      "name": "Announcement Row",
+      "kind": "custom",
+      "description": "Hairline-divided list row: optional date column, pinned badge, truncated title. Rows sit inside one bordered container, never as separate cards.",
+      "html": "<div class=\"ds-rows\"><a class=\"ds-row\" href=\"#\"><span class=\"ds-row-date\">2026-02-01</span><span class=\"ds-badge-pinned\">置顶</span><span class=\"ds-row-title\">店铺春节营业时间调整</span></a><a class=\"ds-row\" href=\"#\"><span class=\"ds-row-title\">游戏王高罕卡专项回收启动</span></a></div>",
+      "css": ".ds-rows { border: 1px solid var(--color-border, #e2e8f0); border-radius: 12px; background: var(--color-surface, #fff); overflow: hidden; font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; }\n.ds-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; text-decoration: none; color: inherit; transition: background-color .15s; }\n.ds-row + .ds-row { border-top: 1px solid var(--color-border, #e2e8f0); }\n.ds-row:hover { background: var(--color-surface-2, #f1f5f9); }\n.ds-row-date { width: 112px; flex-shrink: 0; font-size: 12px; color: var(--color-faint, #94a3b8); font-variant-numeric: tabular-nums; }\n.ds-row-title { flex: 1; min-width: 0; font-size: 14px; color: var(--color-fg, #0f172a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ds-badge-pinned { display: inline-block; flex-shrink: 0; font-size: 10px; padding: 2px 6px; border-radius: 4px; color: oklch(0.586 0.253 17.585); background: oklch(0.645 0.246 16.439 / .15); }\n@media (prefers-color-scheme: dark) { .ds-badge-pinned { color: oklch(0.712 0.194 13.428); } }"
+    },
+    {
+      "name": "Pagination Cell",
+      "kind": "custom",
+      "refersTo": "pagination-active",
+      "description": "36px cells that shrink to 28px at 320px. Active cell fills with Seal; arrows keep a hairline. The row never wraps — it contracts instead.",
+      "html": "<nav class=\"ds-pager\" aria-label=\"分页\"><button class=\"ds-pager-arrow\" aria-label=\"上一页\">‹</button><button class=\"ds-pager-cell\">1</button><button class=\"ds-pager-cell\">2</button><button class=\"ds-pager-cell ds-pager-cell-active\" aria-current=\"page\">3</button><button class=\"ds-pager-cell\">4</button><button class=\"ds-pager-arrow\" aria-label=\"下一页\">›</button></nav>",
+      "css": ".ds-pager { display: flex; align-items: center; justify-content: center; gap: 4px; font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; }\n.ds-pager-cell, .ds-pager-arrow { display: inline-flex; align-items: center; justify-content: center; height: 36px; min-width: 36px; padding: 0 12px; border-radius: 8px; font-size: 14px; font-family: inherit; background: var(--color-surface, #fff); color: var(--color-muted, #475569); border: 1px solid var(--color-border-strong, #cbd5e1); cursor: pointer; transition: background-color .15s, color .15s; }\n.ds-pager-cell:hover, .ds-pager-arrow:hover { background: var(--color-surface-2, #f1f5f9); color: var(--color-fg, #0f172a); }\n.ds-pager-cell-active { background: var(--color-accent, #0f172a); color: var(--color-on-accent, #fff); border-color: transparent; font-weight: 600; }\n.ds-pager-cell:focus-visible, .ds-pager-arrow:focus-visible { outline: 2px solid var(--color-muted, #475569); outline-offset: 2px; }\n@media (max-width: 359px) { .ds-pager-cell, .ds-pager-arrow { min-width: 28px; padding: 0 6px; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Catalogue",
+    "overview": "This interface is a card catalogue you can flip through: entries on cool paper, one hairline per boundary, and a price tag that is the only warm thing on the page. It does not sell with decoration — it sells by being legible. The palette is deliberately cold: slate paper, white card stock, slate ink, and a single red reserved for money. Because there is no second warm hue anywhere, the price is impossible to miss without being loud. Dark mode is the same catalogue read under a lamp, with the same hairline logic and the same single red, lifted one step to stay readable on night paper.",
+    "keyCharacteristics": [
+      "One accent family (red) used only for money and \"pinned\"; everything else is slate.",
+      "Flat at rest. No shadow, no gradient, no glow as decoration.",
+      "Two radius steps (8px controls, 12px containers) plus pills for chips and 4px badges.",
+      "System font stack; hierarchy built from weight and size, never from a second typeface.",
+      "Hairline borders separate everything; color fills are rare and always semantic.",
+      "Light and dark are the same design, one step apart in lightness."
+    ],
+    "rules": [
+      {
+        "name": "The One Warm Colour Rule",
+        "body": "Red appears only for money and for \"pinned\". If a red element is not a price, a pinned badge, or an error, it is a bug. Amber is its only sanctioned companion, and only on the high-value badge.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink-Is-The-Button Rule",
+        "body": "Primary actions fill with ink, never with a brand hue. There is no brand color to spend on a button — the catalogue authority comes from black type.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two-Theme Rule",
+        "body": "Every color decision is made twice, from the same token names, in @theme and in html.dark. A raw Tailwind color name inside a component is a defect: it will not follow the theme.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Display-Type Rule",
+        "body": "There is no display face and no webfont. If a hierarchy problem seems to need a new typeface, it needs a weight or size change instead.",
+        "section": "typography"
+      },
+      {
+        "name": "The Four-Size Rule",
+        "body": "Any given screen uses at most four type sizes: 24, 18, 14, 12 (plus 10 only for badges). A fifth size means the hierarchy is being solved by accident.",
+        "section": "typography"
+      },
+      {
+        "name": "The Truncate-Once Rule",
+        "body": "Card names truncate in lists and wrap with break-words on detail pages. Detail headings, .prose bodies, and shop names must never overflow their column.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-At-Rest Rule",
+        "body": "No shadow, glow, or gradient at rest. If a surface needs to be distinguished, change its border or its tint, not its elevation.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Border-Or-Tint Rule",
+        "body": "Every \"these are separate things\" moment resolves to either a 1px hairline or one step of background tint. Never both, never a shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Two-Radius Rule",
+        "body": "8px for things you press, 12px for things that hold content. A 16px or 20px radius on a button or input is a defect.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Hairline-Always Rule",
+        "body": "Containers get a 1px border-border border. Removing it makes white cards disappear into the page in light mode.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do reach for `bg-surface` / `text-fg` / `border-border` / `bg-accent` before any raw Tailwind color. The token set is the theme switch.",
+      "Do verify every change in both themes at 320px and 1440px. Dark mode is a first-class state, not a filter.",
+      "Do keep interactive targets at least 24px tall (WCAG 2.5.8); pagination may shrink to 28px at 320px but never below.",
+      "Do put new content behind Directus. If the client would ever want to change a string or an image, it belongs in the CMS, not in a component.",
+      "Do keep filters, sort, and page in the URL so a filtered view can be shared and returns intact.",
+      "Do use `min-w-0` on grid and flex children that hold text; `break-words` alone does not reduce a min-content width.",
+      "Do give the three language versions the same structure and the same terminology, even where a translation would be shorter."
+    ],
+    "donts": [
+      "Don't introduce a second warm color, a gradient, or a colored glow. Price-Tag Red and High-Value Amber are the entire permission.",
+      "Don't add a shadow at rest, or a radius outside the 8/12/16/4/full set.",
+      "Don't use `bg-white`, `text-slate-900`, or any raw palette name in a component — it will break dark mode.",
+      "Don't shrink text below 12px except the two 11px badges.",
+      "Don't use a de-emphasised colour for anything a user must read to understand why a container is empty — “暂无图片” is text, not decoration, and sits at the same value as Weak Text.",
+      "Don't let a fifth type size onto a screen to solve a hierarchy problem.",
+      "Don't hardcode client content (site name, shop details, announcement text, card copy) into components; the current values are placeholders and will be replaced.",
+      "Don't fabricate product imagery, testimonials, or review scores to fill a layout — the page must survive with “暂无图片” in every image well.",
+      "Don't reintroduce a cart, checkout, price comparison, or account surface. This is a catalogue, not a store."
+    ]
+  }
+}
