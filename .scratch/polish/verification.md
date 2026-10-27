@@ -3,6 +3,13 @@
 分支 `feat/home-polish`，worktree `.worktrees/home-polish`。基线截图在
 `.scratch/visual-audit/shots/`（master），改动后截图在 `.scratch/polish/shots/`。
 
+> 合并说明：本分支开发期间 master 又推进了 3 个提交（`538212a` / `38363be` /
+> `061ab14`，改的是首页筛选区与 `CatalogFilters`）。已 rebase 到 `061ab14` 之上，
+> 冲突只有 `src/routes/{-$locale}.index.tsx` 一处（import 顺序），已解决。
+> master 带来的「重置」按钮与我原本在结果头加的「清空」重复，现已统一：
+> **整页重置 = 筛选区标题行的「重置」**（disabled 时不跳位），
+> **结果头只保留可逐个移除的 chips**。空结果面板的动作也改用它。
+
 ## 自动化检查
 
 | 检查 | 范围 | 结果 |
