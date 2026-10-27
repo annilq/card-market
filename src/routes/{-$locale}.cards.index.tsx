@@ -6,7 +6,8 @@ import { Pagination } from '~/components/Pagination'
 import { useT } from '~/lib/i18n/react'
 import { translate } from '~/lib/i18n/messages'
 import { buildHead, localeFromMatches, ogImage, siteFromMatches, siteNameOf } from '~/lib/seo'
-import type { CardQuery, Ip, Rarity, Series, SubSeries } from '~/lib/types'
+import { CARD_SORTS } from '~/lib/types'
+import type { CardQuery, CardSort, Ip, Rarity, Series, SubSeries } from '~/lib/types'
 
 // 数值型参数在 search 中：单选取标量 number，多选取 number[]（与 TanStack 默认
 // 解析一致——单值 ip=1 解析为 number，多值 ip=1&ip=2 解析为数组，避免规范化重定向）。
@@ -19,7 +20,7 @@ interface CardSearch {
   min?: number
   max?: number
   q?: string
-  sort?: 'price_desc' | 'price_asc' | 'newest'
+  sort?: CardSort
   page?: number
 }
 
@@ -60,12 +61,9 @@ export const Route = createFileRoute('/{-$locale}/cards/')({
     min: s.min != null && s.min !== '' ? Number(s.min) : undefined,
     max: s.max != null && s.max !== '' ? Number(s.max) : undefined,
     q: s.q != null && s.q !== '' ? String(s.q) : undefined,
-    sort:
-      s.sort === 'price_asc' || s.sort === 'newest'
-        ? s.sort
-        : s.sort === 'price_desc'
-          ? 'price_desc'
-          : undefined,
+    sort: CARD_SORTS.includes(s.sort as CardSort)
+      ? (s.sort as CardSort)
+      : undefined,
     page: s.page != null && s.page !== '' ? Number(s.page) : undefined,
   }),
   loaderDeps: ({ search }) => ({
@@ -298,6 +296,7 @@ function CardList() {
             <option value="price_desc">{t('sortPriceDesc')}</option>
             <option value="price_asc">{t('sortPriceAsc')}</option>
             <option value="newest">{t('sortNewest')}</option>
+            <option value="oldest">{t('sortOldest')}</option>
           </select>
         </div>
 
