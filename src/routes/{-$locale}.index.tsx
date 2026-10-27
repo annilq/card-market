@@ -12,6 +12,7 @@ import { HighValueStrip } from '~/components/HighValueStrip'
 import { HomeNotices } from '~/components/HomeNotices'
 import { localizeHref } from '~/lib/i18n/locales'
 import { useLocale, useT } from '~/lib/i18n/react'
+import { buildHead, localeFromMatches, ogImage, ogImageFromFile, siteFromMatches, siteNameOf } from '~/lib/seo'
 import type { Announcement, Banner, Ip } from '~/lib/types'
 
 export const Route = createFileRoute('/{-$locale}/')({
@@ -32,6 +33,22 @@ export const Route = createFileRoute('/{-$locale}/')({
       ],
     )
     return { banners, announcements, ips, highValue, featured }
+  },
+  // 首页：用 LOCALES 里那条完整的站点标题与描述，分享图取第一条 banner。
+  head: async ({ matches }) => {
+    const locale = localeFromMatches(matches)
+    const site = siteFromMatches(matches)
+    const banners = (matches[matches.length - 1]?.loaderData as
+      | { banners?: Banner[] }
+      | undefined)?.banners
+    return buildHead({
+      locale,
+      pathname: '/',
+      siteName: siteNameOf(site, locale),
+      isHome: true,
+      // 首页优先用第一条 banner；没有 banner 时退回根路由的兜底图（同一个字段，保持一致）。
+      image: ogImageFromFile(banners?.[0]?.image) ?? ogImage(matches),
+    })
   },
   component: Home,
 })
@@ -56,7 +73,7 @@ function Home() {
     <div className="space-y-10">
       {/* Banner 轮播 */}
       {banners.length > 0 && (
-        <section className="relative rounded-2xl overflow-hidden border border-border bg-slate-900 aspect-[21/9]">
+        <section className="relative rounded-2xl overflow-hidden border border-border bg-accent aspect-[21/9]">
           {banners.map((b, i) => {
             const src = assetUrl(b.image, { width: 1280, format: 'webp' })
             const inner = (
@@ -68,11 +85,20 @@ function Home() {
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                 )}
+                {/* 图上文字：压一层足够深的渐隐黑色再写字。
+                    之前是 from-black/60，深色主题下与图片的深色区域叠在一起，
+                    实测对比度只有 1.23:1——文字几乎消失。改成底部实心、向上渐隐。 */}
                 {(b.title || b.description) && (
-                  <div className="absolute inset-0 flex flex-col justify-end p-6 text-white bg-gradient-to-t from-black/60 to-transparent">
-                    {b.title && <div className="text-xl font-bold">{b.title}</div>}
+                  <div className="absolute inset-0 flex flex-col justify-end p-6 text-white bg-gradient-to-t from-black/85 via-black/55 to-transparent">
+                    {b.title && (
+                      <div className="text-xl font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                        {b.title}
+                      </div>
+                    )}
                     {b.description && (
-                      <div className="text-sm opacity-90">{b.description}</div>
+                      <div className="text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                        {b.description}
+                      </div>
                     )}
                   </div>
                 )}

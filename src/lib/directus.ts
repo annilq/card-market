@@ -24,13 +24,20 @@ export const DIRECTUS_BASE = BASE
 /** 构造图片资产 URL（Directus 文件接口，可加缩略图/格式转换，见 development.md §5.3） */
 export function assetUrl(
   fileId: string | number | null | undefined,
-  opts?: { width?: number; height?: number; format?: 'webp' | 'jpg' },
+  opts?: {
+    width?: number
+    height?: number
+    format?: 'webp' | 'jpg'
+    // 只给社交分享图用：OG 卡片要固定 1200×630 的裁切，其他场景保持原始比例。
+    fit?: 'cover' | 'contain'
+  },
 ): string | null {
   if (fileId == null) return null
   const p = new URLSearchParams()
   if (opts?.width) p.set('width', String(opts.width))
   if (opts?.height) p.set('height', String(opts.height))
   if (opts?.format) p.set('format', opts.format)
+  if (opts?.fit) p.set('fit', opts.fit)
   const q = p.toString()
   return `${BASE}/assets/${fileId}${q ? `?${q}` : ''}`
 }
@@ -314,10 +321,15 @@ export async function postMessage(
     })
     if (!res.ok) {
       const text = await res.text().catch(() => '')
-      return { ok: false, error: `提交失败（${res.status}）${text}` }
+      // error 只用来记录与排查，**不要直接渲染给访客**：里面是 HTTP 状态码
+      // 与 Directus 的原始响应体。界面文案由页面按语言给出。
+      return { ok: false, error: `HTTP ${res.status} ${text.slice(0, 500)}` }
     }
     return { ok: true }
   } catch (err) {
-    return { ok: false, error: String(err) }
+    return {
+      ok: false,
+      error: err instanceof Error ? `${err.name}: ${err.message}` : String(err),
+    }
   }
 }

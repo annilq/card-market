@@ -3,10 +3,23 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { assetUrl, getShops } from '~/lib/directus'
 import { MapView } from '~/components/MapView'
 import { useT } from '~/lib/i18n/react'
+import { translate } from '~/lib/i18n/messages'
+import { buildHead, localeFromMatches, ogImage, siteFromMatches, siteNameOf } from '~/lib/seo'
 import type { Shop } from '~/lib/types'
 
 export const Route = createFileRoute('/{-$locale}/shops')({
   loader: async () => ({ shops: await getShops() }),
+  head: async ({ matches }) => {
+    const locale = localeFromMatches(matches)
+    return buildHead({
+      locale,
+      pathname: '/shops',
+      siteName: siteNameOf(siteFromMatches(matches), locale),
+      title: translate(locale, 'shopsTitle'),
+      description: translate(locale, 'shopsIntro'),
+      image: ogImage(matches),
+    })
+  },
   component: ShopsPage,
 })
 
@@ -33,7 +46,7 @@ function ShopRow({
         {img ? (
           <img src={img} alt={shop.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-ghost text-xs">
+          <div className="w-full h-full flex items-center justify-center bg-surface-2 text-hint text-xs">
             {t('noImageShort')}
           </div>
         )}

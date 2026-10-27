@@ -26,6 +26,7 @@ const zh = {
   themeToDark: '切换到深色模式',
   themeToLight: '切换到浅色模式',
   switchLanguage: '切换语言',
+  notFoundHeading: '页面不存在',
   notFoundBody: '页面不存在或已被删除。',
   errorBody: '页面加载出错了，请稍后重试。',
   copyright: '© {year} {site} · 内容由 Directus 驱动',
@@ -40,6 +41,9 @@ const zh = {
   infoTerms: '利用规则',
   infoDataUsage: '数据使用',
   infoPageNotFound: '该信息页不存在或尚未发布。',
+  // 内容语言说明：界面跟着 URL 语言段走，但后台内容是单一语言的。
+  contentLanguageNotice: '本站内容（卡牌名、公告、门店信息）以中文录入，切换语言只影响界面文字。',
+  contentLanguageSwitch: '查看中文原文',
 
   // 首页
   searchPlaceholder: '请输入卡牌名称 / 编号 / 罕见度进行搜索',
@@ -100,16 +104,28 @@ const zh = {
   // 留言
   contactTitle: '留言咨询',
   contactIntro:
-    '留下您的问题或收购意向，管理员会在后台处理。联系方式选填，便于我们回复。',
-  submitOk: '提交成功，感谢您的留言！',
-  submitFail: '提交失败：{msg}',
+    '写下您想了解的卡牌或收购问题，我们看到后会尽快回复。',
+  submitOk: '留言已提交。',
+  submitFail: '留言没能提交。请检查网络后重试；如果仍然失败，请稍后再试或直接到店咨询。',
   messageContent: '留言内容',
-  messagePlaceholder: '例如：想收购某张卡，或咨询回购价格…',
-  contactName: '联系人',
+  messagePlaceholder: '例如：这张卡的收购价大概多少？',
+  contactName: '称呼',
   contactInfo: '联系方式',
-  contactInfoPlaceholder: '邮箱 / 电话 / 微信（选填）',
+  contactInfoPlaceholder: '邮箱 / 电话 / X 账号',
+  contactHint: '留一个联系方式，我们才能回复您；也可以直接到店咨询。',
+  replyHint: '回复需要几天时间。着急的话请直接到店。',
+  /**
+   * 声明字段限制。
+   * 注意不能加 `maxlength` 属性：Directus 对 Public 角色的 create 权限只放行
+   * content / contact_name / contact_info 三个字段，多传任何字段都会被直接 400。
+   */
+  contactMaxLength: '最多 255 字',
+  cardContextLabel: '咨询的卡牌',
+  cardContextRemove: '移除这张卡',
   submitting: '提交中…',
   submitMessage: '提交留言',
+  requiredMark: '必填',
+  optionalMark: '选填',
   backHomeArrow: '← 返回首页',
 
   // 公告
@@ -144,6 +160,7 @@ const ja: Record<MessageKey, string> = {
   themeToDark: 'ダークモードに切り替え',
   themeToLight: 'ライトモードに切り替え',
   switchLanguage: '言語を切り替え',
+  notFoundHeading: 'ページが見つかりません',
   notFoundBody: 'ページが存在しないか、削除されました。',
   errorBody: 'ページの読み込みに失敗しました。時間をおいて再度お試しください。',
   copyright: '© {year} {site} · コンテンツは Directus で管理しています',
@@ -157,6 +174,8 @@ const ja: Record<MessageKey, string> = {
   infoTerms: '利用規約',
   infoDataUsage: 'データの利用',
   infoPageNotFound: 'このページは存在しないか、公開されていません。',
+  contentLanguageNotice: 'カード名・お知らせ・店舗情報などのコンテンツは中国語で登録されています。言語を切り替えると変わるのは画面の文言のみです。',
+  contentLanguageSwitch: '中国語の原文を見る',
 
   searchPlaceholder: 'カード名 / 型番 / レアリティで検索',
   searchPlaceholderShort: 'カード名 / 型番',
@@ -213,16 +232,24 @@ const ja: Record<MessageKey, string> = {
 
   contactTitle: 'お問い合わせ',
   contactIntro:
-    'ご質問や買取のご希望をお寄せください。内容は管理画面で確認します。連絡先は任意です（ご返信のため）。',
-  submitOk: '送信しました。ありがとうございます！',
-  submitFail: '送信に失敗しました：{msg}',
-  messageContent: 'メッセージ内容',
-  messagePlaceholder: '例：特定のカードを買い取りたい、買取価格について相談したい…',
+    '気になるカードや買取についてご記入ください。確認のうえ順次ご返信します。',
+  submitOk: 'お問い合わせを受け付けました。',
+  submitFail:
+    '送信できませんでした。通信状況をご確認のうえ、もう一度お試しください。解決しない場合は店頭にてお問い合わせください。',
+  messageContent: 'お問い合わせ内容',
+  messagePlaceholder: '例：このカードの買取価格はいくらくらいですか？',
   contactName: 'お名前',
-  contactInfo: '連絡先',
-  contactInfoPlaceholder: 'メール / 電話 / WeChat（任意）',
+  contactInfo: 'ご連絡先',
+  contactInfoPlaceholder: 'メール / 電話 / X アカウント',
+  contactHint: 'ご返信できるよう、いずれかをご記入ください。店頭でのご相談も可能です。',
+  replyHint: 'ご返信まで数日いただく場合があります。お急ぎの方は店頭へお越しください。',
+  contactMaxLength: '255 文字まで',
+  cardContextLabel: 'お問い合わせのカード',
+  cardContextRemove: 'このカードを外す',
   submitting: '送信中…',
   submitMessage: '送信する',
+  requiredMark: '必須',
+  optionalMark: '任意',
   backHomeArrow: '← ホームへ戻る',
 
   announcementsTitle: 'お知らせ',
@@ -254,6 +281,7 @@ const en: Record<MessageKey, string> = {
   themeToDark: 'Switch to dark mode',
   themeToLight: 'Switch to light mode',
   switchLanguage: 'Switch language',
+  notFoundHeading: 'Page not found',
   notFoundBody: 'This page does not exist or has been removed.',
   errorBody: 'Something went wrong while loading this page. Please try again.',
   copyright: '© {year} {site} · Content powered by Directus',
@@ -267,6 +295,8 @@ const en: Record<MessageKey, string> = {
   infoTerms: 'Terms of use',
   infoDataUsage: 'How we use data',
   infoPageNotFound: 'This page does not exist or has not been published.',
+  contentLanguageNotice: 'Card names, announcements and shop details are entered in Chinese. Switching language changes the interface text only.',
+  contentLanguageSwitch: 'View the Chinese original',
 
   searchPlaceholder: 'Card name / number / rarity',
   searchPlaceholderShort: 'Name / number',
@@ -323,16 +353,24 @@ const en: Record<MessageKey, string> = {
 
   contactTitle: 'Contact us',
   contactIntro:
-    'Leave your question or buyback request and an admin will handle it. Contact details are optional but help us reply.',
-  submitOk: 'Sent. Thanks for your message!',
-  submitFail: 'Could not send: {msg}',
+    'Tell us which card or buyback question you have. We read every message and reply as soon as we can.',
+  submitOk: 'Your message has been sent.',
+  submitFail:
+    'Your message did not go through. Check your connection and try again — if it keeps failing, please ask at the store instead.',
   messageContent: 'Message',
-  messagePlaceholder: 'e.g. I want to sell a card, or ask about a buyback price…',
+  messagePlaceholder: 'e.g. How much would you pay for this card?',
   contactName: 'Name',
   contactInfo: 'Contact',
-  contactInfoPlaceholder: 'Email / phone / WeChat (optional)',
+  contactInfoPlaceholder: 'Email / phone / X account',
+  contactHint: 'Leave a contact so we can reply. You are also welcome to ask at the store.',
+  replyHint: 'Replies can take a few days. For anything urgent, please come to the store.',
+  contactMaxLength: 'Up to 255 characters',
+  cardContextLabel: 'Card you are asking about',
+  cardContextRemove: 'Remove this card',
   submitting: 'Sending…',
   submitMessage: 'Send message',
+  requiredMark: 'Required',
+  optionalMark: 'Optional',
   backHomeArrow: '← Back to home',
 
   announcementsTitle: 'News',

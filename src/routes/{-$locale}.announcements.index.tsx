@@ -1,9 +1,21 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { getAnnouncements } from '~/lib/directus'
 import { formatDate, useLocale, useT } from '~/lib/i18n/react'
+import { translate } from '~/lib/i18n/messages'
+import { buildHead, localeFromMatches, ogImage, siteFromMatches, siteNameOf } from '~/lib/seo'
 
 export const Route = createFileRoute('/{-$locale}/announcements/')({
   loader: async () => ({ items: await getAnnouncements() }),
+  head: async ({ matches }) => {
+    const locale = localeFromMatches(matches)
+    return buildHead({
+      locale,
+      pathname: '/announcements',
+      siteName: siteNameOf(siteFromMatches(matches), locale),
+      title: translate(locale, 'announcementsTitle'),
+      image: ogImage(matches),
+    })
+  },
   component: Announcements,
 })
 
@@ -26,7 +38,7 @@ function Announcements() {
         >
           <div className="flex items-center gap-2">
             {a.is_pinned && (
-              <span className="text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 rounded px-1.5 py-0.5">
+              <span className="text-[11px] bg-pinned-bg text-pinned rounded px-1.5 py-0.5">
                 {t('pinned')}
               </span>
             )}

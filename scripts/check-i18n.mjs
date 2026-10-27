@@ -18,6 +18,18 @@ async function get(path) {
   return { status: res.status, body }
 }
 
+// 从一个 <link ...> 标签里取出 pathname（绝对地址也能比较）。
+// hreflang / canonical 现在必须是绝对 URL，所以断言按 pathname 比对。
+function pathnameOf(tag) {
+  const href = /href="([^"]+)"/.exec(tag ?? '')?.[1]
+  if (!href) return null
+  try {
+    return new URL(href, BASE).pathname
+  } catch {
+    return null
+  }
+}
+
 // 断言页面在指定语言下渲染出该语言的标志性文案，且不含其他语言的标志性文案。
 // 每条语言的 marker 只取「该页一定有的」：首页有最新上架与留言入口，
 // 筛选面板只在 /cards 出现，因此单独断言，避免把页面差异误判成翻译缺失。
@@ -160,14 +172,27 @@ for (const hrefLang of ['zh-CN', 'ja-JP', 'en', 'x-default']) {
     jaCardsLower.includes(`hreflang="${hrefLang.toLowerCase()}"`),
   )
 }
+// hreflang 必须是绝对地址，搜索引擎明确忽略相对 URL，所以断言按 pathname 比较。
+// React 服务端输出的是 camelCase `hrefLang`，正则要忽略大小写。
+const alternateTag = (lang) =>
+  new RegExp(`<link[^>]*hrefLang="${lang}"[^>]*>`, 'i').exec(jaCards.body)?.[0]
 assert(
   '/ja/cards 的 en 等价位址是 /en/cards',
-  jaCards.body.includes('href="/en/cards"'),
-  jaCards.body.match(/<link[^>]*hreflang="en"[^>]*>/)?.[0],
+  pathnameOf(alternateTag('en')) === '/en/cards',
+  alternateTag('en'),
 )
 assert(
   '/ja/cards 的默认语言等价位址是 /cards',
-  jaCards.body.includes('href="/cards"'),
+  pathnameOf(alternateTag('x-default')) === '/cards',
+  alternateTag('x-default'),
+)
+const canonicalTag = /<link[^>]*rel="canonical"[^>]*>/i.exec(jaCards.body)?.[0]
+assert(
+  '/ja/cards 有自指的 canonical（绝对地址）',
+  pathnameOf(canonicalTag) === '/ja/cards' && /^https?:\/\//.test(
+    /href="([^"]+)"/.exec(canonicalTag ?? '')?.[1] ?? '',
+  ),
+  canonicalTag,
 )
 
 console.log('\n== 后台内容里的站内链接必须补上语言段 ==')

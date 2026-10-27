@@ -4,6 +4,8 @@ import { getCards, getIps, getRarities, getSeries, getSubSeries } from '~/lib/di
 import { CardCard } from '~/components/CardCard'
 import { Pagination } from '~/components/Pagination'
 import { useT } from '~/lib/i18n/react'
+import { translate } from '~/lib/i18n/messages'
+import { buildHead, localeFromMatches, ogImage, siteFromMatches, siteNameOf } from '~/lib/seo'
 import type { CardQuery, Ip, Rarity, Series, SubSeries } from '~/lib/types'
 
 // 数值型参数在 search 中：单选取标量 number，多选取 number[]（与 TanStack 默认
@@ -101,6 +103,23 @@ export const Route = createFileRoute('/{-$locale}/cards/')({
       getRarities(),
     ])
     return { result, ips, series, subSeries, rarities }
+  },
+  // 列表页标题跟随当前筛选：带关键词时用「搜“X”」，否则用「卡牌」。
+  // 搜索结果与分页都不收录（内容随 query 无穷组合，收录反而稀释索引）。
+  head: async ({ matches, match }) => {
+    const locale = localeFromMatches(matches)
+    const site = siteFromMatches(matches)
+    const search = (match.search ?? {}) as CardSearch
+    const base = translate(locale, 'navCards')
+    const title = search.q ? `${base} — ${search.q}` : base
+    return buildHead({
+      locale,
+      pathname: '/cards',
+      siteName: siteNameOf(site, locale),
+      title,
+      image: ogImage(matches),
+      noindex: !!(search.q || search.page),
+    })
   },
   component: CardList,
 })

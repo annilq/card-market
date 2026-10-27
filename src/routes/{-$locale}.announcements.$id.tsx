@@ -1,11 +1,41 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { getAnnouncement } from '~/lib/directus'
 import { formatDate, useLocale, useT } from '~/lib/i18n/react'
+import { translate } from '~/lib/i18n/messages'
+import { buildHead, localeFromMatches, ogImage, plainText, siteFromMatches, siteNameOf } from '~/lib/seo'
+import type { Announcement } from '~/lib/types'
 
 export const Route = createFileRoute('/{-$locale}/announcements/$id')({
   loader: async ({ params }): Promise<{
     item: Awaited<ReturnType<typeof getAnnouncement>>
   }> => ({ item: await getAnnouncement(params.id) }),
+  // 公告详情：标题用公告标题，描述取正文前 140 字纯文本。
+  head: async ({ matches, params }) => {
+    const locale = localeFromMatches(matches)
+    const site = siteFromMatches(matches)
+    const item = (matches[matches.length - 1]?.loaderData as
+      | { item?: Announcement | null }
+      | undefined)?.item
+    const siteName = siteNameOf(site, locale)
+    if (!item) {
+      return buildHead({
+        locale,
+        pathname: `/announcements/${params.id}`,
+        siteName,
+        title: translate(locale, 'announcementNotFound'),
+        noindex: true,
+      })
+    }
+    return buildHead({
+      locale,
+      pathname: `/announcements/${params.id}`,
+      siteName,
+      title: item.title,
+      description: plainText(item.body) || undefined,
+      image: ogImage(matches),
+      type: 'article',
+    })
+  },
   component: AnnouncementDetail,
 })
 
@@ -35,7 +65,7 @@ function AnnouncementDetail() {
       {item.body && (
         // 富文本由管理员在后台维护（受信任来源）；XSS 防护见 development.md §4.4 次要项
         <div
-          className="prose mt-4 text-body [&_a]:text-sky-600 dark:[&_a]:text-sky-400 [&_img]:rounded-lg"
+          className="prose mt-4 text-body [&_a]:text-link [&_a]:underline [&_a]:underline-offset-2 [&_img]:rounded-lg"
           dangerouslySetInnerHTML={{ __html: item.body }}
         />
       )}

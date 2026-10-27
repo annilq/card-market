@@ -10,77 +10,74 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import type { ErrorComponentProps } from '@tanstack/react-router'
-import { assetUrl, getSiteSettings } from '~/lib/directus'
+import { assetUrl, getBanners, getSiteSettings } from '~/lib/directus'
 import type { SiteSettings } from '~/lib/types'
 import { INFO_PAGE_KEYS, INFO_PAGE_LABEL_KEY } from '~/lib/info-pages'
-import { DEFAULT_LOCALE, LOCALES, isDefaultLocale, resolveLocaleParam } from '~/lib/i18n/locales'
+import { LOCALES, isDefaultLocale } from '~/lib/i18n/locales'
 import type { Locale } from '~/lib/i18n/locales'
 import { useLocale, useT } from '~/lib/i18n/react'
+import { translate } from '~/lib/i18n/messages'
+import { buildHead, localeFromMatches } from '~/lib/seo'
 import { GlobalSearch } from '~/components/GlobalSearch'
+import { ContentLanguageNotice } from '~/components/ContentLanguageNotice'
 import '../styles.css'
 
 // 在首屏绘制前同步主题，避免浅色闪一下。优先级：localStorage > 系统偏好。
 const NO_FLASH_SCRIPT = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`
 
-// 从匹配到的路由参数里取语言段。head() 拿不到 location，但能拿到整条 matches，
-// 语言段就在其中（默认语言无段，取不到即回退默认）。
-function localeFromMatches(
-  matches: ReadonlyArray<{ params?: Record<string, unknown>; pathname: string }>,
-): Locale {
-  for (const match of matches) {
-    const raw = match.params?.locale
-    if (typeof raw === 'string') {
-      const resolved = resolveLocaleParam(raw)
-      if (resolved) return resolved
-    }
-  }
-  return DEFAULT_LOCALE
-}
-
-// 当前页在「另一种语言」下的等价位址：去掉已有语言段，按目标语言重新加前缀。
-function pathForLocale(pathname: string, locale: Locale): string {
-  const segments = pathname.split('/').filter(Boolean)
-  const first = segments[0]
-  const rest = first && resolveLocaleParam(first) && first !== DEFAULT_LOCALE
-    ? segments.slice(1)
-    : segments
-  const prefix = LOCALES[locale].prefix
-  const joined = rest.join('/')
-  if (!prefix) return joined ? `/${joined}` : '/'
-  return joined ? `/${prefix}/${joined}` : `/${prefix}`
-}
-
 export const Route = createRootRoute({
+  // 根路由只发「每页都有、与内容无关」的标签，外加一套 **兜底** 的 title/description。
+  //
+  // TanStack 的合并规则是「最深匹配的 title 胜出」（routeMeta 从叶子往根遍历，
+  // 第一个 title 定稿），所以叶子路由自己 head() 里的 title 一定覆盖这里。
+  // 这里保留一份，是为了 404 / 500 这类没有叶子路由的页面不至于没有标题——
+  // 之前的问题是所有页面共用这一份，而不是这一份不该存在。
   head: ({ matches }) => {
     const locale = localeFromMatches(matches)
     const meta = LOCALES[locale]
-    // 取最深的那个匹配的 pathname 作为当前页，用于生成各语言等价位址。
-    const pathname = matches[matches.length - 1]?.pathname ?? '/'
+    // 404：没有叶子路由 head() 可用，标题在这里改写，并且不收录。
+    //
+    // 判据是根 match 的 `_notFound` 标记：未匹配的路径（`/nope`）与非法语言段
+    // （`/de/cards`）都会被打上，正常页面不会（实测正常页为 false）。
+    // 不能改用「匹配链长度」判断——`/nope` 仍然会匹配到 `{-$locale}` 布局的两级；
+    // 也不能看 `match.status`——head() 在状态落定之前就可能执行，那里仍是 'success'。
+    const notFound = matches[0]?._notFound === true
+    const title = notFound
+      ? `${translate(locale, 'notFoundHeading')} | ${meta.title}`
+      : meta.title
     return {
       meta: [
         { charSet: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { title: meta.title },
+        { name: 'format-detection', content: 'telephone=no' },
+        { title },
         { name: 'description', content: meta.description },
-        { property: 'og:locale', content: meta.intl },
+        ...(notFound
+          ? [
+              { name: 'robots', content: 'noindex, follow' },
+              { property: 'og:title', content: title },
+            ]
+          : []),
       ],
       links: [
-        // 各语言版本互相声明，便于搜索引擎按语言收录；默认语言为 x-default。
-        ...Object.entries(LOCALES).map(([key, value]) => ({
-          rel: 'alternate',
-          hrefLang: value.htmlLang,
-          href: pathForLocale(pathname, key as Locale),
-        })),
-        { rel: 'alternate', hrefLang: 'x-default', href: pathForLocale(pathname, DEFAULT_LOCALE) },
+        { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+        { rel: 'icon', href: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/site.webmanifest' },
       ],
       // 首屏前同步主题，避免闪烁。通过 head().scripts 注入，
       // 由 <HeadContent /> 渲染，React 19 不会报 “script in component” 的 hydration 错误。
       scripts: [{ children: NO_FLASH_SCRIPT }],
     }
   },
-  loader: async (): Promise<{ site: SiteSettings | null }> => {
-    const site = await getSiteSettings()
-    return { site }
+  loader: async (): Promise<{
+    site: SiteSettings | null
+    fallbackImage: string | number | null
+  }> => {
+    // banner 一起取：它是全站分享图的兜底（列表/公告/门店等页面本身没有配图），
+    // 根路由反正每次都要跑，多这一个请求比为每个页面各发一次划算。
+    const [site, banners] = await Promise.all([getSiteSettings(), getBanners()])
+    return { site, fallbackImage: banners[0]?.image ?? null }
   },
   component: RootComponent,
   // 文档外壳（<html>/<head>/<body>）只在这一层渲染一次。
@@ -106,9 +103,8 @@ function NotFoundPage() {
   const localeParam = isDefaultLocale(locale) ? undefined : locale
   return (
     <div className="text-center py-24">
-      <div className="text-6xl font-black text-slate-200 dark:text-slate-800 tracking-tight">
-        404
-      </div>
+      {/* 数字用 Weak 档（对卡片 6.2:1）：404 应当读得到，但不必和正文抢注意力。 */}
+      <div className="text-6xl font-black text-faint tracking-tight">404</div>
       <p className="mt-4 text-muted">{t('notFoundBody')}</p>
       <div className="mt-6 flex items-center justify-center gap-4 text-sm">
         <Link
@@ -138,9 +134,7 @@ function ErrorPage({ error, reset }: ErrorComponentProps) {
   const localeParam = isDefaultLocale(locale) ? undefined : locale
   return (
     <div className="text-center py-24">
-      <div className="text-6xl font-black text-slate-200 dark:text-slate-800 tracking-tight">
-        500
-      </div>
+      <div className="text-6xl font-black text-faint tracking-tight">500</div>
       <p className="mt-4 text-muted">{t('errorBody')}</p>
       <p className="mt-2 text-xs text-faint break-all max-w-xl mx-auto">
         {message}
@@ -319,7 +313,7 @@ function ThemeToggle({ className = '' }: { className?: string }) {
 
 // 语言切换：留在当前页面，只换语言段。用相对路由 + params reducer，
 // 这样当前路径的其余参数与查询串原样保留（含筛选态）。
-function LocaleSwitcher() {
+function LocaleSwitcher({ compact = false }: { compact?: boolean }) {
   const locale = useLocale()
   const t = useT()
   const router = useRouter()
@@ -342,17 +336,25 @@ function LocaleSwitcher() {
             replace: true,
           })
         }}
-        className="h-9 rounded-lg border border-border bg-surface px-2 text-sm text-muted hover:bg-surface-2 hover:text-fg transition outline-none focus:border-muted"
+        // compact：手机顶栏用。显示当前语言的短标签（中/日/EN）而不是全称，
+        // 宽度收在 36px 一档，和主题/汉堡按钮同高，不挤掉站名。
+        className={`h-9 rounded-lg border border-border bg-surface text-sm text-muted hover:bg-surface-2 hover:text-fg transition outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted ${
+          compact ? 'w-14 pl-2 pr-1' : 'px-2'
+        }`}
       >
         {Object.entries(LOCALES).map(([key, value]) => (
           <option key={key} value={key}>
-            {value.label}
+            {compact ? SHORT_LOCALE_LABEL[key as Locale] : value.label}
           </option>
         ))}
       </select>
     </label>
   )
 }
+
+// 手机顶栏空间只够一个短标签。值本身是语言代码，屏幕阅读器读到的是它的发音，
+// 视觉用户看到的是「中 / 日 / EN」。
+const SHORT_LOCALE_LABEL: Record<Locale, string> = { zh: '中', ja: '日', en: 'EN' }
 
 // 文档外壳：由 shellComponent 调用，`children` 是当前匹配到的页面内容。
 // 它包住的不只是正常页面，也包括 404 / 500，所以这里是唯一渲染 <html> 的地方。
@@ -385,8 +387,6 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang={LOCALES[locale].htmlLang} suppressHydrationWarning>
       <head>
-        {/* 避免浏览器自动请求 /favicon.ico 产生 404 控制台错误 */}
-        <link rel="icon" href="data:," />
         <HeadContent />
       </head>
       <body className="min-h-screen flex flex-col">
@@ -430,8 +430,13 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
 
               {/* 辅助设置放最右并压低权重：语言与主题是偏好，不是导航，
                   点击频率远低于搜索与店铺，不该占主视线。
-                  手机上空间不够，收进抽屉（见下方 menuOpen 区块）。 */}
+                  但**语言开关在手机上必须可见**：上线后主力是日语用户，
+                  藏进汉堡里等于没有——之前实测 390px 下它是 0×0。
+                  主题开关仍留在抽屉（深色/浅色比语言更低频）。 */}
               <div className="ml-auto flex items-center gap-2">
+                <div className="sm:hidden">
+                  <LocaleSwitcher compact />
+                </div>
                 <div className="hidden sm:flex items-center gap-2">
                   <LocaleSwitcher />
                   <ThemeToggle />
@@ -499,14 +504,12 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                   {t('navContact')}
                 </Link>
 
-                {/* 桌面端在最右的两个设置项，手机收进抽屉，
-                    否则 320 宽下一行放不下 logo + 搜索按钮 + 语言下拉 + 主题 + 汉堡 */}
+                {/* 抽屉里只剩主题：语言已经提到顶栏常驻（上线主力是日语用户，
+                    藏进抽屉等于没有）。320 宽下顶栏实测仍放得下：
+                    站名 + 中/日/EN 下拉(56px) + 汉堡，无溢出。 */}
                 <div className="flex items-center justify-between gap-3 pt-3 pb-1">
                   <span className="text-xs text-faint">{t('preferences')}</span>
-                  <div className="flex items-center gap-2">
-                    <LocaleSwitcher />
-                    <ThemeToggle />
-                  </div>
+                  <ThemeToggle />
                 </div>
               </nav>
             </div>
@@ -514,9 +517,11 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         </header>
 
         <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6">
+          {/* 非默认语言的页面上，说明「内容是什么语言」——界面翻译了，后台内容没有。
+              放在 main 顶部而不是每页各写一次，保证 404 与错误页也带上。 */}
+          <ContentLanguageNotice />
           {children}
         </main>
-
         <footer className="border-t border-border bg-surface mt-10">
           {/* 站内入口：留言咨询 + 审核要求的四个信息页。
               留言从 header 移到这里，与其余站内链接同一行，顺序前端固定。

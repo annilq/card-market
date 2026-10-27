@@ -370,8 +370,13 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 - **站内链接**：`<Link to>` 必须带 `/{-$locale}` 前缀。语言段由当前路由**自动继承**，不要传 `params={{ locale }}`——显式传无效，裸 `to` 不会因 params 长出语言段。索引路由的 `to` 是 `'/{-$locale}'`（**无**尾斜杠）。
 - **后台内容里的站内路径**（如 `banners.link`）绕过路由类型系统，须经 `localizeHref(path, locale)` 补前缀，否则从 `/ja` 点进去掉回中文。
 - **语言切换**：`__root.tsx` 的 `LocaleSwitcher` 用相对路由 + params reducer + `search: true`，保留路径、路径参数与查询串。切到默认语言必须传 `locale: undefined`（传 `'zh'` 会生成 404 的 `/zh/...`）。
-- **SEO**：`<html lang>`、每语言 `<title>`/`description`（在 `LOCALES` 注册表）、`hreflang` 交替链接（含 `x-default`）均按当前语言输出。
-- **不翻译 Directus 内容**：卡名、公告正文、店铺地址等按后台原样输出。界面语言 ≠ 内容语言，内容多语言是 Directus 字段翻译的职责。
+- **SEO**：全部集中在 `src/lib/seo.ts` 的 `buildHead()`，各路由的 `head()` 只描述自己的内容（标题、描述、分享图、是否 noindex）。它负责：
+  - 每页独立 `<title>` / `description` / `og:*` / `twitter:card`；
+  - **绝对地址**的 `canonical` 与 `hreflang`（含 `x-default`）——相对 hreflang 会被搜索引擎忽略；origin 服务端取请求头（含 `x-forwarded-*`），客户端取 `location.origin`；
+  - 分享图：卡牌用卡图，其余页面回落到根路由预取的第一张 banner（`ogImage()`），都没有就不发 `og:image`，不伪造占位图。
+  - 根路由只保留兜底 title（404/500 用）与固定标签（charset/viewport/图标/主题脚本）。
+- **内容语言提示**：`src/components/ContentLanguageNotice.tsx` 在非默认语言且会渲染后台内容的页面上，显示「内容以中文录入」+ 切回中文原文的链接。留言表单、404 这类纯界面页面不显示。
+- **不翻译 Directus 内容**：卡名、公告正文、店铺地址等按后台原样输出。界面语言 ≠ 内容语言，内容多语言是 Directus 字段翻译的职责（当前不在范围内，见 `PRODUCT.md`）。
 - **验收**：`node scripts/check-i18n.mjs http://localhost:3000`（三语 SSR 文案、`<html lang>`、未知语言段 404、hreflang、banner 链接补前缀、内容不被翻译）。
 
 ---

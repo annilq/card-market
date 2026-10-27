@@ -2,6 +2,8 @@ import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { getInfoPage } from '~/lib/directus'
 import { INFO_PAGE_LABEL_KEY, resolveInfoPageKey } from '~/lib/info-pages'
 import { useT } from '~/lib/i18n/react'
+import { translate } from '~/lib/i18n/messages'
+import { buildHead, localeFromMatches, ogImage, plainText, siteFromMatches, siteNameOf } from '~/lib/seo'
 
 // 审核用信息页：/info/operation | /info/personal-info | /info/terms | /info/data-usage
 // 语言段照旧由上级 `{-$locale}` 继承（`/ja/info/terms`）。
@@ -12,6 +14,24 @@ export const Route = createFileRoute('/{-$locale}/info/$key')({
     if (!resolveInfoPageKey(params.key)) throw notFound()
   },
   loader: async ({ params }) => ({ page: await getInfoPage(params.key) }),
+  head: async ({ matches, params }) => {
+    const locale = localeFromMatches(matches)
+    const key = resolveInfoPageKey(params.key)
+    const page = (matches[matches.length - 1]?.loaderData as
+      | { page?: { title?: string | null; body?: string | null } | null }
+      | undefined)?.page
+    // 未登记的标识走 beforeLoad 的 notFound，这里 key 一定是合法的；
+    // 但页面可能尚未发布，此时标题仍用界面文案，描述留空由 buildHead 兜底。
+    const title = page?.title || (key ? translate(locale, INFO_PAGE_LABEL_KEY[key]) : '')
+    return buildHead({
+      locale,
+      pathname: `/info/${params.key}`,
+      siteName: siteNameOf(siteFromMatches(matches), locale),
+      title: title || undefined,
+      description: plainText(page?.body) || undefined,
+      image: ogImage(matches),
+    })
+  },
   component: InfoPage,
 })
 
@@ -30,7 +50,7 @@ function InfoPage() {
       {page?.body ? (
         // 富文本由管理员在后台维护（受信任来源），与公告详情一致
         <div
-          className="prose mt-4 text-body [&_a]:text-sky-600 dark:[&_a]:text-sky-400 [&_h2]:text-fg [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-1 [&_h3]:text-fg [&_img]:rounded-lg"
+          className="prose mt-4 text-body [&_a]:text-link [&_a]:underline [&_a]:underline-offset-2 [&_h2]:text-fg [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-1 [&_h3]:text-fg [&_img]:rounded-lg"
           dangerouslySetInnerHTML={{ __html: page.body }}
         />
       ) : (
