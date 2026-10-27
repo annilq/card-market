@@ -34,6 +34,9 @@ const zh = {
 
   // 信息页（审核用：运营信息 / 个人信息收集 / 利用规则 / 数据使用）
   infoNavTitle: '网站信息',
+  footerNavTitle: '站内链接',
+  preferences: '偏好设置',
+  xAccountLabel: '在 X 上关注我们',
   infoOperation: '运营信息',
   infoPersonalInfo: '个人信息收集',
   infoTerms: '利用规则',
@@ -42,6 +45,7 @@ const zh = {
 
   // 首页
   searchPlaceholder: '请输入卡牌名称 / 编号 / 罕见度进行搜索',
+  searchPlaceholderShort: '搜卡名 / 编号',
   search: '搜索',
   browseByIp: '按 IP 浏览',
   noCategories: '暂无分类',
@@ -149,6 +153,9 @@ const ja: Record<MessageKey, string> = {
   copyright: '© {year} {site} · コンテンツは Directus で管理しています',
 
   infoNavTitle: 'サイト情報',
+  footerNavTitle: 'サイト内リンク',
+  preferences: '表示設定',
+  xAccountLabel: 'X でフォロー',
   infoOperation: '運営情報',
   infoPersonalInfo: '個人情報の収集',
   infoTerms: '利用規約',
@@ -156,6 +163,7 @@ const ja: Record<MessageKey, string> = {
   infoPageNotFound: 'このページは存在しないか、公開されていません。',
 
   searchPlaceholder: 'カード名 / 型番 / レアリティで検索',
+  searchPlaceholderShort: 'カード名 / 型番',
   search: '検索',
   browseByIp: 'IP から探す',
   noCategories: 'カテゴリがありません',
@@ -257,6 +265,9 @@ const en: Record<MessageKey, string> = {
   copyright: '© {year} {site} · Content powered by Directus',
 
   infoNavTitle: 'Site information',
+  footerNavTitle: 'Site links',
+  preferences: 'Preferences',
+  xAccountLabel: 'Follow us on X',
   infoOperation: 'Operations',
   infoPersonalInfo: 'Personal data we collect',
   infoTerms: 'Terms of use',
@@ -264,6 +275,7 @@ const en: Record<MessageKey, string> = {
   infoPageNotFound: 'This page does not exist or has not been published.',
 
   searchPlaceholder: 'Card name / number / rarity',
+  searchPlaceholderShort: 'Name / number',
   search: 'Search',
   browseByIp: 'Browse by IP',
   noCategories: 'No categories yet',

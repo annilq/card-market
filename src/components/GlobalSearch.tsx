@@ -26,15 +26,28 @@ export function GlobalSearch() {
       }}
       className="flex w-full items-center gap-2"
     >
-      <input
-        key={q ?? ''}
-        name="q"
-        type="text"
-        defaultValue={q ?? ''}
-        aria-label={t('searchPlaceholder')}
-        placeholder={t('searchPlaceholder')}
-        className="h-9 w-full min-w-0 flex-1 rounded-lg border border-border-strong bg-surface px-3 text-sm text-fg placeholder:text-faint outline-none focus:border-muted"
-      />
+      {/* 提示文案盖在输入框上，而不是用 placeholder 属性：属性值固定，
+          没法按宽度换。完整文案实测 247px 宽，手机输入框内宽只有 110–220px，
+          必然被裁成「罕见…」，所以窄屏用短文案、xl 起用完整文案。
+          input 用一个空格占位，:placeholder-shown 才能判断「是否为空」。 */}
+      <div className="relative min-w-0 flex-1">
+        <input
+          key={q ?? ''}
+          name="q"
+          type="text"
+          defaultValue={q ?? ''}
+          aria-label={t('searchPlaceholder')}
+          placeholder=" "
+          className="peer h-9 w-full rounded-lg border border-border-strong bg-surface px-3 text-sm text-fg outline-none focus:border-muted"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-3 hidden items-center truncate text-sm text-faint peer-placeholder-shown:flex"
+        >
+          <span className="xl:hidden">{t('searchPlaceholderShort')}</span>
+          <span className="hidden xl:inline">{t('searchPlaceholder')}</span>
+        </span>
+      </div>
       <button
         type="submit"
         className="h-9 shrink-0 rounded-lg bg-accent px-4 text-sm text-on-accent hover:bg-accent/90"
