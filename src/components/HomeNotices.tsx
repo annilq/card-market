@@ -31,7 +31,7 @@ export function HomeNotices({ items }: { items: Announcement[] }) {
                 </span>
               )}
               {a.is_pinned && (
-                <span className="shrink-0 text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 rounded px-1.5 py-0.5">
+                <span className="shrink-0 text-[11px] bg-pinned-bg text-pinned rounded px-1.5 py-0.5">
                   {t('pinned')}
                 </span>
               )}

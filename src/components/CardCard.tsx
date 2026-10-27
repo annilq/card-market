@@ -31,10 +31,10 @@ export function CardCard({
             src={img}
             alt={card.name}
             loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-[1.02] transition"
+            className="w-full h-full object-cover group-hover:scale-[1.02] transition motion-reduce:group-hover:scale-100"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-ghost text-sm">
+          <div className="w-full h-full flex items-center justify-center text-hint text-sm">
             {t('noImage')}
           </div>
         )}
@@ -47,7 +47,7 @@ export function CardCard({
         )}
         <div className="font-medium text-fg truncate">{card.name}</div>
         <div className="mt-2 flex items-center justify-between">
-          <span className="text-rose-600 dark:text-rose-400 font-semibold">
+          <span className="text-price font-semibold tabular-nums">
             {card.price != null ? t('priceTag', { price: card.price }) : t('priceOnRequest')}
           </span>
           {!compact && (
@@ -58,7 +58,7 @@ export function CardCard({
           <div className="text-xs text-faint mt-1">{t('cardCodeShort', { code: card.code })}</div>
         )}
         {!compact && card.is_high_value && (
-          <span className="inline-block mt-1 text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded px-1.5 py-0.5">
+          <span className="inline-block mt-1 text-[11px] bg-high-value-bg text-high-value rounded px-1.5 py-0.5">
             {t('highValue')}
           </span>
         )}
