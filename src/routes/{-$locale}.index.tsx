@@ -13,7 +13,7 @@ import { CatalogFilters } from '~/components/CatalogFilters'
 import type { CatalogFilterValue } from '~/components/CatalogFilters'
 import { HighValueStrip } from '~/components/HighValueStrip'
 import { HomeNotices } from '~/components/HomeNotices'
-import { localizeHref } from '~/lib/i18n/locales'
+import { isDefaultLocale, localizeHref } from '~/lib/i18n/locales'
 import { useLocale, useT } from '~/lib/i18n/react'
 import { buildHead, localeFromMatches, ogImage, ogImageFromFile, siteFromMatches, siteNameOf } from '~/lib/seo'
 import type { Announcement, Banner, CardSort, Ip, Series } from '~/lib/types'
@@ -244,6 +244,7 @@ function Home() {
           ips={ips}
           series={series}
           onChange={onFilterChange}
+          localeParams={{ locale: isDefaultLocale(locale) ? undefined : locale }}
         />
 
         <div className="mt-4 mb-3 text-sm text-muted">

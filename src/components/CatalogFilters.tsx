@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { useT } from '~/lib/i18n/react'
 import type { CardSort, Ip, Series } from '~/lib/types'
 
@@ -17,8 +18,9 @@ export interface CatalogFilterValue {
   sort: CardSort
 }
 
+// 下拉本身也补焦点环：只靠 border 变色在深色主题下几乎看不出焦点在哪。
 const uiSelect =
-  'h-10 w-full appearance-none rounded-lg border border-border-strong bg-surface px-3 pr-9 text-sm text-fg outline-none transition hover:border-muted focus:border-muted'
+  'h-10 w-full appearance-none rounded-lg border border-border-strong bg-surface px-3 pr-9 text-sm text-fg outline-none transition hover:border-muted focus:border-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted'
 
 // 原生 select 的箭头在深色主题下不可控，统一叠一个 chevron。
 // 走内联 style 而不是 Tailwind 任意值：任意值里的引号与 % 编码在构建时
@@ -36,14 +38,16 @@ export function CatalogFilters({
   ips,
   series,
   onChange,
+  localeParams,
 }: {
   value: CatalogFilterValue
   ips: Ip[]
   series: Series[]
   onChange: (next: Partial<CatalogFilterValue>) => void
+  /** 当前语言段。显式传入，避免 `to="/{-$locale}/..."` 从非法路径段继承出二次 404。 */
+  localeParams: { locale: string | undefined }
 }) {
   const t = useT()
-
   // 「分类」跟着「回购分类」收窄：选了宝可梦就只列宝可梦的系列。
   // 没选 IP 时列全部，这样单用「分类」也能查。
   const seriesOptions = value.ipId
@@ -98,11 +102,34 @@ export function CatalogFilters({
   ]
 
   return (
-    <section aria-label={t('catalogFilters')}>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div role="group" aria-label={t('catalogFilters')}>
+      {/* 标题与「全部卡牌」同一行：与站内「通知公告」「高价买取」两个区块的
+          标题行结构一致，读者不用为同一个位置学两种排版。
+          文案用「全部卡牌」而不是「全部」：这里的「全部」在筛选语境里
+          容易被读成「清空筛选」，而它其实是跳到卡牌列表页。
+          跳转用 Link 而不是 button：它是导航，键盘与读屏都该按链接对待。 */}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">{t('catalogFilters')}</h2>
+        <Link
+          to="/{-$locale}/cards"
+          params={localeParams}
+          className="inline-flex items-center rounded-full border border-border-strong bg-surface px-3.5 py-1.5 text-sm text-muted transition hover:border-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          {t('catalogBrowseAll')}
+        </Link>
+      </div>
+
+      {/* 标签与下拉框同一行（参考图就是这个排版）。
+          手机单列：标签在左、下拉占满剩余宽度；≥1024 四列并排。
+          标签按语言给最小宽度：中日文三到四字，英文 Category / Series / Type
+          更长，不分开设的话英文下下拉框会被标签挤窄、四列也参差不齐。 */}
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
         {fields.map((f) => (
-          <label key={f.id} className="block min-w-0">
-            <span className="mb-1 block text-xs text-subtle">{f.label}</span>
+          <label key={f.id} className="flex min-w-0 items-center gap-2">
+            {/* 标签最小宽度：中文「回购分类」四字 48px、英文 Category 52px、
+                日文 買取カテゴリ 72px。统一给到 5rem(80px)，三种语言下
+                下拉框左边缘才会对齐，四列宽度也一致。 */}
+            <span className="w-20 shrink-0 text-xs text-subtle">{f.label}</span>
             <select
               value={f.value}
               onChange={(e) => f.onPick(e.target.value)}
@@ -119,6 +146,6 @@ export function CatalogFilters({
           </label>
         ))}
       </div>
-    </section>
+    </div>
   )
 }
