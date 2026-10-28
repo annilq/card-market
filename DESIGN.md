@@ -145,15 +145,16 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Quiet Catalogue"**
+**Creative North Star: "The Quiet Catalogue, in a Red Shopfront"**
 
 This interface is a card catalogue you can flip through: entries on cool paper, one hairline per boundary, and a price tag that is the only warm thing on the page. It does not sell with decoration — it sells by being legible. Every screen answers the same three questions in the same order: which card is this, what does it cost, what condition is it in. Ornament that does not serve those three answers is not part of the system.
 
-The palette is deliberately cold: slate paper, white card stock, slate ink, and a single red reserved for money. Because there is no second warm hue anywhere, the price is impossible to miss without being loud — the restraint is what makes it work. One cool accent exists and is spent entirely on status: a purple strip that marks a card as being in the case rather than in the bulk box. It never touches money. Dark mode is not an inverted theme bolted on; it is the same catalogue read under a lamp, with the same hairline logic and the same single red, lifted one step to stay readable on night paper.
+The palette is deliberately cold: slate paper, white card stock, slate ink, and a single red reserved for money. Because there is no second warm hue anywhere, the price is impossible to miss without being loud — the restraint is what makes it work. The one place the system stops being quiet is the shopfront: the header is a solid **Brand Red** (`#db261d`) bar and the footer is near-black (`#0d0e15`). They are the frame around the catalogue, not part of it — every screen inside that frame still answers the same three questions in the same order. One cool accent exists and is spent entirely on status: a purple strip that marks a card as being in the case rather than in the bulk box. It never touches money. Dark mode is not an inverted theme bolted on; it is the same catalogue read under a lamp, with the same hairline logic and the same single red, lifted one step to stay readable on night paper.
 
 The build is dense but never cramped: 14px UI type carries most of the interface, containers step to 16px only where a card is a real destination, and the whole grid breathes at 16px gutters. Density is honest here — a buyer scanning forty cards does not want whitespace theatre. What keeps that density from feeling cheap is total consistency: one radius for controls, one for containers, one border weight, one shadow that only appears on hover.
 
 **Key Characteristics:**
+- **Brand Red (`--color-brand`, `#db261d`)** is the shopfront: header bar, notice section bar, active page cell, active tab, and the high-value section title. It is a *fill* colour, not a text colour, and it never appears inside a card.
 - One warm accent family (red) used only for money and "pinned"; one cool accent (purple) used only for "in the case".
 - Rarity is ranked by weight, never by hue: the rarity dictionary is client-editable, so a hardcoded colour ramp would break the first time a new tier is added.
 - Flat at rest. No shadow, no gradient, no glow as decoration.
@@ -165,6 +166,10 @@ The build is dense but never cramped: 14px UI type carries most of the interface
 ## Colors
 
 A cold slate ledger, interrupted exactly twice: red for price, amber for "high value buyback".
+
+### Brand
+- **Brand Red** (`--color-brand`, `#db261d` / dark `#db261d`): measured off the design mockups — the header fill, the "通知公告" section bar, the active IP tab, and the active pagination cell all sample to this one value. It is the site's identity, so primary buttons fill with it too (white on it measures 4.89:1, which clears AA for body-size text). It does **not** replace Price-Tag Red for text: prices keep `#dc0a3c`, whose 5.06:1 / 4.83:1 was tuned for small numerals on card stock and on the page. The two are within a few points of each other and read as one red family on screen.
+- **Footer Night** (`--color-footer`, `#0d0e15` / dark `#07080d`): the footer's own ground. The mockups show a faint world-map texture inside it; that is an image asset, not a token, and is not reproduced. **Footer Link Grey** (`#999999`) and **Footer Ink** (`#ffffff`) are the only two colours permitted on it.
 
 ### Primary
 - **Seal** (`--color-accent`, `#0f172a` / dark `#e2e8f0`): the fill of every primary action. In light mode it is the same near-black as the headline ink, so the primary button reads as "the most solid object on screen" rather than as a branded hue. In dark mode it inverts to near-white. Search submit, "inquire", "contact us", the active page number, and the primary button on error pages all use it.
@@ -199,7 +204,7 @@ Dark mode re-points the same names: Night Paper `#0b1120`, Night Card `#1e293b`,
 
 **The Third Accent Is Cool Rule.** Vault Purple is the system's only cool accent and carries exactly one meaning: this card is in the case. It never touches a price, a button, a link, or a status message. Any purple that is not on a `packaged` card's signature strip or its badge is a bug in the same way a stray red is.
 
-**The Ink-Is-The-Button Rule.** Primary actions fill with ink, never with a brand hue. There is no brand color to spend on a button — the catalogue's authority comes from black type, not from a colored pill.
+**The Red-Is-The-Shopfront Rule.** Brand Red fills the header, the footer's complement bars, the active tab and page cell, and primary buttons. Inside a card it never appears: a red that is not the frame, a primary action, or a price is a bug.
 
 **The Two-Theme Rule.** Every color decision is made twice, from the same token names, in `@theme` and in `html.dark`. A raw Tailwind color name (`text-slate-500`, `bg-white`) inside a component is a defect: it will not follow the theme. For the accent family this is now structural — `text-price`, `text-high-value`, `text-pinned`, `text-vault`, `text-link`, `text-success`, `text-danger` — so the component never writes a `dark:` colour variant at all.
 
@@ -231,9 +236,9 @@ Rarity names are the one place where **weight ranks, not size and not hue**: SSR
 
 ## Layout
 
-A single 1152px (`max-w-6xl`) column with 16px side padding, on every page. The header is sticky, 56px tall, and grows to ~109px below 1024px because the search field and its two icons move to a second row rather than being squeezed into the first.
+A single **1200px** content column (`max-w-[1232px]` plus `px-4`, measured off the mockups: content spans 360→1560 on a 1920 canvas), on every page. The header is sticky and **100px tall** (64px below `md`, where the search field drops to a second row rather than being squeezed).
 
-The home page is a vertical rhythm of `space-y-10` (40px) sections, each led by a Title-weight heading with a "全部 →" link pushed right. The banner is the only element with a large radius (16px) and the only element that bleeds to a fixed 21:9 aspect.
+The home page is a vertical rhythm of `space-y-10` (40px) sections, each led by a Title-weight heading with a "全部 →" link pushed right — **except the banner, which sits flush against the notice bar** (the mockup measures 649 → 650, no gap; the two read as one block). The banner is the only element with a large radius (16px) and the only element that bleeds to a fixed 21:9 aspect. Below the strip, the IP filter is a **40px tab row** (Brand Red fill, white type when active) rather than a select, because the mockup uses tabs for the IP and keeps selects only for series, condition and sort.
 
 List pages use a two-column split at `lg`: a 260px sticky filter rail plus a `minmax(0,1fr)` content column. **Below `lg` the rail is not rendered at all** — the content column opens with a 36px toolbar (filter button carrying the active-filter count, result count, sort select) and the facets appear in a bordered panel only when the button is pressed. The earlier version collapsed the rail behind a button but left the collapsed body in flow, so a phone's first card started ~300px down; it now starts at ~190px. The product grid is 2 columns on phones, 3 at `sm`, 4 at `lg`, with `gap-4` (16px). Cards are `aspect-[3/4]` images over a 12px-padded text block.
 
@@ -241,7 +246,7 @@ Detail pages are a 1:1 split from `md` up, with the image column in a 3:4 well a
 
 **The price and its action never scroll away.** From `md` up the price block and its buttons are `sticky top-20` inside the text column. On phones, where there is no second column to stick, the same pair is a `fixed` bottom bar with the card's name and price on the left and "咨询此卡" on the right, inside `env(safe-area-inset-bottom)`. The page reserves matching bottom padding so the bar never covers the last line of the description. This is the product's only conversion path; it should not require scrolling past the description to find.
 
-The shops page is `minmax(280px,380px)` list + `minmax(0,1fr)` map from `lg`; on phones the map comes first, then the rows. Both columns carry `min-w-0` — without it, a long unbroken address or card name pushes the grid wider than the viewport.
+The shops page is one **store block**: a large photo (960×598, measured) on the left carrying the business hours as white type over a bottom scrim, and a 540-wide right column holding the name, address, phone and the map (540×318), with a measured 61px between the two columns. Below it, the shop switcher rows, and only when there is more than one shop. On phones the whole thing stacks: photo, info, map, rows. Both columns carry `min-w-0` — without it, a long unbroken address pushes the grid wider than the viewport. **When a shop has no photo the block degrades to a two-column "info | map" split** rather than reserving an empty 960×598 well.
 
 Breakpoints in use: `min-[360px]` (pagination step-down), `sm` 640, `md` 768, `lg` 1024, `xl` 1280. The 320px viewport is treated as a real target, not an edge case.
 
@@ -319,9 +324,9 @@ The one recurring silhouette worth naming: the product card is a strict rectangl
 
 ### Cards / Containers
 - **Corner Style:** 12px.
-- **Background:** Card Stock over Cool Paper; Night Card over Night Paper.
-- **Shadow Strategy:** none at rest; `hover:shadow-md` plus a Hairline Strong border on hover (see Elevation).
-- **Border:** 1px Hairline, always.
+- **Background: depends on where the card is, and this is measured, not stylistic.** In a **grid** the card has **no panel at all** — sampling the card's text block in the mockup returns the page colour (`#f5f7fa`) at 82%, so the image, name and price sit directly on the page and the image itself is the block. In the **horizontal strip** the card is Card Stock (81% white under the text block) because a scrolling row of bare images reads as unrelated loose pictures.
+- **Shadow Strategy:** none at rest; `hover:shadow-md` plus a Hairline Strong border on hover — the strip variant only.
+- **Border:** 1px Hairline on the strip variant; **none in the grid.**
 - **Internal Padding:** 12px (`p-3`) for the product-card text block, 8px (`p-2`) in the compact variant used in the home page's horizontal strip, 12px (`p-3`) for shop rows, 16px horizontal for announcement rows.
 - **Image well:** `bg-surface-2` at 3:4, `object-cover` for catalogue thumbnails, `object-contain` on the detail page so a card is never cropped.
 
@@ -333,9 +338,9 @@ The one recurring silhouette worth naming: the product card is a strict rectangl
 - **Required / optional marks:** 12px Weak Text with a leading `*`, never red. Red in this system means money or a failure; "required" is neither, and spending red on it leaves the error state with less contrast budget than it needs.
 
 ### Navigation
-- **Header:** sticky, translucent Card Stock over a Hairline bottom border. Site name at 18px/600; nav links at 14px in Secondary Ink, `py-2` so their hit area reaches 32px, active state at Ink/600. A single search field with a Seal submit button, then two icon-only shortcuts (X, shop), then locale and theme controls pushed to the far right and visually de-emphasized.
+- **Header:** sticky, solid Brand Red, no border and no translucency — a shopfront, not a tool bar. Site name at 18px/700 in white (24px from `md`); nav links at 14px in white/85, `py-2` so their hit area reaches 32px, active state at white/700. The search field is a **560×40 white rounded input** followed by a separate **80×40 light-grey 检索 button** (both 4px radius, measured); then X and 店铺信息 in white, then locale and theme controls at the far right. Every control on the bar is white type on red — there are no outlined buttons on it.
 - **Mobile:** below `sm` the nav collapses into a hamburger drawer and the search field moves to its own full-width row. **The language switcher stays in the top bar** — the launch market is Japan and the default language is Chinese, so hiding the one control that fixes that in a drawer is the same as not shipping it. The theme toggle stays in the drawer. The drawer's rows are 40px tall with hairline dividers.
-- **Footer:** three text blocks at `lg` (intro, contact, data notice), collapsing to one column on phones; then a hairline-separated row of site links (contact + the four compliance info pages) with `py-1.5` to lift each link to a 28px hit area, then a centered 12px copyright line.
+- **Footer:** near-black ground, `pt-20`, holding two blocks at `md`: the logo at the left and a **fixed 665px "帮助中心" block at the right** (the mockup measures the heading's left edge at 535px inside the container, i.e. 665px from its right edge). Under that heading, the site links sit in a 2-column grid (`sm`: 3 columns) in Footer Link Grey, `py-1.5` for a 28px hit area. Below everything, a centred 14px white copyright line with `pb-24`. The heading-to-links gap is 56px (`mt-14`), matching the measured 57px.
 
 ### Badges
 - **Pinned:** 4px radius, Price-Tag Red at 15% alpha, red text, 11px.
@@ -344,7 +349,7 @@ The one recurring silhouette worth naming: the product card is a strict rectangl
 - All are label-sized and never contain an icon. All sit on the 11px Micro step rather than 10px, because 10px CJK text loses stroke detail; the contrast floor (4.8:1 on their own tinted background) matters more than the extra compactness.
 
 ### The Price
-The most repeated custom pattern in the system: price renders at 16px/600 in Price-Tag Red with tabular numerals (detail page: 24px/600), currency symbol included, right-aligned against its row's end where a rarity label sits opposite. "面议" (price on request) occupies the same slot in the same weight but in Weak Text — a card without a price must not look like a card with one.
+The most repeated custom pattern in the system: price renders at **20px/700** in Price-Tag Red with tabular numerals (measured: the grid price "¥3,000" is a 22px-tall ink block against a 17px card name), currency symbol included, and the detail page renders it larger, right-aligned against its row's end where a rarity label sits opposite. "面议" (price on request) occupies the same slot in the same weight but in Weak Text — a card without a price must not look like a card with one.
 
 **Yen are integers here.** Directus stores `decimal(10,2)` and the seed data arrives as `880.00`; rendering it verbatim produced `¥880.00` on every surface, which asks a buyer to strip two decimal places off every card in a grid of forty. Trading cards have no subunit in use, so all price rendering goes through `formatYen` (`lib/format.ts`), which formats with `maximumFractionDigits: 0` and thousands separators. This is display only — the stored value keeps its precision for any future averaging or fee calculation.
 
