@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import type { ReactNode } from 'react'
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import {
   Outlet,
   createRootRoute,
@@ -8,22 +8,22 @@ import {
   Scripts,
   useRouter,
   useRouterState,
-} from '@tanstack/react-router'
-import type { ErrorComponentProps } from '@tanstack/react-router'
-import { assetUrl, getBanners, getSiteSettings } from '~/lib/directus'
-import type { SiteSettings } from '~/lib/types'
-import { INFO_PAGE_KEYS, INFO_PAGE_LABEL_KEY } from '~/lib/info-pages'
-import { LOCALES, isDefaultLocale } from '~/lib/i18n/locales'
-import type { Locale } from '~/lib/i18n/locales'
-import { useLocale, useT } from '~/lib/i18n/react'
-import { translate } from '~/lib/i18n/messages'
-import { buildHead, localeFromMatches } from '~/lib/seo'
-import { GlobalSearch } from '~/components/GlobalSearch'
-import { ContentLanguageNotice } from '~/components/ContentLanguageNotice'
-import '../styles.css'
+} from "@tanstack/react-router";
+import type { ErrorComponentProps } from "@tanstack/react-router";
+import { assetUrl, getBanners, getSiteSettings } from "~/lib/directus";
+import type { SiteSettings } from "~/lib/types";
+import { INFO_PAGE_KEYS, INFO_PAGE_LABEL_KEY } from "~/lib/info-pages";
+import { LOCALES, isDefaultLocale } from "~/lib/i18n/locales";
+import type { Locale } from "~/lib/i18n/locales";
+import { useLocale, useT } from "~/lib/i18n/react";
+import { translate } from "~/lib/i18n/messages";
+import { buildHead, localeFromMatches } from "~/lib/seo";
+import { GlobalSearch } from "~/components/GlobalSearch";
+import { ContentLanguageNotice } from "~/components/ContentLanguageNotice";
+import "../styles.css";
 
 // 在首屏绘制前同步主题，避免浅色闪一下。优先级：localStorage > 系统偏好。
-const NO_FLASH_SCRIPT = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`
+const NO_FLASH_SCRIPT = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
 
 export const Route = createRootRoute({
   // 根路由只发「每页都有、与内容无关」的标签，外加一套 **兜底** 的 title/description。
@@ -33,51 +33,59 @@ export const Route = createRootRoute({
   // 这里保留一份，是为了 404 / 500 这类没有叶子路由的页面不至于没有标题——
   // 之前的问题是所有页面共用这一份，而不是这一份不该存在。
   head: ({ matches }) => {
-    const locale = localeFromMatches(matches)
-    const meta = LOCALES[locale]
+    const locale = localeFromMatches(matches);
+    const meta = LOCALES[locale];
     // 404：没有叶子路由 head() 可用，标题在这里改写，并且不收录。
     //
     // 判据是根 match 的 `_notFound` 标记：未匹配的路径（`/nope`）与非法语言段
     // （`/de/cards`）都会被打上，正常页面不会（实测正常页为 false）。
     // 不能改用「匹配链长度」判断——`/nope` 仍然会匹配到 `{-$locale}` 布局的两级；
     // 也不能看 `match.status`——head() 在状态落定之前就可能执行，那里仍是 'success'。
-    const notFound = matches[0]?._notFound === true
+    const notFound = matches[0]?._notFound === true;
     const title = notFound
-      ? `${translate(locale, 'notFoundHeading')} | ${meta.title}`
-      : meta.title
+      ? `${translate(locale, "notFoundHeading")} | ${meta.title}`
+      : meta.title;
     return {
       meta: [
-        { charSet: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'format-detection', content: 'telephone=no' },
+        { charSet: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { name: "format-detection", content: "telephone=no" },
         { title },
-        { name: 'description', content: meta.description },
+        { name: "description", content: meta.description },
         ...(notFound
           ? [
-              { name: 'robots', content: 'noindex, follow' },
-              { property: 'og:title', content: title },
+              { name: "robots", content: "noindex, follow" },
+              { property: "og:title", content: title },
             ]
           : []),
       ],
       links: [
-        { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
-        { rel: 'icon', href: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
-        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
-        { rel: 'manifest', href: '/site.webmanifest' },
+        { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+        {
+          rel: "icon",
+          href: "/favicon-32.png",
+          sizes: "32x32",
+          type: "image/png",
+        },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+        { rel: "manifest", href: "/site.webmanifest" },
       ],
       // 首屏前同步主题，避免闪烁。通过 head().scripts 注入，
       // 由 <HeadContent /> 渲染，React 19 不会报 “script in component” 的 hydration 错误。
       scripts: [{ children: NO_FLASH_SCRIPT }],
-    }
+    };
   },
   loader: async (): Promise<{
-    site: SiteSettings | null
-    fallbackImage: string | number | null
+    site: SiteSettings | null;
+    fallbackImage: string | number | null;
   }> => {
     // banner 一起取：它是全站分享图的兜底（列表/公告/门店等页面本身没有配图），
     // 根路由反正每次都要跑，多这一个请求比为每个页面各发一次划算。
-    const [site, banners] = await Promise.all([getSiteSettings(), getBanners()])
-    return { site, fallbackImage: banners[0]?.image ?? null }
+    const [site, banners] = await Promise.all([
+      getSiteSettings(),
+      getBanners(),
+    ]);
+    return { site, fallbackImage: banners[0]?.image ?? null };
   },
   component: RootComponent,
   // 文档外壳（<html>/<head>/<body>）只在这一层渲染一次。
@@ -87,55 +95,55 @@ export const Route = createRootRoute({
   shellComponent: RootDocument,
   notFoundComponent: NotFoundPage,
   errorComponent: ErrorPage,
-})
+});
 
 function RootComponent() {
-  return <Outlet />
+  return <Outlet />;
 }
 
 // 未匹配路由（含爬虫乱扫的路径、以及不支持的语言段）：给出站内 404，而不是默认的裸 "Not Found"
 function NotFoundPage() {
-  const t = useT()
+  const t = useT();
   // 404 也可能是「未知语言段」造成的（如 /nope、/de/cards）。此时 params.locale
   // 是那个非法值，直接用它生成链接会得到 /nope/cards 这类二次 404。
   // 这里把非法/缺失的语言段归一成 undefined（默认语言），链接才会回到站内真实页面。
-  const locale = useLocale()
-  const localeParam = isDefaultLocale(locale) ? undefined : locale
+  const locale = useLocale();
+  const localeParam = isDefaultLocale(locale) ? undefined : locale;
   return (
     <div className="text-center py-24">
       {/* 数字用 Weak 档（对卡片 6.2:1）：404 应当读得到，但不必和正文抢注意力。 */}
       <div className="text-6xl font-black text-faint tracking-tight">404</div>
-      <p className="mt-4 text-muted">{t('notFoundBody')}</p>
+      <p className="mt-4 text-muted">{t("notFoundBody")}</p>
       <div className="mt-6 flex items-center justify-center gap-4 text-sm">
         <Link
           to="/{-$locale}"
           params={{ locale: localeParam }}
           className="inline-flex items-center rounded-full bg-accent text-on-accent px-4 py-1.5 hover:bg-accent/90"
         >
-          {t('backHome')}
+          {t("backHome")}
         </Link>
         <Link
           to="/{-$locale}/cards"
           params={{ locale: localeParam }}
           className="text-muted underline"
         >
-          {t('browseCards')}
+          {t("browseCards")}
         </Link>
       </div>
     </div>
-  )
+  );
 }
 
 // 渲染/加载异常兜底，避免整页白屏
 function ErrorPage({ error, reset }: ErrorComponentProps) {
-  const t = useT()
-  const message = error instanceof Error ? error.message : String(error)
-  const locale = useLocale()
-  const localeParam = isDefaultLocale(locale) ? undefined : locale
+  const t = useT();
+  const message = error instanceof Error ? error.message : String(error);
+  const locale = useLocale();
+  const localeParam = isDefaultLocale(locale) ? undefined : locale;
   return (
     <div className="text-center py-24">
       <div className="text-6xl font-black text-faint tracking-tight">500</div>
-      <p className="mt-4 text-muted">{t('errorBody')}</p>
+      <p className="mt-4 text-muted">{t("errorBody")}</p>
       <p className="mt-2 text-xs text-faint break-all max-w-xl mx-auto">
         {message}
       </p>
@@ -144,18 +152,18 @@ function ErrorPage({ error, reset }: ErrorComponentProps) {
           onClick={reset}
           className="inline-flex items-center rounded-full bg-accent text-on-accent px-4 py-1.5 hover:bg-accent/90"
         >
-          {t('reload')}
+          {t("reload")}
         </button>
         <Link
           to="/{-$locale}"
           params={{ locale: localeParam }}
           className="text-muted underline"
         >
-          {t('backHome')}
+          {t("backHome")}
         </Link>
       </div>
     </div>
-  )
+  );
 }
 
 // X（原 Twitter）图标。用官方简化字形：
@@ -163,10 +171,16 @@ function ErrorPage({ error, reset }: ErrorComponentProps) {
 // 让两个交易入口在视觉重量上一致。
 function XIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      fill="currentColor"
+      aria-hidden="true"
+    >
       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117l11.966 15.644Z" />
     </svg>
-  )
+  );
 }
 
 // 店铺图标：遮阳棚 + 店门。18px 下不带文字时容易被看成打印机，
@@ -174,8 +188,15 @@ function XIcon() {
 function ShopIcon() {
   return (
     <svg
-      width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
     >
       {/* 遮阳棚：一道横梁 + 四个下垂的棚布 */}
       <path d="M3.5 9.5V5.5h17v4" />
@@ -184,15 +205,15 @@ function ShopIcon() {
       <path d="M5.5 12.5V20h13v-7.5" />
       <path d="M9.8 20v-4.2h4.4V20" />
     </svg>
-  )
+  );
 }
 
 // X 图标与店铺图标共用同一套外壳尺寸，保证顶栏右侧那两个按钮在所有宽度一致。
 const iconBtn =
-  'inline-flex h-9 shrink-0 items-center justify-center rounded text-white/90 transition hover:bg-white/15 hover:text-white'
+  "inline-flex h-9 shrink-0 items-center justify-center rounded text-white/90 transition hover:bg-white/15 hover:text-white";
 
 // 顶栏那两个图标按钮共用同一套外壳尺寸，保证在所有宽度下高度一致。
-const iconBtnSquare = `${iconBtn} w-9`
+const iconBtnSquare = `${iconBtn} w-9`;
 
 // 页脚 logo：site_settings.logo 是 Directus 文件 id，走后台上传。
 // 未上传时占住同样的尺寸（h-16 w-40）而不是整块消失，否则后台一传 logo，
@@ -203,11 +224,11 @@ function FooterLogo({
   logo,
   name,
 }: {
-  logo: string | number | null
-  name: string
+  logo: string | number | null;
+  name: string;
 }) {
-  const src = assetUrl(logo, { height: 64, format: 'webp' })
-  if (!src) return <div aria-hidden="true" className="h-16 w-40" />
+  const src = assetUrl(logo, { height: 64, format: "webp" });
+  if (!src) return <div aria-hidden="true" className="h-16 w-40" />;
   return (
     <div className="flex h-16 w-40 items-center justify-center">
       <img
@@ -217,17 +238,23 @@ function FooterLogo({
         loading="lazy"
       />
     </div>
-  )
+  );
 }
 
 // 后台没配 x_account 时整颗按钮不渲染：宁可少一个图标，也不给死链。
 function SocialIcon({ href, label }: { href: string | null; label: string }) {
-  if (!href) return null
+  if (!href) return null;
   return (
-    <a href={href} target="_blank" rel="me noreferrer" aria-label={label} className={iconBtnSquare}>
+    <a
+      href={href}
+      target="_blank"
+      rel="me noreferrer"
+      aria-label={label}
+      className={iconBtnSquare}
+    >
       <XIcon />
     </a>
-  )
+  );
 }
 
 function ShopLink({
@@ -235,64 +262,75 @@ function ShopLink({
   label,
   withText = false,
 }: {
-  localeParams: { locale: string | undefined }
-  label: string
+  localeParams: { locale: string | undefined };
+  label: string;
   /** 宽屏带 SHOP 字样：单靠图标在 16px 下辨识度不够。 */
-  withText?: boolean
+  withText?: boolean;
 }) {
+  const t = useT();
   return (
     <Link
       to="/{-$locale}/shops"
       params={localeParams}
       aria-label={label}
-      activeProps={{ className: 'bg-surface-2 text-fg' }}
+      activeProps={{ className: "bg-surface-2 text-fg" }}
       className={
         // 文字只在 ≥1024 出现；再窄就退化成和 X 一样的方形图标。
-        withText ? `${iconBtnSquare} lg:w-auto lg:gap-1.5 lg:px-2.5` : iconBtnSquare
+        withText
+          ? `${iconBtnSquare} lg:w-auto lg:gap-1.5 lg:px-2.5`
+          : iconBtnSquare
       }
     >
       <ShopIcon />
       {withText && (
-        <span className="hidden text-xs font-semibold tracking-wide lg:inline">SHOP</span>
+        <span className="hidden text-xs font-semibold tracking-wide lg:inline">
+          {t("shopLabel")}
+        </span>
       )}
     </Link>
-  )
+  );
 }
 
-function ThemeToggle({ className = '' }: { className?: string }) {
-  const t = useT()
+function ThemeToggle({ className = "" }: { className?: string }) {
+  const t = useT();
   // 仅用于 aria-label。服务端与首帧都取 false，挂载后再从 DOM 读真实值，
   // 因此不会出现「渲染期读 document」导致的水合不一致。
-  const [dark, setDark] = useState(false)
+  const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    setDark(document.documentElement.classList.contains('dark'))
-  }, [])
+    setDark(document.documentElement.classList.contains("dark"));
+  }, []);
 
   const toggle = () => {
-    const next = !document.documentElement.classList.contains('dark')
-    document.documentElement.classList.toggle('dark', next)
+    const next = !document.documentElement.classList.contains("dark");
+    document.documentElement.classList.toggle("dark", next);
     try {
-      localStorage.setItem('theme', next ? 'dark' : 'light')
+      localStorage.setItem("theme", next ? "dark" : "light");
     } catch {
       /* ignore */
     }
-    setDark(next)
-  }
+    setDark(next);
+  };
 
   return (
     <button
       type="button"
       onClick={toggle}
-      aria-label={dark ? t('themeToLight') : t('themeToDark')}
+      aria-label={dark ? t("themeToLight") : t("themeToDark")}
       aria-pressed={dark}
       className={`inline-flex h-9 w-9 items-center justify-center rounded text-white/90 transition hover:bg-white/15 hover:text-white ${className}`}
     >
       {/* 月亮：深色时显示。两个图标同时渲染，由 CSS 决定可见性，
           因此没有「首帧图标不对、水合后跳变」的问题。 */}
       <svg
-        width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="hidden dark:block"
         aria-hidden="true"
       >
@@ -300,8 +338,14 @@ function ThemeToggle({ className = '' }: { className?: string }) {
       </svg>
       {/* 太阳：浅色时显示 */}
       <svg
-        width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="block dark:hidden"
         aria-hidden="true"
       >
@@ -309,24 +353,24 @@ function ThemeToggle({ className = '' }: { className?: string }) {
         <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
       </svg>
     </button>
-  )
+  );
 }
 
 // 语言切换：留在当前页面，只换语言段。用相对路由 + params reducer，
 // 这样当前路径的其余参数与查询串原样保留（含筛选态）。
 function LocaleSwitcher({ compact = false }: { compact?: boolean }) {
-  const locale = useLocale()
-  const t = useT()
-  const router = useRouter()
+  const locale = useLocale();
+  const t = useT();
+  const router = useRouter();
   return (
     <label className="inline-flex items-center">
-      <span className="sr-only">{t('switchLanguage')}</span>
+      <span className="sr-only">{t("switchLanguage")}</span>
       <select
         value={locale}
         onChange={(e) => {
-          const next = e.target.value as Locale
+          const next = e.target.value as Locale;
           router.navigate({
-            to: '.',
+            to: ".",
             params: (prev: Record<string, unknown>) => ({
               ...prev,
               // 默认语言不带路径段：传 undefined 让可选段整体消失，
@@ -338,12 +382,12 @@ function LocaleSwitcher({ compact = false }: { compact?: boolean }) {
             // 换语言只是把同一页换成另一种界面语言，视口要留在原处：
             // 默认会滚回页顶，读了一半的列表会被拽走。
             resetScroll: false,
-          })
+          });
         }}
         // compact：手机顶栏用。显示当前语言的短标签（中/日/EN）而不是全称，
         // 宽度收在 36px 一档，和主题/汉堡按钮同高，不挤掉站名。
         className={`h-9 rounded border border-white/40 bg-transparent text-sm text-white transition hover:bg-white/15 [&>option]:text-fg outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
-          compact ? 'w-14 pl-2 pr-1' : 'px-2'
+          compact ? "w-14 pl-2 pr-1" : "px-2"
         }`}
       >
         {Object.entries(LOCALES).map(([key, value]) => (
@@ -353,12 +397,16 @@ function LocaleSwitcher({ compact = false }: { compact?: boolean }) {
         ))}
       </select>
     </label>
-  )
+  );
 }
 
 // 手机顶栏空间只够一个短标签。值本身是语言代码，屏幕阅读器读到的是它的发音，
 // 视觉用户看到的是「中 / 日 / EN」。
-const SHORT_LOCALE_LABEL: Record<Locale, string> = { zh: '中', ja: '日', en: 'EN' }
+const SHORT_LOCALE_LABEL: Record<Locale, string> = {
+  zh: "中",
+  ja: "日",
+  en: "EN",
+};
 
 // 文档外壳：由 shellComponent 调用，`children` 是当前匹配到的页面内容。
 // 它包住的不只是正常页面，也包括 404 / 500，所以这里是唯一渲染 <html> 的地方。
@@ -368,35 +416,36 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
   // null（站名与页脚文案都有兜底）。
   const site = useRouterState({
     select: (s) =>
-      (s.matches[0]?.loaderData as { site?: SiteSettings | null } | undefined)?.site ?? null,
-  })
-  const locale = useLocale()
-  const t = useT()
+      (s.matches[0]?.loaderData as { site?: SiteSettings | null } | undefined)
+        ?.site ?? null,
+  });
+  const locale = useLocale();
+  const t = useT();
   // 显式传 locale 参数：`to="/{-$locale}/..."` 默认会从「当前匹配的 params」继承语言段，
   // 而 404 页（如 /nope、/de/cards）里那个段是非法值，继承下来就会生成 /nope/cards
   // 这类二次 404 链接。这里统一用已解析出的合法 locale（默认语言为 undefined，不带段）。
-  const localeParams = { locale: isDefaultLocale(locale) ? undefined : locale }
-  const siteName = site?.site_name || t('defaultSiteName')
+  const localeParams = { locale: isDefaultLocale(locale) ? undefined : locale };
+  const siteName = site?.site_name || t("defaultSiteName");
   // 店铺不再占一个文字导航项，改由搜索右侧的 SHOP 图标进入；留言咨询移到页脚。
   // 两者都还在全站可达，只是把主视线让给「浏览卡牌 / 看公告」。
   const nav = [
-    { to: '/{-$locale}/cards' as const, label: t('navCards') },
-    { to: '/{-$locale}/announcements' as const, label: t('navAnnouncements') },
-  ]
+    { to: "/{-$locale}/cards" as const, label: t("navCards") },
+    { to: "/{-$locale}/announcements" as const, label: t("navAnnouncements") },
+  ];
   // 社交账号只在后台维护（site_settings.x_account，形如 @cardmarket），
   // 这里拼成可点击的主页地址；没配就整颗图标不渲染，不留死链。
-  const xHandle = site?.x_account?.replace(/^@/, '').trim()
-  const xUrl = xHandle ? `https://x.com/${xHandle}` : null
-  const [menuOpen, setMenuOpen] = useState(false)
+  const xHandle = site?.x_account?.replace(/^@/, "").trim();
+  const xUrl = xHandle ? `https://x.com/${xHandle}` : null;
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <html lang={LOCALES[locale].htmlLang} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body className="min-h-screen flex flex-col">
-        <header className="sticky top-0 z-30 bg-brand text-white">
+        <header className="sticky top-0 z-9999 bg-brand text-white">
           <div className="mx-auto max-w-[1232px] px-4">
-            <div className="flex h-16 items-center gap-3 md:h-[100px] md:gap-6">
+            <div className="flex h-16 items-center gap-3 md:h-24 md:gap-6">
               <Link
                 to="/{-$locale}"
                 params={localeParams}
@@ -413,7 +462,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                     key={n.to}
                     to={n.to}
                     params={localeParams}
-                    activeProps={{ className: 'text-white font-semibold' }}
+                    activeProps={{ className: "text-white font-semibold" }}
                     className="inline-flex items-center py-2 transition hover:text-white"
                   >
                     {n.label}
@@ -434,8 +483,12 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                     避免 iPad 竖屏（768~1023）第一行图标还在、第二行又出现一份，
                     导致 SHOP / X 同时显示两份。 */}
                 <div className="hidden items-center gap-2 lg:flex">
-                  <SocialIcon href={xUrl} label={t('xAccountLabel')} />
-                  <ShopLink localeParams={localeParams} label={t('navShops')} withText />
+                  <SocialIcon href={xUrl} label={t("xAccountLabel")} />
+                  <ShopLink
+                    localeParams={localeParams}
+                    label={t("navShops")}
+                    withText
+                  />
                 </div>
                 <div className="hidden items-center gap-2 sm:flex">
                   <LocaleSwitcher />
@@ -447,12 +500,20 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 </div>
                 <button
                   type="button"
-                  aria-label={t('openMenu')}
+                  aria-label={t("openMenu")}
                   aria-expanded={menuOpen}
                   onClick={() => setMenuOpen((v) => !v)}
                   className="inline-flex h-9 w-9 items-center justify-center rounded text-white hover:bg-white/15 lg:hidden"
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
                     {menuOpen ? (
                       <path d="M6 6l12 12M18 6L6 18" />
                     ) : (
@@ -468,8 +529,8 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               <div className="flex min-w-0 flex-1">
                 <GlobalSearch />
               </div>
-              <SocialIcon href={xUrl} label={t('xAccountLabel')} />
-              <ShopLink localeParams={localeParams} label={t('navShops')} />
+              <SocialIcon href={xUrl} label={t("xAccountLabel")} />
+              <ShopLink localeParams={localeParams} label={t("navShops")} />
             </div>
           </div>
 
@@ -483,7 +544,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                     to={n.to}
                     params={localeParams}
                     onClick={() => setMenuOpen(false)}
-                    activeProps={{ className: 'text-white font-semibold' }}
+                    activeProps={{ className: "text-white font-semibold" }}
                     className="border-b border-white/25 py-2.5 text-sm text-white/85 hover:text-white last:border-0"
                   >
                     {n.label}
@@ -495,7 +556,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                   onClick={() => setMenuOpen(false)}
                   className="border-b border-white/25 py-2.5 text-sm text-white/85 hover:text-white"
                 >
-                  {t('navShops')}
+                  {t("navShops")}
                 </Link>
                 <Link
                   to="/{-$locale}/message"
@@ -503,7 +564,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                   onClick={() => setMenuOpen(false)}
                   className="border-b border-white/25 py-2.5 text-sm text-white/85 hover:text-white"
                 >
-                  {t('navContact')}
+                  {t("navContact")}
                 </Link>
               </nav>
             </div>
@@ -532,17 +593,19 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 从容器右端往左量 665px（实测标题左边缘在容器内的 535px 处）。
                 用 flex-1 会随视口变宽而左移，标题就对不上参考图的位置。 */}
             <div className="min-w-0 md:w-[665px] md:max-w-full">
-              <h2 className="text-xl font-bold md:text-2xl">{t('footerHelpCenter')}</h2>
+              <h2 className="text-xl font-bold md:text-2xl">
+                {t("footerHelpCenter")}
+              </h2>
               <nav
-                aria-label={t('footerNavTitle')}
-                className="mt-14 grid grid-cols-2 gap-x-10 gap-y-1 sm:grid-cols-3 sm:gap-x-12"
+                aria-label={t("footerNavTitle")}
+                className="mt-4 grid grid-cols-2 gap-x-10 gap-y-1 sm:grid-cols-3 sm:gap-x-12"
               >
                 <Link
                   to="/{-$locale}/message"
                   params={localeParams}
                   className="inline-flex items-center py-1.5 text-sm text-footer-muted transition hover:text-footer-fg hover:underline"
                 >
-                  {t('navContact')}
+                  {t("navContact")}
                 </Link>
                 {INFO_PAGE_KEYS.map((key) => (
                   <Link
@@ -558,8 +621,8 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
             </div>
           </div>
 
-          <p className="pb-24 text-center text-sm text-footer-fg">
-            {t('copyright', {
+          <p className="pb-12 mt-12 text-center text-sm text-footer-fg">
+            {t("copyright", {
               year: new Date().getFullYear(),
               site: siteName,
             })}
@@ -568,5 +631,5 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <Scripts />
       </body>
     </html>
-  )
+  );
 }

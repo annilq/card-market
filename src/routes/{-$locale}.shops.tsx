@@ -160,7 +160,7 @@ function ShopsPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="break-words text-[28px] font-bold leading-snug">{t('shopsTitle')}</h1>
+      {/*<h1 className="break-words text-[28px] font-bold leading-snug">{t('shopsTitle')}</h1>*/}
 
       {!current ? (
         <div className="rounded-xl border border-dashed border-border py-16 text-center">
@@ -175,7 +175,7 @@ function ShopsPage() {
               会被长地址的 min-content 顶宽，320 视口下整页横向溢出。
               后台没传照片时左列仍然是图位（放「暂无图片」占位），
               版面不因此换成另一种结构——左图、右信息+地图是这一页的固定骨架。 */}
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.78fr)_minmax(0,1fr)] lg:gap-[61px]">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.78fr)_minmax(0,1fr)]">
             <div className="relative aspect-[960/598] overflow-hidden rounded-xl bg-surface-2">
               {heroImg ? (
                 <>
@@ -214,7 +214,7 @@ function ShopsPage() {
               )}
             </div>
 
-            <div className="flex min-w-0 flex-col gap-7">
+            <div className="flex min-w-0 flex-col gap-7 justify-center">
               <ShopInfo shop={current} />
               <ShopMap
                 shops={shops}

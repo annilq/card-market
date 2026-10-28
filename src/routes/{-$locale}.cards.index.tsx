@@ -387,7 +387,7 @@ function CardList() {
           // key 跟着筛选与页码走：换页/换筛选时网格重挂载，`grid-enter` 播一次。
           <div
             key={`${search.page ?? 1}-${search.ip}-${search.series}-${search.sub}-${search.rarity}-${search.hv}-${search.min}-${search.max}-${search.q}-${search.sort}`}
-            className={`grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-8 ${changed ? 'grid-enter' : ''}`}
+            className={`grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 ${changed ? 'grid-enter' : ''}`}
           >
             {result.items.map((c) => (
               <CardCard key={c.id} card={c} />

@@ -63,6 +63,14 @@
   root route `head()` 返回 `scripts: [{ dangerouslySetInnerHTML: {...} }]` 交给 `<HeadContent />` 渲染。
 - `<link rel="icon" href="data:," />` 压掉 favicon 404 控制台报错。
 
+## 公共页 chrome 设计令牌（KoDuckYa 设计稿）
+- 品牌红 `--color-brand:#e60012` / `--color-brand-hover:#c50010`；顶栏 `bg-brand text-white`。
+- 页脚底色 `--color-footer:#0d0d0d`、主文 `--color-footer-fg:#f5f5f5`、次要 `--color-footer-muted:#a8a8a8`；
+  令牌名用 `footer`（非 `footer-bg`），这样 `bg-footer` 才能直接命中。
+- 页面灰底 `--color-bg:#ECECEC`（替换原 `#f8fafc`）。
+- 顶栏搜索按钮 `--color-search-btn:#e8e8e8` / `--color-search-btn-fg:#333333`（浅灰底深灰字，贴输入框右缘）。
+- 页脚左侧 FooterLogo、右侧「帮助中心」链接网格（message + 4 个 info_pages key）；标题走界面语言键 `footerHelpCenter`。
+
 ## 审核信息页（info_pages）
 - 集合 `info_pages`：`page_key`(唯一索引 uniq_info_pages_page_key) / `title` / `body`(rich) / `sort` / `status`(Directus)。
   Public 角色只读且 `status=published`。四个 key：`operation` / `personal-info` / `terms` / `data-usage`。

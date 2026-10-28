@@ -143,7 +143,7 @@ export function CatalogFilters({
           「重置」移到了下面那排筛选控件的末尾——它是把四个下拉恢复默认值，
           属于操作而不是导航，挨着「全部」放会被读成一对同类的文字链接。 */}
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">{t('catalogFilters')}</h2>
+        {/*<h2 className="text-lg font-semibold">{t('catalogFilters')}</h2>*/}
         <Link
           to="/{-$locale}/cards"
           params={localeParams}
