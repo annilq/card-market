@@ -121,28 +121,19 @@ export function CatalogFilters({
 
   return (
     <div role="group" aria-label={t('catalogFilters')}>
-      {/* 标题行：右侧是「重置」与「全部」。与站内「通知公告」「高价买取」的
-          标题行同一套排版，三个区块的「全部」用同一种纯文字加箭头样式。
-          「重置」是操作而不是导航，用 button；没有可重置的筛选时禁用。 */}
+      {/* 标题行右侧只留「全部」：与站内「通知公告」「高价买取」的标题行
+          同一套排版，三个区块的「全部」用同一种纯文字样式。
+          「重置」移到了下面那排筛选控件的末尾——它是把四个下拉恢复默认值，
+          属于操作而不是导航，挨着「全部」放会被读成一对同类的文字链接。 */}
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">{t('catalogFilters')}</h2>
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={onReset}
-            disabled={!isDirty}
-            className="text-sm text-muted transition hover:text-fg hover:underline disabled:cursor-default disabled:text-faint disabled:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            {t('catalogReset')}
-          </button>
-          <Link
-            to="/{-$locale}/cards"
-            params={localeParams}
-            className="text-sm text-muted transition hover:text-fg hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            {t('viewAll')}
-          </Link>
-        </div>
+        <Link
+          to="/{-$locale}/cards"
+          params={localeParams}
+          className="text-sm text-muted transition hover:text-fg hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          {t('viewAll')}
+        </Link>
       </div>
 
       {/* 标签与下拉框同一行（参考图就是这个排版）。
@@ -182,6 +173,20 @@ export function CatalogFilters({
             </select>
           </label>
         ))}
+
+        {/* 「重置」是这一排筛选的最后一个控件：改完四个下拉之后手就在这一带，
+            清空动作也就该在这里，而不是回到标题行右上角找。
+            仍是 button（操作而非导航），没有可重置项时禁用而不是隐藏，
+            按钮位置才不会在筛选前后跳动。self-start：手机是单列纵向排列，
+            默认 stretch 会把按钮拉成整行宽的色块。 */}
+        <button
+          type="button"
+          onClick={onReset}
+          disabled={!isDirty}
+          className="self-start whitespace-nowrap py-1 text-sm text-muted transition hover:text-fg hover:underline disabled:cursor-default disabled:text-faint disabled:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          {t('catalogReset')}
+        </button>
       </div>
     </div>
   )
