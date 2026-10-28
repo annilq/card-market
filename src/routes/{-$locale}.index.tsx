@@ -143,18 +143,25 @@ function Home() {
   // 让结果网格播一次入场（这是用户操作的结果，不是页面加载）。
   const onReset = () => {
     setChanged(true)
-    navigate({ to: '/{-$locale}', search: {} })
+    // resetScroll: false：改筛选只是换列表内容，视口不该被拽回页顶——
+    // 用户是滚到筛选区再改的，回到顶部等于把他刚看过的上下文丢掉。
+    navigate({ to: '/{-$locale}', search: {}, resetScroll: false })
   }
 
   // 改任一筛选都写回 URL。换 IP 时顺手清掉系列：新 IP 下可能没有原系列，
   // 留着会是「已选但下拉里没有」的旧值，界面与结果对不上。
+  //
+  // 合并必须用 `'key' in next` 判断，不能用 `next.x !== undefined`：
+  // 选回「全部」时调用方传的就是 `{ ipId: undefined }`，按 !== undefined 判断
+  // 会被当成「这一项没变」而沿用 search 里的旧值——筛选因此永远清不掉，
+  // 「全部」看着像点了没反应。
   const onFilterChange = (next: Partial<CatalogFilterValue>) => {
     setChanged(true)
     const merged: HomeSearch = {
-      ip: next.ipId !== undefined ? next.ipId : search.ip,
-      series: next.seriesId !== undefined ? next.seriesId : search.series,
-      type: next.cardStatus !== undefined ? next.cardStatus : search.type,
-      sort: next.sort !== undefined ? next.sort : search.sort,
+      ip: 'ipId' in next ? next.ipId : search.ip,
+      series: 'seriesId' in next ? next.seriesId : search.series,
+      type: 'cardStatus' in next ? next.cardStatus : search.type,
+      sort: 'sort' in next ? next.sort : search.sort,
     }
     if ('ipId' in next) merged.series = undefined
     if ('seriesId' in next && next.seriesId != null) {
@@ -162,7 +169,7 @@ function Home() {
       const parent = series.find((s) => s.id === next.seriesId)
       if (parent) merged.ip = parent.ip_id
     }
-    navigate({ to: '/{-$locale}', search: merged })
+    navigate({ to: '/{-$locale}', search: merged, resetScroll: false })
   }
 
   // 活跃筛选：把 URL 里的选择摊成可逐个移除的 chip。
@@ -328,7 +335,7 @@ function Home() {
               type="button"
               onClick={() => {
                 setChanged(true)
-                navigate({ to: '/{-$locale}', search: c.clear })
+                navigate({ to: '/{-$locale}', search: c.clear, resetScroll: false })
               }}
               className="inline-flex items-center gap-1 rounded-full border border-border-strong bg-surface px-2.5 py-1 text-xs text-muted transition-colors duration-150 hover:border-fg hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted"
             >

@@ -133,9 +133,16 @@ function CardList() {
   const subSel = new Set(toArr(search.sub))
   const raritySel = new Set(toArr(search.rarity))
 
+  // resetScroll: false：勾一个分面只该换结果，不该把视口拽回页顶。
+  // 筛选栏在桌面是 sticky、在手机是折叠面板，用户滚到列表中部再改筛选时，
+  // 回到页顶等于把刚才的浏览位置丢掉，还得重新滚下来看结果。
   const patch = (p: Partial<CardSearch>) => {
     setChanged(true)
-    navigate({ to: '/{-$locale}/cards', search: { ...search, ...p, page: 1 } })
+    navigate({
+      to: '/{-$locale}/cards',
+      search: { ...search, ...p, page: 1 },
+      resetScroll: false,
+    })
   }
 
   // 切页后把视口带回网格顶端：`scrollRestoration` 只在「后退/前进」时恢复，
@@ -144,7 +151,13 @@ function CardList() {
   const gridTopRef = useRef<HTMLElement>(null)
   const patchPage = (page: number) => {
     setChanged(true)
-    navigate({ to: '/{-$locale}/cards', search: { ...search, page } })
+    // 翻页是例外：这里要的是「回到网格顶端」，而不是页顶，
+    // 因此关掉默认的 resetScroll，再自己 scrollIntoView 到网格（见下）。
+    navigate({
+      to: '/{-$locale}/cards',
+      search: { ...search, page },
+      resetScroll: false,
+    })
     requestAnimationFrame(() => {
       gridTopRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' })
       gridTopRef.current?.focus({ preventScroll: true })
@@ -190,6 +203,7 @@ function CardList() {
     navigate({
       to: '/{-$locale}/cards',
       search: { q: search.q || undefined, sort: search.sort },
+      resetScroll: false,
     })
 
   const seriesEnabled = (s: Series) =>
