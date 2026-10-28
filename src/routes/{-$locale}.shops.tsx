@@ -169,62 +169,60 @@ function ShopsPage() {
         </div>
       ) : (
         <>
-          {/* 双列：左大图（带营业时间覆层）+ 右「店名 / 地址 / 地图」。
-              比例来自参考图实测：左图 960×598，右块 540 宽，中间空 61px，
+          {/* 双列：左门店图（带营业时间覆层）+ 右「店名 / 地址 / 电话 / 地图」。
+              比例来自设计图实测：左图 960×598，右块 540 宽，中间空 61px，
               地图 540×318。列宽用 minmax(0,…)：grid 子项默认 min-width:auto，
               会被长地址的 min-content 顶宽，320 视口下整页横向溢出。
-              后台没传门店照片时降级成「信息 | 地图」——留一个 960×598 的
-              空白图位比不放图更糟。 */}
-          {heroImg ? (
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.78fr)_minmax(0,1fr)] lg:gap-[61px]">
-              <div className="relative aspect-[960/598] overflow-hidden rounded-xl bg-surface-2">
-                <img src={heroImg} alt={current.name} className="h-full w-full object-cover" />
-                {/* 覆层压在图底部：参考图的营业时间就是压在门店照片上的白字。
-                    用底部实心、向上渐隐的黑色，避免浅色照片上文字掉到 1:1 级别。 */}
-                {(current.business_hours || current.phone) && (
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/55 to-transparent p-5 text-white sm:p-6">
-                    {current.business_hours && (
-                      <>
-                        <div className="text-xs font-medium text-white/85">
-                          {t('businessHours')}
+              后台没传照片时左列仍然是图位（放「暂无图片」占位），
+              版面不因此换成另一种结构——左图、右信息+地图是这一页的固定骨架。 */}
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.78fr)_minmax(0,1fr)] lg:gap-[61px]">
+            <div className="relative aspect-[960/598] overflow-hidden rounded-xl bg-surface-2">
+              {heroImg ? (
+                <>
+                  <img
+                    src={heroImg}
+                    alt={current.name}
+                    className="h-full w-full object-cover"
+                  />
+                  {/* 覆层压在图底部：设计图的营业时间就是压在门店照片上的白字。
+                      用底部实心、向上渐隐的黑色，避免浅色照片上文字掉到 1:1 级别。
+                      没有照片时不压字：信息块里已经有一份营业时间，不必重复。 */}
+                  {(current.business_hours || current.phone) && (
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/55 to-transparent p-5 text-white sm:p-6">
+                      {current.business_hours && (
+                        <>
+                          <div className="text-xs font-medium text-white/85">
+                            {t('businessHours')}
+                          </div>
+                          <div className="mt-1 text-lg font-bold tabular-nums">
+                            {current.business_hours}
+                          </div>
+                        </>
+                      )}
+                      {current.phone && (
+                        <div className="mt-2 text-sm tabular-nums text-white/90">
+                          {t('phoneLabel', { phone: current.phone })}
                         </div>
-                        <div className="mt-1 text-lg font-bold tabular-nums">
-                          {current.business_hours}
-                        </div>
-                      </>
-                    )}
-                    {current.phone && (
-                      <div className="mt-2 text-sm tabular-nums text-white/90">
-                        {t('phoneLabel', { phone: current.phone })}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-hint text-sm">
+                  {t('noImage')}
+                </div>
+              )}
+            </div>
 
-              <div className="flex min-w-0 flex-col gap-7">
-                <ShopInfo shop={current} />
-                <ShopMap
-                  shops={shops}
-                  selectedId={current.id}
-                  onSelect={setSelectedId}
-                />
-              </div>
+            <div className="flex min-w-0 flex-col gap-7">
+              <ShopInfo shop={current} />
+              <ShopMap
+                shops={shops}
+                selectedId={current.id}
+                onSelect={setSelectedId}
+              />
             </div>
-          ) : (
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-[61px]">
-              <div className="min-w-0">
-                <ShopInfo shop={current} />
-              </div>
-              <div className="min-w-0">
-                <ShopMap
-                  shops={shops}
-                  selectedId={current.id}
-                  onSelect={setSelectedId}
-                />
-              </div>
-            </div>
-          )}
+          </div>
 
           {/* 多店切换：只有一家门店时这一整块不出现，不为「只有一个选项」留一排。 */}
           {shops.length > 1 && (

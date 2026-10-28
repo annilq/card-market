@@ -23,3 +23,7 @@ dist
 
 # ── 运行时数据（用户上传、健康检查等，不入库） ──
 directus/uploads
+
+# ── 截图产物 ──
+# 复核脚本（.scratch/**/capture.mjs）可随时重生成，36MB 的 PNG 不进历史。
+.scratch/**/shots/

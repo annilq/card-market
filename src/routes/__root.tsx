@@ -429,8 +429,14 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               </div>
 
               <div className="ml-auto flex shrink-0 items-center gap-2 md:gap-4">
-                <SocialIcon href={xUrl} label={t('xAccountLabel')} />
-                <ShopLink localeParams={localeParams} label={t('navShops')} withText />
+                {/* X 与 SHOP 和搜索同组：≥1024 在第一行（紧挨搜索框），
+                    <1024 整体下移到第二行。这里用 hidden lg:flex 包住，
+                    避免 iPad 竖屏（768~1023）第一行图标还在、第二行又出现一份，
+                    导致 SHOP / X 同时显示两份。 */}
+                <div className="hidden items-center gap-2 lg:flex">
+                  <SocialIcon href={xUrl} label={t('xAccountLabel')} />
+                  <ShopLink localeParams={localeParams} label={t('navShops')} withText />
+                </div>
                 <div className="hidden items-center gap-2 sm:flex">
                   <LocaleSwitcher />
                   <ThemeToggle />

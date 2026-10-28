@@ -49,31 +49,32 @@ check('首页无横向溢出', home.sw <= home.iw + 1, true)
 await cdp.goto(BASE + '/shops', { settle: 1500 })
 await sleep(600)
 const shops = JSON.parse(await cdp.evaluate(`(() => {
-  const r = (el) => { if (!el) return null; const b = el.getBoundingClientRect(); return {x:Math.round(b.x),y:Math.round(b.y),w:Math.round(b.width),h:Math.round(b.height),right:Math.round(b.right)} }
+  const r = (el) => { if (!el) return null; const b = el.getBoundingClientRect(); return {x:Math.round(b.x),y:Math.round(b.y),w:Math.round(b.width),h:Math.round(b.height)} }
   const asp = [...document.querySelectorAll('main [class*="aspect-"]')]
   const hero = asp.find((e) => e.className.includes('960/598')) || null
   const map = asp.find((e) => e.className.includes('540/318')) || null
   const grid = (hero || map)?.closest('div.grid')
-  const gap = grid ? getComputedStyle(grid).columnGap : null
-  const cols = grid ? getComputedStyle(grid).gridTemplateColumns : null
+  const rightCol = grid?.children[1]
   return JSON.stringify({
     hasHero: !!hero,
-    hero: r(hero), map: r(map), cols, gap,
+    hero: r(hero), map: r(map),
+    hasHeroImg: !!(hero && hero.querySelector('img')),
+    mapInRightCol: !!(rightCol && map && rightCol.contains(map)),
+    rightColW: r(rightCol)?.w,
+    gap: grid ? getComputedStyle(grid).columnGap : null,
     hoursShown: /营业|営業|Hours/.test(document.body.innerText),
     sw: document.documentElement.scrollWidth, iw: window.innerWidth,
   })
 })()`))
 console.log('shops:', shops)
+check('左图位存在', shops.hasHero, true)
+check('左图宽高比 1.605', Number((shops.hero.w / shops.hero.h).toFixed(2)), 1.61, 0.03)
+check('地图在右列内', shops.mapInRightCol, true)
 check('地图宽高比 1.698', Number((shops.map.w / shops.map.h).toFixed(2)), 1.70, 0.03)
 check('双列间距 61px', parseInt(shops.gap), 61)
-check('门店名/营业时间渲染', shops.hoursShown, true)
+check('营业时间渲染', shops.hoursShown, true)
 check('门店页无横向溢出', shops.sw <= shops.iw + 1, true)
-if (shops.hasHero) {
-  check('大图宽高比 1.605', Number((shops.hero.w / shops.hero.h).toFixed(2)), 1.61, 0.03)
-  check('营业时间覆层存在', shops.overlay, true)
-} else {
-  console.log('NOTE  当前种子数据没有门店照片 → 走「信息 | 地图」降级双列，不留空白图位')
-}
+console.log(shops.hasHeroImg ? 'NOTE  门店照片已上传，左列显示实拍图 + 营业时间覆层' : 'NOTE  当前数据没有门店照片 → 左列显示「暂无图片」占位，骨架仍是左图/右信息+地图')
 
 console.log(fails === 0 ? 'ALL PASS' : `${fails} FAILED`)
 process.exit(fails === 0 ? 0 : 1)

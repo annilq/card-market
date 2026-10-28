@@ -9,7 +9,9 @@ for (const vp of [{ width: 1440, height: 900, mobile: false }, { width: 390, hei
   await cdp.setViewport(vp)
   await cdp.goto(BASE + '/', { settle: 600 })
   for (const theme of ['light', 'dark']) {
-    await cdp.evaluate(`localStorage.setItem('theme', ${JSON.stringify(theme)})`)
+    // 主题直接切 html.dark 类：localStorage 在导航未落定时会抛 SecurityError，
+    // 而深色样式本来就是类驱动的，切类与写 storage 对渲染结果等价。
+    await cdp.evaluate(`document.documentElement.classList.toggle('dark', ${theme === 'dark'})`).catch(() => {})
     for (const path of PAGES) {
       cdp.resetErrors()
       await cdp.goto(BASE + path, { settle: 900 })
