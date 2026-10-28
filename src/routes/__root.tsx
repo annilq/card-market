@@ -334,6 +334,9 @@ function LocaleSwitcher({ compact = false }: { compact?: boolean }) {
             }),
             search: true,
             replace: true,
+            // 换语言只是把同一页换成另一种界面语言，视口要留在原处：
+            // 默认会滚回页顶，读了一半的列表会被拽走。
+            resetScroll: false,
           })
         }}
         // compact：手机顶栏用。显示当前语言的短标签（中/日/EN）而不是全称，
@@ -393,7 +396,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur border-b border-border">
           <div className="mx-auto max-w-6xl px-4">
             <div className="h-14 flex items-center gap-3 sm:gap-6">
-              <Link to="/{-$locale}" params={localeParams} className="font-bold text-lg text-fg truncate">
+              <Link to="/{-$locale}" params={localeParams} className="min-w-0 font-bold text-lg text-fg truncate">
                 {siteName}
               </Link>
 
@@ -430,19 +433,24 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
 
               {/* 辅助设置放最右并压低权重：语言与主题是偏好，不是导航，
                   点击频率远低于搜索与店铺，不该占主视线。
-                  但**语言开关在手机上必须可见**：上线后主力是日语用户，
-                  藏进汉堡里等于没有——之前实测 390px 下它是 0×0。
-                  主题开关仍留在抽屉（深色/浅色比语言更低频）。 */}
-              <div className="ml-auto flex items-center gap-2">
-                <div className="sm:hidden">
+                  但**两者在手机上必须都可见**：上线后主力是日语用户，语言开关
+                  藏进汉堡里等于没有（之前实测 390px 下它是 0×0）；主题开关也
+                  从抽屉提到顶栏，与语言开关并排——分处两地时用户找不到
+                  「改显示设置」的入口在哪，并排才会被读成同一组偏好。 */}
+              <div className="ml-auto flex min-w-0 items-center gap-2">
+                {/* <640：语言用 compact 短标签（中/日/EN，56px）+ 36px 方形主题按钮，
+                    窄屏下省出的宽度留给站名。 */}
+                <div className="flex items-center gap-2 sm:hidden">
                   <LocaleSwitcher compact />
+                  <ThemeToggle />
                 </div>
-                <div className="hidden sm:flex items-center gap-2">
+                <div className="hidden items-center gap-2 sm:flex">
                   <LocaleSwitcher />
                   <ThemeToggle />
                 </div>
 
-                {/* 移动端汉堡按钮：导航与设置都在抽屉里，顶栏只留必要项 */}
+                {/* 移动端汉堡按钮：导航与留言入口在抽屉里，顶栏只留必要项。
+                    语言与主题都在顶栏右侧常驻，抽屉里不再重复放一份。 */}
                 <button
                   type="button"
                   aria-label={t('openMenu')}
@@ -503,14 +511,6 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 >
                   {t('navContact')}
                 </Link>
-
-                {/* 抽屉里只剩主题：语言已经提到顶栏常驻（上线主力是日语用户，
-                    藏进抽屉等于没有）。320 宽下顶栏实测仍放得下：
-                    站名 + 中/日/EN 下拉(56px) + 汉堡，无溢出。 */}
-                <div className="flex items-center justify-between gap-3 pt-3 pb-1">
-                  <span className="text-xs text-faint">{t('preferences')}</span>
-                  <ThemeToggle />
-                </div>
               </nav>
             </div>
           )}
