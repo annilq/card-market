@@ -20,7 +20,7 @@ const zh = {
   defaultSiteName: 'Card Shop',
   navCards: '卡牌',
   navAnnouncements: '公告',
-  navShops: '店铺',
+  navShops: '店铺信息',
   navContact: '留言咨询',
   openMenu: '打开菜单',
   themeToDark: '切换到深色模式',
@@ -29,11 +29,12 @@ const zh = {
   notFoundHeading: '页面不存在',
   notFoundBody: '页面不存在或已被删除。',
   errorBody: '页面加载出错了，请稍后重试。',
-  copyright: '© {year} {site} · 内容由 Directus 驱动',
+  copyright: 'Copyright © {year} {site}. All rights reserved.',
 
   // 信息页（审核用：运营信息 / 个人信息收集 / 利用规则 / 数据使用）
   infoNavTitle: '网站信息',
   footerNavTitle: '站内链接',
+  footerHelpCenter: '帮助中心',
   preferences: '偏好设置',
   xAccountLabel: '在 X 上关注我们',
   infoOperation: '运营信息',
@@ -111,11 +112,13 @@ const zh = {
   // 店铺
   shopsTitle: '店铺',
   shopsIntro: '我们在以下门店提供卡牌展示与高价回购，点击门店可在地图中定位。',
+  allShops: '全部门店',
   noShops: '暂无门店信息',
   leaveMessage: '给我们留言',
   noImageShort: '暂无图',
   phoneLabel: '电话：{phone}',
   hoursLabel: '营业：{hours}',
+  businessHours: '营业时间',
 
   // 留言
   contactTitle: '留言咨询',
@@ -171,7 +174,7 @@ const ja: Record<MessageKey, string> = {
   defaultSiteName: 'カードショップ',
   navCards: 'カード',
   navAnnouncements: 'お知らせ',
-  navShops: '店舗',
+  navShops: '店舗情報',
   navContact: 'お問い合わせ',
   openMenu: 'メニューを開く',
   themeToDark: 'ダークモードに切り替え',
@@ -180,10 +183,11 @@ const ja: Record<MessageKey, string> = {
   notFoundHeading: 'ページが見つかりません',
   notFoundBody: 'ページが存在しないか、削除されました。',
   errorBody: 'ページの読み込みに失敗しました。時間をおいて再度お試しください。',
-  copyright: '© {year} {site} · コンテンツは Directus で管理しています',
+  copyright: 'Copyright © {year} {site}. All rights reserved.',
 
   infoNavTitle: 'サイト情報',
   footerNavTitle: 'サイト内リンク',
+  footerHelpCenter: 'ヘルプセンター',
   preferences: '表示設定',
   xAccountLabel: 'X でフォロー',
   infoOperation: '運営情報',
@@ -257,11 +261,13 @@ const ja: Record<MessageKey, string> = {
   shopsTitle: '店舗',
   shopsIntro:
     '以下の店舗でカード展示と高価買取を行っています。店舗をクリックすると地図上に表示されます。',
+  allShops: '全店舗',
   noShops: '店舗情報がありません',
   leaveMessage: 'メッセージを送る',
   noImageShort: '画像なし',
   phoneLabel: '電話：{phone}',
   hoursLabel: '営業：{hours}',
+  businessHours: '営業時間',
 
   contactTitle: 'お問い合わせ',
   contactIntro:
@@ -309,7 +315,7 @@ const en: Record<MessageKey, string> = {
   defaultSiteName: 'Card Shop',
   navCards: 'Cards',
   navAnnouncements: 'News',
-  navShops: 'Stores',
+  navShops: 'Store Info',
   navContact: 'Contact',
   openMenu: 'Open menu',
   themeToDark: 'Switch to dark mode',
@@ -318,10 +324,11 @@ const en: Record<MessageKey, string> = {
   notFoundHeading: 'Page not found',
   notFoundBody: 'This page does not exist or has been removed.',
   errorBody: 'Something went wrong while loading this page. Please try again.',
-  copyright: '© {year} {site} · Content powered by Directus',
+  copyright: 'Copyright © {year} {site}. All rights reserved.',
 
   infoNavTitle: 'Site information',
   footerNavTitle: 'Site links',
+  footerHelpCenter: 'Help Center',
   preferences: 'Preferences',
   xAccountLabel: 'Follow us on X',
   infoOperation: 'Operations',
@@ -395,11 +402,13 @@ const en: Record<MessageKey, string> = {
   shopsTitle: 'Stores',
   shopsIntro:
     'Our stores display cards and buy them back at premium prices. Select a store to locate it on the map.',
+  allShops: 'All stores',
   noShops: 'No stores yet',
   leaveMessage: 'Send us a message',
   noImageShort: 'No image',
   phoneLabel: 'Phone: {phone}',
   hoursLabel: 'Hours: {hours}',
+  businessHours: 'Business hours',
 
   contactTitle: 'Contact us',
   contactIntro:

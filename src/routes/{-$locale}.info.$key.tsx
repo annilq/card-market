@@ -44,10 +44,11 @@ function InfoPage() {
   // 而不是把整个页面变成 404——页脚入口必须始终能落到一个有效页面（审计要求）。
   const title = page?.title || t(INFO_PAGE_LABEL_KEY[infoKey])
   return (
-    // 与公告详情同一套阅读栏宽（68ch）：信息页也是长文，75ch 的 2xl 太宽。
-    <article className="mx-auto max-w-[68ch]">
+    // 与公告详情一致：正文铺满整条内容列（参考图实测 1200px），不设窄栏。
+    <article>
       <div className="text-xs text-faint">{t('infoNavTitle')}</div>
-      <h1 className="mt-1 text-2xl font-bold break-words">{title}</h1>
+      {/* 28px：参考图里信息页标题实测约 30px，与公告标题同一档。 */}
+      <h1 className="mt-1 break-words text-[28px] font-bold leading-snug">{title}</h1>
       {page?.body ? (
         // 富文本由管理员在后台维护（受信任来源），与公告详情一致。
         // h2 从 16px 提到 18px：审核类长文靠小标题分段，16px 与正文同尺寸时分不出层级。

@@ -203,109 +203,113 @@ function Home() {
   }
   return (
     <div className="space-y-10">
-      {/* Banner 轮播。悬停暂停（鼠标停在图上时不该被换走），
-          减少动态时完全不自动，只保留手动圆点。 */}
-      {banners.length > 0 && (
-        <section
-          className="relative rounded-2xl overflow-hidden border border-border bg-accent aspect-[21/9]"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-          onFocus={() => setPaused(true)}
-          onBlur={() => setPaused(false)}
-        >
-          {banners.map((b, i) => {
-            const src = assetUrl(b.image, { width: 1280, format: 'webp' })
-            const inner = (
-              <>
-                {src && (
-                  <img
-                    src={src}
-                    alt={b.title || 'banner'}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                )}
-                {/* 图上文字：压一层足够深的渐隐黑色再写字。
-                    之前是 from-black/60，深色主题下与图片的深色区域叠在一起，
-                    实测对比度只有 1.23:1——文字几乎消失。改成底部实心、向上渐隐。 */}
-                {(b.title || b.description) && (
-                  <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 text-white bg-gradient-to-t from-black/85 via-black/55 to-transparent">
-                    {b.title && (
-                      <div className="text-lg sm:text-xl font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                        {b.title}
-                      </div>
-                    )}
-                    {b.description && (
-                      <div className="text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] line-clamp-2">
-                        {b.description}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            )
-            const el = (
-              <div
-                className={`absolute inset-0 transition-opacity duration-500 ${
-                  i === idx ? 'opacity-100' : 'opacity-0'
-                }`}
-                aria-hidden={i !== idx}
-              >
-                {inner}
-              </div>
-            )
-            return b.link ? (
-              b.link.startsWith('/') ? (
-                // b.link 来自后台内容，绕过路由类型，需补语言段，否则会掉回默认语言。
-                <Link key={b.id} to={localizeHref(b.link, locale) as '/{-$locale}/cards'}>
-                  {el}
-                </Link>
-              ) : (
-                <a
-                  key={b.id}
-                  href={b.link}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {el}
-                </a>
+      {/* banner 与通知条紧邻：参考图实测 banner 底边 649、通知红条顶边 650，
+          中间没有间距，两者读作同一块。 */}
+      <div>
+        {/* Banner 轮播。悬停暂停（鼠标停在图上时不该被换走），
+            减少动态时完全不自动，只保留手动圆点。 */}
+        {banners.length > 0 && (
+          <section
+            className="relative rounded-2xl overflow-hidden border border-border bg-accent aspect-[21/9]"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onFocus={() => setPaused(true)}
+            onBlur={() => setPaused(false)}
+          >
+            {banners.map((b, i) => {
+              const src = assetUrl(b.image, { width: 1280, format: 'webp' })
+              const inner = (
+                <>
+                  {src && (
+                    <img
+                      src={src}
+                      alt={b.title || 'banner'}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  )}
+                  {/* 图上文字：压一层足够深的渐隐黑色再写字。
+                      之前是 from-black/60，深色主题下与图片的深色区域叠在一起，
+                      实测对比度只有 1.23:1——文字几乎消失。改成底部实心、向上渐隐。 */}
+                  {(b.title || b.description) && (
+                    <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 text-white bg-gradient-to-t from-black/85 via-black/55 to-transparent">
+                      {b.title && (
+                        <div className="text-lg sm:text-xl font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                          {b.title}
+                        </div>
+                      )}
+                      {b.description && (
+                        <div className="text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] line-clamp-2">
+                          {b.description}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
               )
-            ) : (
-              <div key={b.id}>{el}</div>
-            )
-          })}
-          {banners.length > 1 && (
-            // 圆点从 8px 视觉尺寸扩到 24px 触控区（WCAG 2.5.8）：
-            // 视觉上仍是小点，但热区覆盖整块 24×24。当前项用宽度而非颜色区分，
-            // 灰度或色觉差异下同样可辨。
-            <div className="absolute bottom-1 right-2 flex">
-              {banners.map((b, i) => (
-                <button
-                  key={b.id}
-                  type="button"
-                  onClick={() => {
-                    setIdx(i)
-                    setPaused(true)
-                  }}
-                  aria-label={t('bannerAria', { n: i + 1 })}
-                  aria-current={i === idx ? 'true' : undefined}
-                  className="group/dot flex h-6 w-6 items-center justify-center"
+              const el = (
+                <div
+                  className={`absolute inset-0 transition-opacity duration-500 ${
+                    i === idx ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  aria-hidden={i !== idx}
                 >
-                  <span
-                    className={`h-1.5 rounded-full transition-all duration-200 ${
-                      i === idx
-                        ? 'w-4 bg-white'
-                        : 'w-1.5 bg-white/50 group-hover/dot:bg-white/80'
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+                  {inner}
+                </div>
+              )
+              return b.link ? (
+                b.link.startsWith('/') ? (
+                  // b.link 来自后台内容，绕过路由类型，需补语言段，否则会掉回默认语言。
+                  <Link key={b.id} to={localizeHref(b.link, locale) as '/{-$locale}/cards'}>
+                    {el}
+                  </Link>
+                ) : (
+                  <a
+                    key={b.id}
+                    href={b.link}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {el}
+                  </a>
+                )
+              ) : (
+                <div key={b.id}>{el}</div>
+              )
+            })}
+            {banners.length > 1 && (
+              // 圆点从 8px 视觉尺寸扩到 24px 触控区（WCAG 2.5.8）：
+              // 视觉上仍是小点，但热区覆盖整块 24×24。当前项用宽度而非颜色区分，
+              // 灰度或色觉差异下同样可辨。
+              <div className="absolute bottom-1 right-2 flex">
+                {banners.map((b, i) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => {
+                      setIdx(i)
+                      setPaused(true)
+                    }}
+                    aria-label={t('bannerAria', { n: i + 1 })}
+                    aria-current={i === idx ? 'true' : undefined}
+                    className="group/dot flex h-6 w-6 items-center justify-center"
+                  >
+                    <span
+                      className={`h-1.5 rounded-full transition-all duration-200 ${
+                        i === idx
+                          ? 'w-4 bg-white'
+                          : 'w-1.5 bg-white/50 group-hover/dot:bg-white/80'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
-      {/* 通知公告 */}
-      {announcements.length > 0 && <HomeNotices items={announcements} />}
+        {/* 通知公告 */}
+        {announcements.length > 0 && <HomeNotices items={announcements} />}
+      </div>
 
       {/* 高价买取 */}
       {highValue.items.length > 0 && (
@@ -352,7 +356,7 @@ function Home() {
           // 不逐格 stagger——12 个格子逐格延迟会读成「加载慢」而不是「列表换了」。
           <div
             key={`${search.ip}-${search.series}-${search.type}-${search.sort}`}
-            className={`grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 ${changed ? 'grid-enter' : ''}`}
+            className={`grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-8 ${changed ? 'grid-enter' : ''}`}
           >
             {catalog.items.map((c) => (
               <CardCard key={c.id} card={c} />

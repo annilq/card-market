@@ -66,27 +66,30 @@ function AnnouncementDetail() {
     )
   }
   return (
-    // max-w-[68ch]：当前 max-w-2xl（672px）在 16px 正文下约 75ch，CJK 更宽。
-    // 68ch 是长文阅读的常规上限，再宽眼睛回扫就费力。
-    <article className="mx-auto max-w-[68ch]">
+    // 正文铺满整条内容列：参考图实测正文 357→1559（1200px），不是窄栏。
+    <article>
       <Link
         to="/{-$locale}/announcements"
         className="inline-flex items-center py-1 text-xs text-muted transition-colors duration-150 hover:text-fg hover:underline"
       >
         {t('backToAnnouncementsArrow')}
       </Link>
-      <h1 className="text-2xl font-bold mt-2 break-words">{item.title}</h1>
+      {/* 标题 ~28px：参考图里公告标题实测约 29px，比 24px 更接近。
+          置顶徽章前置到标题同一行，日期另起一行右对齐——这是参考图的排版。 */}
+      <h1 className="mt-2 flex flex-wrap items-center gap-2 break-words text-[28px] font-bold leading-snug">
+        {item.is_pinned && (
+          <span className="rounded bg-pinned-bg px-1.5 py-0.5 text-[11px] font-medium text-pinned">
+            {t('pinned')}
+          </span>
+        )}
+        {item.title}
+      </h1>
       {/* 未设发布时间就不渲染日期行：一排「—」比没有日期更吵。 */}
       {item.published_at && (
-        <div className="mt-1.5 flex items-center gap-2 text-xs text-faint tabular-nums">
+        <div className="mt-2 flex justify-end text-xs text-faint tabular-nums">
           <time dateTime={item.published_at}>
             {formatDate(item.published_at, locale)}
           </time>
-          {item.is_pinned && (
-            <span className="rounded bg-pinned-bg px-1.5 py-0.5 text-[11px] text-pinned">
-              {t('pinned')}
-            </span>
-          )}
         </div>
       )}
       {item.body && (

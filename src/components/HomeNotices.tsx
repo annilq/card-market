@@ -13,16 +13,18 @@ export function HomeNotices({ items }: { items: Announcement[] }) {
   const locale = useLocale()
   return (
     <section>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold">{t('homeNotices')}</h2>
+      {/* 标题条：参考图是「整条品牌红 + 居中白字」，40px 高、横跨整个内容列。
+          「全部」压在条的右端并用绝对定位，标题才能保持真正的居中。 */}
+      <div className="relative flex h-10 items-center justify-center bg-brand px-4">
+        <h2 className="text-base font-bold text-white">{t('homeNotices')}</h2>
         <Link
           to="/{-$locale}/announcements"
-          className="inline-flex items-center py-1 text-sm text-muted transition-colors duration-150 hover:text-fg hover:underline"
+          className="absolute right-4 inline-flex items-center py-1 text-xs text-white/90 transition-colors duration-150 hover:text-white hover:underline"
         >
           {t('viewAll')}
         </Link>
       </div>
-      <ul className="rounded-xl border border-border bg-surface divide-y divide-border overflow-hidden">
+      <ul className="divide-y divide-border bg-surface px-4">
         {items.slice(0, 3).map((a) => (
           <li key={a.id}>
             <Link
@@ -31,12 +33,8 @@ export function HomeNotices({ items }: { items: Announcement[] }) {
               // 44px 行高：整行是触控目标，不是只有文字。
               // 悬停时左侧 2px 指示条由透明转墨——指示条常驻、只换颜色，
               // 若让宽度从 0 长到 2px，整行文字会跟着左右跳。
-              className="group flex min-h-11 items-center gap-3 px-4 py-2.5 transition-colors duration-150 hover:bg-surface-2"
+              className="flex min-h-14 items-center gap-3 py-3 transition-colors duration-150 hover:bg-surface-2"
             >
-              <span
-                aria-hidden="true"
-                className="h-4 w-0.5 shrink-0 rounded-full bg-transparent transition-colors duration-150 group-hover:bg-fg"
-              />
               {/* 未设发布时间（发布即展示）的公告不占日期位——一排「—」比没有日期更吵。 */}
               {a.published_at && (
                 <span className="w-24 shrink-0 whitespace-nowrap text-xs text-faint tabular-nums max-sm:hidden">

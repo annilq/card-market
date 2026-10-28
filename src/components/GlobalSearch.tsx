@@ -15,6 +15,7 @@ export function GlobalSearch() {
 
   return (
     <form
+      // 参考图顶栏：560×40 白输入框 + 80×40 浅灰「检索」按钮，两者分开，各带 4px 圆角。
       onSubmit={(e) => {
         e.preventDefault()
         const value = String(new FormData(e.currentTarget).get('q') ?? '')
@@ -24,7 +25,7 @@ export function GlobalSearch() {
           search: (prev) => ({ ...prev, q: value.trim() || undefined, page: 1 }),
         })
       }}
-      className="flex w-full items-center gap-2"
+      className="flex w-full items-center gap-2.5"
     >
       {/* 提示文案盖在输入框上，而不是用 placeholder 属性：属性值固定，
           没法按宽度换。完整文案实测 247px 宽，手机输入框内宽只有 110–220px，
@@ -38,11 +39,11 @@ export function GlobalSearch() {
           defaultValue={q ?? ''}
           aria-label={t('searchPlaceholder')}
           placeholder=" "
-          className="peer h-9 w-full rounded-lg border border-border-strong bg-surface px-3 text-sm text-fg outline-none focus:border-muted"
+          className="peer h-10 w-full rounded border-0 bg-white px-3.5 text-sm text-fg outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-3 hidden items-center truncate text-sm text-faint peer-placeholder-shown:flex"
+          className="pointer-events-none absolute inset-y-0 left-3.5 hidden items-center truncate text-sm text-subtle peer-placeholder-shown:flex"
         >
           <span className="xl:hidden">{t('searchPlaceholderShort')}</span>
           <span className="hidden xl:inline">{t('searchPlaceholder')}</span>
@@ -50,8 +51,12 @@ export function GlobalSearch() {
       </div>
       <button
         type="submit"
-        className="h-9 shrink-0 rounded-lg bg-accent px-4 text-sm text-on-accent hover:bg-accent/90"
+        className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded bg-surface-2 px-4 text-sm text-fg transition hover:bg-border-strong"
       >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
         {t('search')}
       </button>
     </form>

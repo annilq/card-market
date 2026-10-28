@@ -18,12 +18,16 @@ export function HighValueStrip({ items }: { items: Card[] }) {
   const t = useT()
   return (
     <section>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold">{t('highValueBuys')}</h2>
+      {/* 区块标题：参考图里这一块是居中的品牌红图形标题，因此标题居中、
+          用品牌红而不是墨黑；「全部」压在右端（绝对定位）才能保住居中。 */}
+      <div className="relative mb-4 flex items-center justify-center">
+        <h2 className="text-xl font-bold text-brand md:text-2xl">
+          {t('highValueBuys')}
+        </h2>
         <Link
           to="/{-$locale}/cards"
           search={{ hv: true }}
-          className="inline-flex items-center py-1 text-sm text-muted transition-colors duration-150 hover:text-fg hover:underline"
+          className="absolute right-0 inline-flex items-center py-1 text-xs text-muted transition-colors duration-150 hover:text-fg hover:underline"
         >
           {t('viewAll')}
         </Link>
@@ -38,7 +42,8 @@ export function HighValueStrip({ items }: { items: Card[] }) {
         {items.map((c) => (
           // vt={false}：同一张卡可能同时出现在这里与下方网格，
           // 而 view-transition-name 在同一份 DOM 里必须唯一。
-          <div key={c.id} className="w-40 shrink-0 snap-start">
+          // 卡位 224px：参考图的横条是 5 张 ≈227px 卡位铺满整行。
+          <div key={c.id} className="w-44 shrink-0 snap-start sm:w-56">
             <CardCard card={c} compact vt={false} />
           </div>
         ))}

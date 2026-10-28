@@ -8,6 +8,12 @@ import type { Card } from '~/lib/types'
  * 卡牌卡片。`compact` 用于首页高价买取横条：窄卡位只保留图片、卡名与价格，
  * 类目/稀有度/编号在小宽度下会截成噪声，故隐藏。
  *
+ * 两种外壳不是随意区分，而是参考图的两处实测结果：
+ * - 网格里的卡**没有卡片底板**：实测卡位底色就是页面底色 #f5f7fa，
+ *   图片 + 卡名 + 价格直接落在页面上，靠图片本身成块，不靠边框。
+ * - 横条里的卡是白卡片（实测 #ffffff）：横向滚动的一排若没有底板，
+ *   会读成一串彼此无关的散图。
+ *
  * 三件事在同一个组件里解决，因为它们在列表和横条里必须一致：
  *
  * 1. **柜藏级签名条。** `card_status = packaged` 的卡在图位左侧有一条 4px 紫条。
@@ -49,10 +55,10 @@ export function CardCard({
       // 共享元素转场：这张卡的图位在详情页是同一张图。
       // 名字按卡牌 id 生成，列表与详情用同一个名字，浏览器才认得出是同一个元素。
       viewTransition={vt}
-      className="group relative block rounded-xl border border-border bg-surface overflow-hidden transition-[border-color,box-shadow] duration-150 hover:border-border-strong hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted"
+      className={`group relative block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted ${compact ? 'overflow-hidden rounded-xl border border-border bg-surface transition-[border-color,box-shadow] duration-150 hover:border-border-strong hover:shadow-md' : ''}`}
     >
       <div
-        className={`relative aspect-[3/4] bg-surface-2 overflow-hidden ${vt ? 'vt-card' : ''}`}
+        className={`relative aspect-[3/4] overflow-hidden rounded-lg bg-surface-2 ${vt ? 'vt-card' : ''}`}
         style={vt ? { ['--vt-name' as string]: `card-${card.id}` } : undefined}
       >
         {img ? (
@@ -84,17 +90,20 @@ export function CardCard({
         )}
       </div>
 
-      <div className={compact ? 'p-2' : 'p-3'}>
+      <div className={compact ? 'p-2' : 'pt-2.5'}>
         {!compact && (
-          <div className="text-xs text-faint truncate">
+          <div className="truncate text-xs text-faint">
             {card.ip?.name} · {card.series?.name}
           </div>
         )}
-        <div className="font-medium text-fg truncate">{card.name}</div>
+        {/* 卡名两行截断：参考图的网格卡名就是两行，一行放不下完整的卡名。 */}
+        <div className="line-clamp-2 text-sm font-medium leading-snug text-fg">
+          {card.name}
+        </div>
         {/* 价格行：价格在左、稀有度在右，两者底部对齐。
             悬停时这一行不动——把「动」留给图片与边框，列表才不会在鼠标扫过时抖。 */}
         <div className="mt-2 flex items-baseline justify-between gap-2">
-          <span className="text-price font-semibold tabular-nums">
+          <span className="text-[20px] font-bold tabular-nums text-price">
             {card.price != null
               ? t('priceTag', { price: formatYen(card.price) })
               : t('priceOnRequest')}

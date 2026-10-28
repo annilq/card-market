@@ -189,8 +189,9 @@ function ShopIcon() {
 
 // X 图标与店铺图标共用同一套外壳尺寸，保证顶栏右侧那两个按钮在所有宽度一致。
 const iconBtn =
-  'inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted hover:bg-surface-2 hover:text-fg transition'
+  'inline-flex h-9 shrink-0 items-center justify-center rounded text-white/90 transition hover:bg-white/15 hover:text-white'
 
+// 顶栏那两个图标按钮共用同一套外壳尺寸，保证在所有宽度下高度一致。
 const iconBtnSquare = `${iconBtn} w-9`
 
 // 页脚 logo：site_settings.logo 是 Directus 文件 id，走后台上传。
@@ -285,7 +286,7 @@ function ThemeToggle({ className = '' }: { className?: string }) {
       onClick={toggle}
       aria-label={dark ? t('themeToLight') : t('themeToDark')}
       aria-pressed={dark}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted hover:bg-surface-2 hover:text-fg transition ${className}`}
+      className={`inline-flex h-9 w-9 items-center justify-center rounded text-white/90 transition hover:bg-white/15 hover:text-white ${className}`}
     >
       {/* 月亮：深色时显示。两个图标同时渲染，由 CSS 决定可见性，
           因此没有「首帧图标不对、水合后跳变」的问题。 */}
@@ -341,7 +342,7 @@ function LocaleSwitcher({ compact = false }: { compact?: boolean }) {
         }}
         // compact：手机顶栏用。显示当前语言的短标签（中/日/EN）而不是全称，
         // 宽度收在 36px 一档，和主题/汉堡按钮同高，不挤掉站名。
-        className={`h-9 rounded-lg border border-border bg-surface text-sm text-muted hover:bg-surface-2 hover:text-fg transition outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted ${
+        className={`h-9 rounded border border-white/40 bg-transparent text-sm text-white transition hover:bg-white/15 [&>option]:text-fg outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
           compact ? 'w-14 pl-2 pr-1' : 'px-2'
         }`}
       >
@@ -393,23 +394,27 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <HeadContent />
       </head>
       <body className="min-h-screen flex flex-col">
-        <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur border-b border-border">
-          <div className="mx-auto max-w-6xl px-4">
-            <div className="h-14 flex items-center gap-3 sm:gap-6">
-              <Link to="/{-$locale}" params={localeParams} className="min-w-0 font-bold text-lg text-fg truncate">
+        <header className="sticky top-0 z-30 bg-brand text-white">
+          <div className="mx-auto max-w-[1232px] px-4">
+            <div className="flex h-16 items-center gap-3 md:h-[100px] md:gap-6">
+              <Link
+                to="/{-$locale}"
+                params={localeParams}
+                className="min-w-0 shrink-0 truncate text-lg font-bold text-white md:text-2xl"
+              >
                 {siteName}
               </Link>
 
               {/* 桌面端导航。链接本身撑到 32px 高：纯文字行只有 16px，
                   低于 WCAG 2.5.8 的 24px，鼠标和触屏都更难命中。 */}
-              <nav className="hidden sm:flex items-center gap-5 text-sm text-muted">
+              <nav className="hidden items-center gap-5 text-sm text-white/85 xl:flex">
                 {nav.map((n) => (
                   <Link
                     key={n.to}
                     to={n.to}
                     params={localeParams}
-                    activeProps={{ className: 'text-fg font-semibold' }}
-                    className="inline-flex items-center py-2 hover:text-fg transition"
+                    activeProps={{ className: 'text-white font-semibold' }}
+                    className="inline-flex items-center py-2 transition hover:text-white"
                   >
                     {n.label}
                   </Link>
@@ -419,44 +424,27 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               {/* 搜索 + 两个交易图标是同一组（参考图里就是「搜索框 | X | SHOP」）。
                   ≥1024 并进第一行；不足 1024 时第一行要放导航与设置，剩下的宽度
                   只够 54px 的搜索框（实测），所以整组下移成第二行，搜索才有整行可用。 */}
-              <div className="ml-auto hidden min-w-0 flex-1 max-w-xl lg:flex">
+              <div className="ml-auto hidden min-w-0 max-w-[560px] flex-1 lg:flex">
                 <GlobalSearch />
               </div>
 
-              {/* 交易入口：X 与 SHOP 紧贴搜索右侧。做成图标比文字省宽度，
-                  也不与「卡牌 / 公告」这两个内容导航抢注意力。
-                  SHOP 字样只在 ≥1024 出现，其余宽度是方形图标。 */}
-              <div className="ml-auto hidden shrink-0 items-center gap-1.5 lg:flex">
+              <div className="ml-auto flex shrink-0 items-center gap-2 md:gap-4">
                 <SocialIcon href={xUrl} label={t('xAccountLabel')} />
                 <ShopLink localeParams={localeParams} label={t('navShops')} withText />
-              </div>
-
-              {/* 辅助设置放最右并压低权重：语言与主题是偏好，不是导航，
-                  点击频率远低于搜索与店铺，不该占主视线。
-                  但**两者在手机上必须都可见**：上线后主力是日语用户，语言开关
-                  藏进汉堡里等于没有（之前实测 390px 下它是 0×0）；主题开关也
-                  从抽屉提到顶栏，与语言开关并排——分处两地时用户找不到
-                  「改显示设置」的入口在哪，并排才会被读成同一组偏好。 */}
-              <div className="ml-auto flex min-w-0 items-center gap-2">
-                {/* <640：语言用 compact 短标签（中/日/EN，56px）+ 36px 方形主题按钮，
-                    窄屏下省出的宽度留给站名。 */}
-                <div className="flex items-center gap-2 sm:hidden">
-                  <LocaleSwitcher compact />
-                  <ThemeToggle />
-                </div>
                 <div className="hidden items-center gap-2 sm:flex">
                   <LocaleSwitcher />
                   <ThemeToggle />
                 </div>
-
-                {/* 移动端汉堡按钮：导航与留言入口在抽屉里，顶栏只留必要项。
-                    语言与主题都在顶栏右侧常驻，抽屉里不再重复放一份。 */}
+                <div className="flex items-center gap-2 sm:hidden">
+                  <LocaleSwitcher compact />
+                  <ThemeToggle />
+                </div>
                 <button
                   type="button"
                   aria-label={t('openMenu')}
                   aria-expanded={menuOpen}
                   onClick={() => setMenuOpen((v) => !v)}
-                  className="sm:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted hover:bg-surface-2"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded text-white hover:bg-white/15 lg:hidden"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     {menuOpen ? (
@@ -481,16 +469,16 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
 
           {/* 移动端下拉菜单 */}
           {menuOpen && (
-            <div className="sm:hidden border-t border-border bg-surface">
-              <nav className="mx-auto max-w-6xl px-4 py-2 flex flex-col">
+            <div className="border-t border-white/25 bg-brand text-white lg:hidden">
+              <nav className="mx-auto flex max-w-[1232px] flex-col px-4 py-2">
                 {nav.map((n) => (
                   <Link
                     key={n.to}
                     to={n.to}
                     params={localeParams}
                     onClick={() => setMenuOpen(false)}
-                    activeProps={{ className: 'text-fg font-semibold' }}
-                      className="py-2.5 text-sm text-muted hover:text-fg border-b border-border last:border-0"
+                    activeProps={{ className: 'text-white font-semibold' }}
+                    className="border-b border-white/25 py-2.5 text-sm text-white/85 hover:text-white last:border-0"
                   >
                     {n.label}
                   </Link>
@@ -499,7 +487,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                   to="/{-$locale}/shops"
                   params={localeParams}
                   onClick={() => setMenuOpen(false)}
-                  className="py-2.5 text-sm text-muted hover:text-fg border-b border-border"
+                  className="border-b border-white/25 py-2.5 text-sm text-white/85 hover:text-white"
                 >
                   {t('navShops')}
                 </Link>
@@ -507,7 +495,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                   to="/{-$locale}/message"
                   params={localeParams}
                   onClick={() => setMenuOpen(false)}
-                  className="py-2.5 text-sm text-muted hover:text-fg border-b border-border"
+                  className="border-b border-white/25 py-2.5 text-sm text-white/85 hover:text-white"
                 >
                   {t('navContact')}
                 </Link>
@@ -516,56 +504,60 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
           )}
         </header>
 
-        <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6">
+        <main className="mx-auto w-full max-w-[1232px] flex-1 px-4 py-6 sm:py-8">
           {/* 非默认语言的页面上，说明「内容是什么语言」——界面翻译了，后台内容没有。
               放在 main 顶部而不是每页各写一次，保证 404 与错误页也带上。 */}
           <ContentLanguageNotice />
           {children}
         </main>
-        <footer className="border-t border-border bg-surface mt-10">
-          {/* 站内入口：留言咨询 + 审核要求的四个信息页。
-              留言从 header 移到这里，与其余站内链接同一行，顺序前端固定。
-              入口文字走界面语言翻译（与头部导航一致）：不翻译 Directus 内容这条边界
-              只针对正文与标题，页脚的链接文字属于界面 chrome。
-              用 inline-flex + py-1.5 把点击高度抬到 28px：
-              纯文本行只有 16px，低于 WCAG 2.5.8 的 24px。 */}
-          <nav
-            aria-label={t('footerNavTitle')}
-            className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-5 gap-y-1 px-4 py-6 text-xs text-muted"
-          >
-            <Link
-              to="/{-$locale}/message"
-              params={localeParams}
-              className="inline-flex items-center py-1.5 hover:text-fg hover:underline transition"
-            >
-              {t('navContact')}
-            </Link>
-            {INFO_PAGE_KEYS.map((key) => (
-              <Link
-                key={key}
-                to="/{-$locale}/info/$key"
-                params={{ key, ...localeParams }}
-                className="inline-flex items-center py-1.5 hover:text-fg hover:underline transition"
-              >
-                {t(INFO_PAGE_LABEL_KEY[key])}
-              </Link>
-            ))}
-          </nav>
-
-          {/* 版权区与上面链接区用一道分割线隔开，中间是 logo 与版权。
-              logo 读 site_settings.logo（Directus 文件 id），后台没传时退化成
-              同尺寸的占位框，不塌成 0 高，保证换 logo 前后版面不跳。 */}
-          <div className="border-t border-border">
-            <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 py-8">
+        <footer className="mt-16 bg-footer text-footer-fg">
+          {/* 参考图的页脚：近黑底、左侧 logo、右侧「帮助中心」标题 + 三列链接栅格，
+              底部一行居中的版权。留言咨询与四个审核信息页都收进右侧那块——
+              它们同属「帮助中心」，与参考图的结构一致，也让页脚只有一个信息块
+              而不是「链接行 + 版权区」两层。
+              链接栅格用 2 列起、sm 起 3 列：手机上三列会把「个人信息收集」
+              挤成两行。每格 py-1.5 把点击高度抬到 28px（WCAG 2.5.8 要 24px）。 */}
+          <div className="mx-auto flex max-w-[1232px] flex-col gap-12 px-4 pt-20 md:flex-row md:items-start md:justify-between md:gap-16">
+            <div className="shrink-0">
               <FooterLogo logo={site?.logo ?? null} name={siteName} />
-              <p className="text-center text-xs text-faint">
-                {t('copyright', {
-                  year: new Date().getFullYear(),
-                  site: siteName,
-                })}
-              </p>
+            </div>
+
+            {/* 右侧块固定 665px 并靠右：参考图里「帮助中心」那一块就是
+                从容器右端往左量 665px（实测标题左边缘在容器内的 535px 处）。
+                用 flex-1 会随视口变宽而左移，标题就对不上参考图的位置。 */}
+            <div className="min-w-0 md:w-[665px] md:max-w-full">
+              <h2 className="text-xl font-bold md:text-2xl">{t('footerHelpCenter')}</h2>
+              <nav
+                aria-label={t('footerNavTitle')}
+                className="mt-14 grid grid-cols-2 gap-x-10 gap-y-1 sm:grid-cols-3 sm:gap-x-12"
+              >
+                <Link
+                  to="/{-$locale}/message"
+                  params={localeParams}
+                  className="inline-flex items-center py-1.5 text-sm text-footer-muted transition hover:text-footer-fg hover:underline"
+                >
+                  {t('navContact')}
+                </Link>
+                {INFO_PAGE_KEYS.map((key) => (
+                  <Link
+                    key={key}
+                    to="/{-$locale}/info/$key"
+                    params={{ key, ...localeParams }}
+                    className="inline-flex items-center py-1.5 text-sm text-footer-muted transition hover:text-footer-fg hover:underline"
+                  >
+                    {t(INFO_PAGE_LABEL_KEY[key])}
+                  </Link>
+                ))}
+              </nav>
             </div>
           </div>
+
+          <p className="pb-24 text-center text-sm text-footer-fg">
+            {t('copyright', {
+              year: new Date().getFullYear(),
+              site: siteName,
+            })}
+          </p>
         </footer>
         <Scripts />
       </body>

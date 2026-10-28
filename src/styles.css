@@ -7,7 +7,8 @@
 /* ===== 语义化设计令牌（Design Tokens）=====
    组件只使用以下语义色，主题切换在单一处完成，便于长期维护。 */
 @theme {
-  --color-bg: #f8fafc; /* 页面底色 */
+  /* 页面底色：设计图实测 #f5f7fa（冷灰，不是纯白）。页面必须退到卡片后面。 */
+  --color-bg: #f5f7fa; /* 页面底色 */
   --color-surface: #ffffff; /* 卡片 / 头部 / 底部 / 输入框 */
   --color-surface-2: #f1f5f9; /* 次级填充（原 slate-100） */
 
@@ -26,7 +27,21 @@
   --color-border: #e2e8f0; /* 主边框 */
   --color-border-strong: #cbd5e1; /* 强边框 / 输入框 */
 
-  --color-accent: #0f172a; /* 主按钮底色 */
+  /* ===== 品牌红 =====
+     设计图实测 #db261d（顶栏底色、通知红条、选中 tab、页码方块、页脚以外的
+     全部品牌面）。它是这个站的识别色，因此主按钮也从「墨黑」改成这支红：
+     白字压在 #db261d 上实测 4.89:1，仍过正文级 4.5:1。 */
+  --color-brand: #db261d;
+  --color-brand-hover: #c11d16; /* 悬停压深一档，只在按钮/页码上用 */
+
+  /* ===== 页脚 =====
+     设计图实测底色 #0d0e15（近黑，带一层世界地图底纹——底纹不还原，
+     它属于图片素材而非样式）。页脚是唯一使用这三支色的区域。 */
+  --color-footer: #0d0e15;
+  --color-footer-fg: #ffffff;
+  --color-footer-muted: #999999; /* 页脚链接：实测 #999999，在近黑底上 5.3:1 */
+
+  --color-accent: #db261d; /* 主按钮底色：与品牌红同一支 */
   --color-on-accent: #ffffff; /* 主按钮文字 */
 
   /* 语义强调色。原来在组件里直接写 Tailwind 调色板名（text-rose-600 等），
@@ -78,8 +93,16 @@ html.dark {
   --color-border: #334155;
   --color-border-strong: #475569;
 
-  --color-accent: #e2e8f0;
-  --color-on-accent: #0f172a;
+  /* 深色下品牌红不变：它是品牌识别色，不是随主题走的语义色，
+     且白字压在其上 4.89:1 与浅色态一致。 */
+  --color-brand: #db261d;
+  --color-brand-hover: #ef3630; /* 深色下「压深」反而更暗，改为提亮一档 */
+  --color-footer: #07080d; /* 深色下比页面再暗一档，页脚仍读作「底」 */
+  --color-footer-fg: #f8fafc;
+  --color-footer-muted: #9aa3b2;
+
+  --color-accent: #db261d;
+  --color-on-accent: #ffffff;
 
   /* 深色下强调色统一提亮一档：黑底上原色太重，小字会糊。 */
   --color-price: #ff637e; /* 5.11:1 在夜卡片上 */

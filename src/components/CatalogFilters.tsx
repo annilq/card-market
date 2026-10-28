@@ -40,6 +40,33 @@ const chevronStyle = {
   backgroundSize: '16px 16px',
 } as const
 
+// 40px 高：参考图实测 tab 从 y1476 到 1515。整颗是点击目标，
+// 纯文字行只有 20px，低于 WCAG 2.5.8 的 24px。
+function IpTab({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean
+  onClick: () => void
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`inline-flex h-10 items-center rounded px-5 text-sm transition-colors duration-150 ${
+        active
+          ? 'bg-brand font-bold text-white'
+          : 'font-medium text-fg hover:bg-surface-2'
+      }`}
+    >
+      {label}
+    </button>
+  )
+}
+
 export function CatalogFilters({
   value,
   ips,
@@ -73,16 +100,6 @@ export function CatalogFilters({
     : series
 
   const fields = [
-    {
-      id: 'ip',
-      label: t('filterIp'),
-      value: value.ipId == null ? '' : String(value.ipId),
-      allLabel: t('facetAllIps'),
-      options: ips.map((ip) => ({ value: String(ip.id), label: ip.name })),
-      onPick: (raw: string) =>
-        // 换 IP 时清掉不再属于它的系列，否则会留下一个选不中的旧值。
-        onChange({ ipId: raw ? Number(raw) : undefined }),
-    },
     {
       id: 'series',
       label: t('filterSeries'),
@@ -136,6 +153,26 @@ export function CatalogFilters({
         </Link>
       </div>
 
+      {/* IP tab 条：参考图里「宝可梦 / 海贼王」那一排就是 IP 选择，
+          红底白字 40px 高，未选中只有文字没有填充。
+          用它替代原来的「回购分类」下拉是必要的：两者筛的是同一件事，
+          同时存在就是同一个筛选两个入口、且会互相打架。 */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <IpTab
+          active={value.ipId == null}
+          onClick={() => onChange({ ipId: undefined })}
+          label={t('facetAllIps')}
+        />
+        {ips.map((ip) => (
+          <IpTab
+            key={ip.id}
+            active={value.ipId === ip.id}
+            onClick={() => onChange({ ipId: ip.id })}
+            label={ip.name}
+          />
+        ))}
+      </div>
+
       {/* 标签与下拉框同一行（参考图就是这个排版）。
           手机单列：标签在左、下拉占满剩余宽度；≥1024 四列并排。
           标签按语言给最小宽度：中日文三到四字，英文 Category / Series / Type
@@ -144,7 +181,7 @@ export function CatalogFilters({
           固定 80px 宽度，中英文短标签后面会空出一大段。 */}
       {/* 手机：每行一个筛选（w-full），标签在左、下拉占满整行剩余宽度。
           平板起才并排：≥640 两列，≥1024 四列，每列宽度由内容决定。 */}
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5">
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-8">
         {fields.map((f) => (
           <label
             key={f.id}
@@ -155,7 +192,7 @@ export function CatalogFilters({
                 改成由内容决定宽度后，同一行内四个下拉会因标签长短不同而左边缘
                 不齐——这是有意的取舍：对齐四列只是视觉整齐，紧贴标签才是
                 用户实际感知到的问题。 */}
-            <span className="shrink-0 whitespace-nowrap text-xs text-subtle">
+            <span className="shrink-0 whitespace-nowrap text-sm font-bold text-fg">
               {f.label}
             </span>
             <select
