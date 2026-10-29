@@ -21,5 +21,9 @@ CORS_CREDENTIALS="true"
 STORAGE_LOCATIONS="local"
 STORAGE_LOCAL_DRIVER="local"
 STORAGE_LOCAL_ROOT="./directus/uploads"
+# 自定义后台扩展（地图选点接口 map-picker）加载目录
+EXTENSIONS_PATH="./directus/extensions"
 set +a
-exec npx -y directus start
+# 固定到 11.x，与 docker-compose 的 directus/directus:11 镜像、以及地图选点扩展的
+# host(^11.0.0) 保持一致；避免 npx 拉到不兼容的 12.x 导致启动失败。
+exec npx -y directus@11 start

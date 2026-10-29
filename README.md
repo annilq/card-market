@@ -137,6 +137,42 @@ npm run dev
 | `npm run directus:bootstrap` | 创建集合/字段/关系/M2O+M2M / 索引 / Public 权限 |
 | `npm run directus:seed` | 写入样例维度、卡牌、公告、banner、站点设置、一条留言 |
 | `npm run directus:snapshot` | 生成 `directus/schema.yaml`（需安装 directus CLI） |
+| `npm run directus:extension:build` | 构建自定义后台扩展「地图选点接口」（`directus/extensions/map-picker` → `dist/`） |
+| `npm run directus:extension:watch` | 开发时监听重建该扩展 |
+
+## 自定义后台扩展：店铺地图选点（`map-picker`）
+
+后台设置店铺位置时，原来要手填 `lat` / `lng` 坐标。现在 `shops` 集合新增「位置」字段 `geo`（json），绑定自定义接口
+`map-picker`：在 **Leaflet + OpenStreetMap** 地图上**点选 / 拖动标记**，或**输入地址搜索**（OpenStreetMap
+Nominatim 免费地理编码，无需 Mapbox token），地图会自动飞到该点并把 `{lat, lng}` 写入 `geo`。
+
+要点：
+
+- 扩展源码：`directus/extensions/map-picker/`（一个 Directus `interface` 类型扩展）。
+- 复用前端 `MapView` 同款 OSM 瓦片，**免费、无需任何 token**；地址搜索走 Nominatim（约 1 次/秒限速，对后台录入足够）。
+- `shops.lat` / `shops.lng` 保留为 `decimal` 且改为**隐藏字段**，由数据库触发器 `trg_shops_sync_geo`
+  （`bootstrap.mjs` 的 `setupShopGeoTrigger` 幂等创建）在写入/更新时把 `geo` 同步回 `lat` / `lng`。
+- 因此 **前端 `MapView`、公开 API、种子数据均无需改动**，仍按原样读取 `lat` / `lng`。
+- 构建产物 `dist/` 由 Directus 在启动时从 `EXTENSIONS_PATH`（容器内 `/directus/extensions`，本地 `./directus/extensions`）加载。
+
+> 关于「不改 shops 表结构」：Directus 此版本（`@directus/composables@11.0.10`）未导出可写兄弟字段的 `useItem`，
+> 单接口无法直接写 `lat` 与 `lng` 两个字段。故采用「单字段 `geo`（地图写入）+ 触发器镜像到 `lat/lng`」的稳妥做法，
+> 对外（前端/API）完全无感。若未来升级 Directus 并拿到 `useItem`，可改回单写两列、再删 `geo` 列与触发器。
+
+### 构建与运行
+
+```bash
+# 1. 构建扩展（生成 directus/extensions/map-picker/dist/）
+npm run directus:extension:build
+
+# 2. 拉起/重启 Directus，使其加载扩展
+docker compose up -d          # 或 ./directus/run-local.sh
+npm run directus:bootstrap    # 幂等：新增 geo 字段(绑定 map-picker)、隐藏 lat/lng、创建同步触发器
+```
+
+> 改动 `src/` 后重跑 `npm run directus:extension:build` 并重启 Directus 即可生效。
+> Nominatim 为公共服务，若需更高并发/稳定性可换成自有地理编码服务（改 `interface.vue` 里的 `search()` 即可）。
+> 已存在的旧店铺若只有 lat/lng 没有 geo，打开编辑保存时不会丢坐标；想让地图显示原位置，用地图重新点选一次即可（或自行做一次 `geo` 回填）。
 
 ## 权限模型（详见 development.md §4.8）
 

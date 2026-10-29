@@ -1,0 +1,24 @@
+{
+  "name": "directus-interface-map-picker",
+  "version": "1.0.0",
+  "description": "后台地图选点 / 地址搜索接口：在地图上点选或输入地址，自动写入 lat / lng。基于 Leaflet + OpenStreetMap（免 token）。",
+  "author": "",
+  "license": "MIT",
+  "directus:extension": {
+    "type": "interface",
+    "path": "dist/index.js",
+    "source": "src/index.ts",
+    "host": "^11.0.0",
+    "hidden": false
+  },
+  "scripts": {
+    "build": "directus-extension build",
+    "watch": "directus-extension build --watch"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "@directus/extensions-sdk": "^11.0.0"
+  }
+}

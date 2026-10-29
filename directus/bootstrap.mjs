@@ -169,6 +169,7 @@ const FIELD_LABELS_JA = {
   shops: {
     name: '店舗名',
     address: '住所',
+    geo: '位置情報',
     lat: '緯度',
     lng: '経度',
     phone: '電話番号',
@@ -429,8 +430,12 @@ const collections = [
     fields: [
       { field: 'name', label: '店铺名称', type: 'string', interface: 'input', required: true },
       { field: 'address', label: '地址', type: 'string', interface: 'input' },
-      { field: 'lat', label: '纬度', type: 'decimal', interface: 'input', decimal: { precision: 10, scale: 7 }, note: '纬度（-90~90），用于地图定位' },
-      { field: 'lng', label: '经度', type: 'decimal', interface: 'input', decimal: { precision: 10, scale: 7 }, note: '经度（-180~180），用于地图定位' },
+      // 位置：自定义后台接口 map-picker（Leaflet + OSM），点选/搜索把 {lat,lng} 写入 geo 字段；
+      // 再由数据库触发器把 geo 同步回 lat / lng（见 setupShopGeoTrigger）。
+      // 这样前端 MapView 与公开 API 读取 lat / lng 的方式完全不变。
+      { field: 'geo', label: '位置（地图选点）', type: 'json', interface: 'map-picker', width: 'full', options: { height: 360, defaultZoom: 13, defaultLat: 35.6812, defaultLng: 139.7671, searchPlaceholder: '输入地址或地名，回车搜索…' }, note: '在地图上点选 / 拖动标记，或搜索地址，自动写入经纬度（同步到 lat / lng）' },
+      { field: 'lat', label: '纬度', type: 'decimal', interface: 'input', decimal: { precision: 10, scale: 7 }, hidden: true, note: '纬度（-90~90），由 geo 触发器自动写入' },
+      { field: 'lng', label: '经度', type: 'decimal', interface: 'input', decimal: { precision: 10, scale: 7 }, hidden: true, note: '经度（-180~180），由 geo 触发器自动写入' },
       { field: 'phone', label: '联系电话', type: 'string', interface: 'input' },
       { field: 'business_hours', label: '营业时间', type: 'string', interface: 'input' },
       { field: 'description', label: '店铺介绍', type: 'text', interface: 'textarea' },
@@ -551,7 +556,8 @@ function buildFieldMeta(collection, f) {
     interface: f.interface,
     required: !!f.required,
     readonly: f.readonly ?? false,
-    hidden: false,
+    hidden: f.hidden ?? false,
+    width: f.width ?? 'half',
     note: f.note || '',
     options: f.options || {},
     special: f.special || null,
@@ -733,6 +739,41 @@ async function setupCardTimestamps() {
         FOR EACH ROW EXECUTE FUNCTION cards_touch_updated();
     `)
     console.log('✓ cards 时间戳保障已就绪（默认值 + 更新触发器）')
+  } finally {
+    await pool.end()
+  }
+}
+
+// 后台经纬度改用「地图选点」接口写入 geo(json: {lat,lng})，
+// 通过触发器把 geo 同步回 decimallat / lng 两列，
+// 这样前端 MapView 与公开 API 读取 lat / lng 的方式完全不变。
+async function setupShopGeoTrigger() {
+  const pool = new Pool(DB)
+  try {
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION shops_sync_geo() RETURNS trigger AS $f$
+      BEGIN
+        -- 仅当 geo 真正发生变化时才回写，避免误覆盖已有坐标
+        IF NEW.geo IS DISTINCT FROM OLD.geo THEN
+          IF NEW.geo IS NULL THEN
+            NEW.lat := NULL;
+            NEW.lng := NULL;
+          ELSE
+            NEW.lat := (NEW.geo->>'lat')::numeric;
+            NEW.lng := (NEW.geo->>'lng')::numeric;
+          END IF;
+        END IF;
+        RETURN NEW;
+      END;
+      $f$ LANGUAGE plpgsql;
+    `)
+    await pool.query('DROP TRIGGER IF EXISTS trg_shops_sync_geo ON shops;')
+    await pool.query(`
+      CREATE TRIGGER trg_shops_sync_geo
+        BEFORE INSERT OR UPDATE ON shops
+        FOR EACH ROW EXECUTE FUNCTION shops_sync_geo();
+    `)
+    console.log('✓ shops 地理坐标同步已就绪（geo → lat/lng 触发器）')
   } finally {
     await pool.end()
   }
@@ -1128,6 +1169,7 @@ async function main() {
   }
   await setupIndexes()
   await setupCardTimestamps()
+  await setupShopGeoTrigger()
   for (const d of DROP_FIELDS) await dropField(d.collection, d.field)
   await setupPermissions()
   await setupSettings()

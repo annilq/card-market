@@ -11,18 +11,23 @@
     "backend": "bash scripts/start-backend.sh",
     "directus:bootstrap": "node directus/bootstrap.mjs",
     "directus:seed": "node directus/seed.mjs",
-    "directus:snapshot": "npx directus schema snapshot directus/schema.yaml --yes"
+    "directus:snapshot": "npx directus schema snapshot directus/schema.yaml --yes",
+    "directus:extension:build": "npm --prefix directus/extensions/map-picker run build",
+    "directus:extension:watch": "npm --prefix directus/extensions/map-picker run watch"
   },
   "dependencies": {
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "latest",
+    "isomorphic-dompurify": "^3.19.0",
     "leaflet": "^1.9.4",
+    "markdown-it": "^15.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@directus/sdk": "^27.0.0",
     "@tailwindcss/vite": "latest",
+    "@types/markdown-it": "^14.2.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

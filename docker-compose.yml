@@ -54,8 +54,11 @@ services:
       STORAGE_LOCAL_ROOT: "/directus/uploads"
       # 内容 API 安全
       WEBSOCKETS_ENABLED: "true"
+      # 自定义后台扩展（地图选点接口 map-picker）加载目录
+      EXTENSIONS_PATH: "/directus/extensions"
     volumes:
       - ./directus/uploads:/directus/uploads
+      - ./directus/extensions:/directus/extensions
 
 volumes:
   db_data:
