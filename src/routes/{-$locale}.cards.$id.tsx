@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { CardInfo } from '~/components/CardInfo'
 import { assetUrl, getCard } from '~/lib/directus'
 import { formatDate, useLocale, useT } from '~/lib/i18n/react'
 import { formatYen } from '~/lib/format'
@@ -79,10 +80,6 @@ function CardDetail() {
       </div>
     )
   }
-
-  const statusLabel =
-    card.card_status === 'packaged' ? t('statusPackaged') : t('statusRaw')
-  const isVault = card.card_status === 'packaged'
 
   const imgs = (card.images ?? [])
     .map((i) => assetUrl(i, { width: 900, format: 'webp' }))
@@ -164,48 +161,20 @@ function CardDetail() {
       </div>
 
       <div className="min-w-0">
-        <div>
-          <div className="text-xs text-faint">
-            {[card.ip?.name, card.series?.name, card.sub_series?.name]
-              .filter(Boolean)
-              .join(' · ')}
-          </div>
-          <h1 className="text-2xl font-bold mt-1 break-words">{card.name}</h1>
-          {card.code && (
-            <div className="text-sm text-muted mt-1">
-              {t('cardCode', { code: card.code })}
-            </div>
-          )}
+        <div className="text-xs text-faint">
+          {[card.ip?.name, card.series?.name, card.sub_series?.name]
+            .filter(Boolean)
+            .join(' · ')}
         </div>
 
-        {/* 价格 + 徽章 + CTA 合成一块粘性栏：长描述滚动时，价格与「咨询此卡」
-            始终在视口内。桌面吸顶，手机吸底（见文件末尾的 sticky 条）。
-            手机端这里只留价格，CTA 交给底部条，避免同一页两个主按钮。 */}
-        <div className="mt-5 md:sticky md:top-20">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-2xl text-price font-semibold tabular-nums">
-              {card.price != null
-                ? t('priceTag', { price: formatYen(card.price) })
-                : t('priceOnRequest')}
-            </span>
-            {card.rarity?.name && (
-              <span className="text-sm bg-surface-2 text-muted rounded-full px-3 py-1">
-                {card.rarity.name}
-              </span>
-            )}
-            {isVault && (
-              <span className="text-xs bg-vault-bg text-vault rounded px-2 py-1 font-medium">
-                {t('statusPackaged')}
-              </span>
-            )}
-            {card.is_high_value && (
-              <span className="text-xs bg-high-value-bg text-high-value rounded px-2 py-1">
-                {t('highValue')}
-              </span>
-            )}
-          </div>
+        {/* 与弹窗共用同一个信息组件（设计要求）：徽章 + 名称/编号/状态 + 价格。
+            详情页这一列不拉伸，CardInfo 里那块 mt-auto 没有多余高度可占，
+            价格就紧跟在三行下面。桌面吸顶：价格与「咨询此卡」始终在视口内。 */}
+        <div className="mt-3 md:sticky md:top-20">
+          <CardInfo card={card} nameAs="h1" />
 
-          {/* 桌面 CTA 紧跟价格：价格与「问这张卡」是同一件事的两面。 */}
+          {/* 桌面 CTA 紧跟价格：价格与「问这张卡」是同一件事的两面。
+              手机端 CTA 交给底部粘性条，避免同一页两个主按钮。 */}
           <div className="mt-4 hidden gap-3 md:flex">
             <Link
               to="/{-$locale}/message"
@@ -223,26 +192,16 @@ function CardDetail() {
           </div>
         </div>
 
-        <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-5 text-sm">
-          <div>
-            <dt className="text-faint">{t('cardStatus')}</dt>
-            <dd className="mt-0.5">{statusLabel}</dd>
+        {/* 上架时间不进 CardInfo（附件的信息列只有三行），单独留一行：
+            它是这页剩下的唯一事实，删掉就没处看了。 */}
+        {card.date_created && (
+          <div className="mt-5 text-sm text-faint">
+            {t('listedAt')}：
+            <span className="tabular-nums text-muted">
+              {formatDate(card.date_created, locale)}
+            </span>
           </div>
-          <div>
-            <dt className="text-faint">{t('rarityLabel')}</dt>
-            <dd className="mt-0.5">{card.rarity?.name ?? '—'}</dd>
-          </div>
-          <div>
-            <dt className="text-faint">{t('cardCodeLabel')}</dt>
-            <dd className="mt-0.5 break-words tabular-nums">{card.code ?? '—'}</dd>
-          </div>
-          <div>
-            <dt className="text-faint">{t('listedAt')}</dt>
-            <dd className="mt-0.5 tabular-nums">
-              {card.date_created ? formatDate(card.date_created, locale) : '—'}
-            </dd>
-          </div>
-        </dl>
+        )}
 
         {card.description && (
           <div className="mt-6 border-t border-border pt-5">

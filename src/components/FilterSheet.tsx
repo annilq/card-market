@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
+import { useDialog } from '~/lib/use-dialog'
 import { useT } from '~/lib/i18n/react'
 import type { CardSort, Series, SubSeries } from '~/lib/types'
 
@@ -72,31 +73,14 @@ export function FilterSheet({
   onClose: () => void
 }) {
   const t = useT()
-  const panelRef = useRef<HTMLDivElement>(null)
+  const panelRef = useDialog<HTMLDivElement>(onClose)
   // 二级面板里当前看的是哪个主系列。它只是面板内的浏览位置，
   // 不写回 URL——真正生效是在右侧选中子系列（或「全部」）的那一刻。
   const [tabId, setTabId] = useState<number | undefined>(
     value.seriesId ?? series[0]?.id,
   )
 
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null
-    // 焦点进面板：读屏与键盘用户打开的是对话框，而不是身后那张页面。
-    panelRef.current?.focus()
-    // 面板打开时锁住背景滚动，否则手指在面板里滑动会把身后的页面一起带走。
-    const overflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = overflow
-      // 关闭后把焦点还回去，键盘用户才不会掉到文档开头。
-      previous?.focus?.()
-    }
-  }, [onClose])
+  // Esc 关闭 / 锁背景滚动 / 关闭后归还焦点：与卡牌弹窗是同一套，走同一个 hook。
 
   const subs = tabId ? subSeries.filter((s) => s.series_id === tabId) : []
 

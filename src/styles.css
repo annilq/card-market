@@ -280,6 +280,22 @@ html.dark {
   animation: sheet-fade var(--dur-feedback) var(--ease-out-soft) both;
 }
 
+/* 卡牌弹窗：整块轻微放大 + 淡入。缩放幅度刻意很小（0.96→1），
+   它要读成「内容出现了」，不是「弹出一个广告」。 */
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.modal-in {
+  animation: modal-in var(--dur-state) var(--ease-out-quart) both;
+}
+
 /* ===== 浏览器自己的界面也要跟主题走 =====
    选中文字、滚动条、数字列宽这些不属于任何设计系统，默认值在深色页面里
    会突兀地亮一下。用同一套令牌喂它们，成本最低、辨识度最高。 */
@@ -328,7 +344,9 @@ html.dark .map-tiles {
   .banner-enter,
   /* 面板仍要出现，只是不再位移滑入——滑入是纯空间运动，关掉不丢信息。 */
   .sheet-in,
-  .sheet-fade {
+  .sheet-fade,
+  /* 弹窗同理：仍要出现，只是不再位移缩放。 */
+  .modal-in {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

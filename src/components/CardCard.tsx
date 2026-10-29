@@ -28,9 +28,16 @@ export function CardCard({
   card,
   compact = false,
   vt = true,
+  onOpen,
 }: {
   card: Card
   compact?: boolean
+  /**
+   * 给了这个回调，点击就改成「弹出卡牌弹窗」而不是跳详情页。
+   * 元素本身仍是带 href 的 <Link>：中键 / Cmd / Ctrl / Shift 点击照旧开新标签，
+   * 爬虫与读屏看到的也仍是一个真实链接——弹窗只是拦了普通左键。
+   */
+  onOpen?: (card: Card) => void
   /**
    * 是否参与跨页共享元素转场。默认开启；首页高价买取横条要关掉——
    * 同一张卡可能同时出现在横条和下方网格里，而 `view-transition-name`
@@ -52,6 +59,16 @@ export function CardCard({
     <Link
       to="/{-$locale}/cards/$id"
       params={{ id: String(card.id) }}
+      onClick={(e) => {
+        if (!onOpen) return
+        // 修饰键与中键留给浏览器：那是在要求「开新标签 / 新窗口」，
+        // 拦下来会把用户想开的新标签页变成一个弹窗。
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+          return
+        }
+        e.preventDefault()
+        onOpen(card)
+      }}
       // 共享元素转场：这张卡的图位在详情页是同一张图。
       // 名字按卡牌 id 生成，列表与详情用同一个名字，浏览器才认得出是同一个元素。
       viewTransition={vt}

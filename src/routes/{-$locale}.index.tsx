@@ -10,6 +10,7 @@ import {
   getSubSeries,
 } from "~/lib/directus";
 import { CardCard } from "~/components/CardCard";
+import { CardModal } from "~/components/CardModal";
 import { CatalogFilters } from "~/components/CatalogFilters";
 import type { CatalogFilterValue } from "~/components/CatalogFilters";
 import { HighValueStrip } from "~/components/HighValueStrip";
@@ -29,6 +30,7 @@ import { DEFAULT_CARD_SORT } from "~/lib/types";
 import type {
   Announcement,
   Banner,
+  Card,
   CardSort,
   Ip,
   Series,
@@ -152,6 +154,9 @@ function Home() {
   const [paused, setPaused] = useState(false);
   // 同列表页：首屏不播网格入场，只在用户改过筛选之后播。
   const [changed, setChanged] = useState(false);
+  // 点首页网格里的卡片弹出弹窗，不跳详情页。存的是整张卡：
+  // 列表请求已经带回了名称 / 编号 / 价格 / 稀有度，弹窗不必再取一次。
+  const [modalCard, setModalCard] = useState<Card | null>(null);
   const reduced = useReducedMotion();
 
   useEffect(() => {
@@ -423,7 +428,7 @@ function Home() {
             className={`grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 ${changed ? "grid-enter" : ""}`}
           >
             {catalog.items.map((c) => (
-              <CardCard key={c.id} card={c} />
+              <CardCard key={c.id} card={c} onOpen={setModalCard} />
             ))}
           </div>
         ) : (
@@ -441,6 +446,10 @@ function Home() {
           </div>
         )}
       </section>
+
+      {modalCard && (
+        <CardModal card={modalCard} onClose={() => setModalCard(null)} />
+      )}
     </div>
   );
 }
