@@ -1,7 +1,8 @@
-import { Link } from '@tanstack/react-router'
-import { CardCard } from '~/components/CardCard'
-import { useT } from '~/lib/i18n/react'
-import type { Card } from '~/lib/types'
+import { Link } from "@tanstack/react-router";
+import { CardCard } from "~/components/CardCard";
+import { useT } from "~/lib/i18n/react";
+import iconHighPrice from "~/asserts/icon/high_price.png";
+import type { Card } from "~/lib/types";
 
 /**
  * 首页高价买取横条：单行横向滚动，不换行、无箭头。
@@ -15,27 +16,29 @@ import type { Card } from '~/lib/types'
  *    卡名与价格挤成两行小字；改成 160px 后价格不再截断。
  */
 export function HighValueStrip({ items }: { items: Card[] }) {
-  const t = useT()
+  const t = useT();
   return (
     <section>
       {/* 区块标题：参考图里这一块是居中的品牌红图形标题，因此标题居中、
           用品牌红而不是墨黑；「全部」压在右端（绝对定位）才能保住居中。 */}
       <div className="relative mb-4 flex items-center justify-center">
-        <h2 className="text-xl font-bold text-brand md:text-2xl">
-          {t('highValueBuys')}
-        </h2>
+        <img
+          src={iconHighPrice}
+          alt={t("highValueBuys")}
+          className="h-10 md:h-20"
+        />
         <Link
           to="/{-$locale}/cards"
           search={{ hv: true }}
           className="absolute right-0 inline-flex items-center py-1 text-xs text-muted transition-colors duration-150 hover:text-fg hover:underline"
         >
-          {t('viewAll')}
+          {t("viewAll")}
         </Link>
       </div>
       {/* 可聚焦的滚动区域：键盘用户需先聚焦容器才能用方向键横向滚动。 */}
       <div
         role="region"
-        aria-label={t('highValueBuys')}
+        aria-label={t("highValueBuys")}
         tabIndex={0}
         className="strip-fade flex snap-x snap-mandatory gap-3 overflow-x-auto rounded-xl pb-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-strong"
       >
@@ -49,5 +52,5 @@ export function HighValueStrip({ items }: { items: Card[] }) {
         ))}
       </div>
     </section>
-  )
+  );
 }

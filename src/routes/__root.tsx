@@ -21,6 +21,8 @@ import { buildHead, localeFromMatches } from "~/lib/seo";
 import { GlobalSearch } from "~/components/GlobalSearch";
 import { ContentLanguageNotice } from "~/components/ContentLanguageNotice";
 import "../styles.css";
+import ShopImg from "~/asserts/icon/shop.png";
+import XImg from "~/asserts/icon/x.png";
 
 // 在首屏绘制前同步主题，避免浅色闪一下。优先级：localStorage > 系统偏好。
 const NO_FLASH_SCRIPT = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
@@ -169,43 +171,15 @@ function ErrorPage({ error, reset }: ErrorComponentProps) {
 // X（原 Twitter）图标。用官方简化字形：
 // 与旁边的 SHOP 图标同为 18px 描边风格会显得太轻，因此这里用实心路径，
 // 让两个交易入口在视觉重量上一致。
+
 function XIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="16"
-      height="16"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117l11.966 15.644Z" />
-    </svg>
-  );
+  return <img src={XImg} alt="shop" loading="lazy" />;
 }
 
 // 店铺图标：遮阳棚 + 店门。18px 下不带文字时容易被看成打印机，
 // 因此右侧搭配 SHOP 字样（参考站也是一图标一字，红色块上写着 SHOP）。
 function ShopIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {/* 遮阳棚：一道横梁 + 四个下垂的棚布 */}
-      <path d="M3.5 9.5V5.5h17v4" />
-      <path d="M3.5 9.5a2.6 2.6 0 0 0 5.2 0 2.6 2.6 0 0 0 5.2 0 2.6 2.6 0 0 0 5.2 0" />
-      {/* 店面主体与门 */}
-      <path d="M5.5 12.5V20h13v-7.5" />
-      <path d="M9.8 20v-4.2h4.4V20" />
-    </svg>
-  );
+  return <img src={ShopImg} alt="shop" loading="lazy" />;
 }
 
 // X 图标与店铺图标共用同一套外壳尺寸，保证顶栏右侧那两个按钮在所有宽度一致。
@@ -283,7 +257,7 @@ function ShopLink({
     >
       <ShopIcon />
       {withText && (
-        <span className="hidden text-xs font-semibold tracking-wide lg:inline">
+        <span className="hidden text-2xl font-semibold tracking-wide lg:inline">
           {t("shopLabel")}
         </span>
       )}
@@ -445,18 +419,18 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <body className="min-h-screen flex flex-col">
         <header className="sticky top-0 z-9999 bg-brand text-white">
           <div className="mx-auto max-w-[1232px] px-4">
-            <div className="flex h-16 items-center gap-3 md:h-24 md:gap-6">
+            <div className="flex h-16 items-center gap-3 md:h-24 md:gap-6 text-lg">
               <Link
                 to="/{-$locale}"
                 params={localeParams}
-                className="min-w-0 shrink-0 truncate text-lg font-bold text-white md:text-2xl"
+                className="min-w-0 shrink-0 truncate font-bold text-white md:text-2xl"
               >
                 {siteName}
               </Link>
 
               {/* 桌面端导航。链接本身撑到 32px 高：纯文字行只有 16px，
                   低于 WCAG 2.5.8 的 24px，鼠标和触屏都更难命中。 */}
-              <nav className="hidden items-center gap-5 text-sm text-white/85 xl:flex">
+              {/*<nav className="hidden items-center gap-5 text-white/85 xl:flex">
                 {nav.map((n) => (
                   <Link
                     key={n.to}
@@ -468,12 +442,9 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                     {n.label}
                   </Link>
                 ))}
-              </nav>
+              </nav>*/}
 
-              {/* 搜索 + 两个交易图标是同一组（参考图里就是「搜索框 | X | SHOP」）。
-                  ≥1024 并进第一行；不足 1024 时第一行要放导航与设置，剩下的宽度
-                  只够 54px 的搜索框（实测），所以整组下移成第二行，搜索才有整行可用。 */}
-              <div className="ml-auto hidden min-w-0 max-w-[560px] flex-1 lg:flex">
+              <div className="w-auto hidden min-w-0 flex-1 lg:flex">
                 <GlobalSearch />
               </div>
 
@@ -498,7 +469,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                   <LocaleSwitcher compact />
                   <ThemeToggle />
                 </div>
-                <button
+                {/*<button
                   type="button"
                   aria-label={t("openMenu")}
                   aria-expanded={menuOpen}
@@ -520,7 +491,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                       <path d="M4 7h16M4 12h16M4 17h16" />
                     )}
                   </svg>
-                </button>
+                </button>*/}
               </div>
             </div>
 
