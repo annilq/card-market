@@ -3,6 +3,7 @@ import { getAnnouncement, getAnnouncements } from '~/lib/directus'
 import { formatDate, useLocale, useT } from '~/lib/i18n/react'
 import { translate } from '~/lib/i18n/messages'
 import { buildHead, localeFromMatches, ogImage, plainText, siteFromMatches, siteNameOf } from '~/lib/seo'
+import { renderRichText } from '~/lib/richtext'
 import type { Announcement } from '~/lib/types'
 
 export const Route = createFileRoute('/{-$locale}/announcements/$id')({
@@ -43,7 +44,7 @@ export const Route = createFileRoute('/{-$locale}/announcements/$id')({
       pathname: `/announcements/${params.id}`,
       siteName,
       title: item.title,
-      description: plainText(item.body) || undefined,
+      description: plainText(renderRichText(item.body)) || undefined,
       image: ogImage(matches),
       type: 'article',
     })
@@ -93,11 +94,11 @@ function AnnouncementDetail() {
         </div>
       )}
       {item.body && (
-        // 富文本由管理员在后台维护（受信任来源）；XSS 防护见 development.md §4.4 次要项。
-        // 首段由 `.prose > p:first-of-type` 提到 17px——读者真正开始读的地方。
+        // 富文本由管理员在后台维护（受信任来源），经 renderRichText 统一转 HTML 并做 DOMPurify 清洗。
+        // 首段由 `.prose > p:first-of-type` 提到 17px，读者真正开始读的地方。
         <div
-          className="prose mt-6 text-body [&_a]:text-link [&_a]:underline [&_a]:underline-offset-2 [&_img]:rounded-lg [&_h2]:text-fg [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-1.5 [&_h3]:text-fg [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
-          dangerouslySetInnerHTML={{ __html: item.body }}
+          className="prose mt-6 text-body [&_a]:text-link [&_a]:underline [&_a]:underline-offset-2 [&_img]:rounded-lg [&_h1]:text-fg [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:mt-6 [&_h1]:mb-2 [&_h2]:text-fg [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-1.5 [&_h3]:text-fg [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_strong]:font-semibold [&_em]:italic [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:text-muted [&_code]:rounded [&_code]:bg-muted/10 [&_code]:px-1 [&_hr]:border-border [&_p]:leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: renderRichText(item.body) }}
         />
       )}
 

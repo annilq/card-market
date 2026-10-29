@@ -4,6 +4,7 @@ import { INFO_PAGE_LABEL_KEY, resolveInfoPageKey } from '~/lib/info-pages'
 import { useT } from '~/lib/i18n/react'
 import { translate } from '~/lib/i18n/messages'
 import { buildHead, localeFromMatches, ogImage, plainText, siteFromMatches, siteNameOf } from '~/lib/seo'
+import { renderRichText } from '~/lib/richtext'
 
 // 审核用信息页：/info/operation | /info/personal-info | /info/terms | /info/data-usage
 // 语言段照旧由上级 `{-$locale}` 继承（`/ja/info/terms`）。
@@ -28,7 +29,7 @@ export const Route = createFileRoute('/{-$locale}/info/$key')({
       pathname: `/info/${params.key}`,
       siteName: siteNameOf(siteFromMatches(matches), locale),
       title: title || undefined,
-      description: plainText(page?.body) || undefined,
+      description: plainText(renderRichText(page?.body)) || undefined,
       image: ogImage(matches),
     })
   },
@@ -50,11 +51,11 @@ function InfoPage() {
       {/* 28px：参考图里信息页标题实测约 30px，与公告标题同一档。 */}
       <h1 className="mt-1 break-words text-[28px] font-bold leading-snug">{title}</h1>
       {page?.body ? (
-        // 富文本由管理员在后台维护（受信任来源），与公告详情一致。
+        // 富文本由管理员在后台维护（受信任来源），经 renderRichText 统一转 HTML 并做 DOMPurify 清洗，与公告详情一致。
         // h2 从 16px 提到 18px：审核类长文靠小标题分段，16px 与正文同尺寸时分不出层级。
         <div
-          className="prose mt-6 text-body [&_a]:text-link [&_a]:underline [&_a]:underline-offset-2 [&_h2]:text-fg [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-7 [&_h2]:mb-2 [&_h3]:text-fg [&_h3]:font-semibold [&_h3]:mt-5 [&_ul]:list-disc [&_ul]:pl-5 [&_img]:rounded-lg"
-          dangerouslySetInnerHTML={{ __html: page.body }}
+          className="prose mt-6 text-body [&_a]:text-link [&_a]:underline [&_a]:underline-offset-2 [&_h1]:text-fg [&_h1]:text-xl [&_h1]:font-semibold [&_h1]:mt-7 [&_h1]:mb-2 [&_h2]:text-fg [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-7 [&_h2]:mb-2 [&_h3]:text-fg [&_h3]:font-semibold [&_h3]:mt-5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_strong]:font-semibold [&_em]:italic [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:text-muted [&_code]:rounded [&_code]:bg-muted/10 [&_code]:px-1 [&_hr]:border-border [&_p]:leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: renderRichText(page.body) }}
         />
       ) : (
         <p className="mt-4 text-sm text-muted">{t('infoPageNotFound')}</p>
