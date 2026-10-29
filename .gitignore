@@ -25,7 +25,9 @@ dist
 directus/uploads
 
 # ── 截图产物 ──
+# 只忽略截图本身：.scratch 下的规格与复核脚本是要入仓的，
+# 上一版写成 .scratch/ 把整个目录挡在门外了。
 # 复核脚本（.scratch/**/capture.mjs）可随时重生成，36MB 的 PNG 不进历史。
-.scratch/
+.scratch/**/shots/
 resources
 .workbuddy

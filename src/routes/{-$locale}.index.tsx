@@ -7,6 +7,7 @@ import {
   getCards,
   getIps,
   getSeries,
+  getSubSeries,
 } from "~/lib/directus";
 import { CardCard } from "~/components/CardCard";
 import { CatalogFilters } from "~/components/CatalogFilters";
@@ -25,7 +26,14 @@ import {
   siteNameOf,
 } from "~/lib/seo";
 import { DEFAULT_CARD_SORT } from "~/lib/types";
-import type { Announcement, Banner, CardSort, Ip, Series } from "~/lib/types";
+import type {
+  Announcement,
+  Banner,
+  CardSort,
+  Ip,
+  Series,
+  SubSeries,
+} from "~/lib/types";
 
 /** 首页卡牌列表每页数量。首页要露出 banner 与公告，因此比列表页的 24 少。 */
 const HOME_PAGE_SIZE = 12;
@@ -42,6 +50,7 @@ const SORTS: CardSort[] = ["price_desc", "price_asc", "newest", "oldest"];
 interface HomeSearch {
   ip?: number;
   series?: number;
+  sub?: number;
   type?: "raw" | "packaged";
   sort?: CardSort;
 }
@@ -56,12 +65,14 @@ export const Route = createFileRoute("/{-$locale}/")({
   validateSearch: (s: Record<string, unknown>): HomeSearch => ({
     ip: asId(s.ip),
     series: asId(s.series),
+    sub: asId(s.sub),
     type: s.type === "raw" || s.type === "packaged" ? s.type : undefined,
     sort: SORTS.includes(s.sort as CardSort) ? (s.sort as CardSort) : undefined,
   }),
   loaderDeps: ({ search }) => ({
     ip: search.ip,
     series: search.series,
+    sub: search.sub,
     type: search.type,
     sort: search.sort,
   }),
@@ -74,25 +85,36 @@ export const Route = createFileRoute("/{-$locale}/")({
     announcements: Announcement[];
     ips: Ip[];
     series: Series[];
+    subSeries: SubSeries[];
     highValue: Awaited<ReturnType<typeof getCards>>;
     catalog: Awaited<ReturnType<typeof getCards>>;
   }> => {
-    const [banners, announcements, ips, series, highValue, catalog] =
+    const [banners, announcements, ips, series, subSeries, highValue, catalog] =
       await Promise.all([
         getBanners(),
         getAnnouncements(),
         getIps(),
         getSeries(),
+        getSubSeries(),
         getCards({ highValueOnly: true, sort: "price_desc", limit: 8 }),
         getCards({
           ipIds: deps.ip ? [deps.ip] : undefined,
           seriesIds: deps.series ? [deps.series] : undefined,
+          subSeriesIds: deps.sub ? [deps.sub] : undefined,
           cardStatus: deps.type ? [deps.type] : undefined,
           sort: deps.sort ?? "price_desc",
           limit: HOME_PAGE_SIZE,
         }),
       ]);
-    return { banners, announcements, ips, series, highValue, catalog };
+    return {
+      banners,
+      announcements,
+      ips,
+      series,
+      subSeries,
+      highValue,
+      catalog,
+    };
   },
   // 首页：用 LOCALES 里那条完整的站点标题与描述，分享图取第一条 banner。
   // 筛选只改查询串，pathname 仍是 `/`，所以 canonical 始终指向首页本身，
@@ -117,7 +139,7 @@ export const Route = createFileRoute("/{-$locale}/")({
 });
 
 function Home() {
-  const { banners, announcements, ips, series, highValue, catalog } =
+  const { banners, announcements, ips, series, subSeries, highValue, catalog } =
     Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -144,6 +166,7 @@ function Home() {
   const filterValue: CatalogFilterValue = {
     ipId: search.ip,
     seriesId: search.series,
+    subSeriesId: search.sub,
     cardStatus: search.type,
     sort: search.sort ?? DEFAULT_CARD_SORT,
   };
@@ -170,10 +193,22 @@ function Home() {
     const merged: HomeSearch = {
       ip: "ipId" in next ? next.ipId : search.ip,
       series: "seriesId" in next ? next.seriesId : search.series,
+      sub: "subSeriesId" in next ? next.subSeriesId : search.sub,
       type: "cardStatus" in next ? next.cardStatus : search.type,
       sort: "sort" in next ? next.sort : search.sort,
     };
-    if ("ipId" in next) merged.series = undefined;
+    // 换 IP 会连带清掉主系列与子系列：新 IP 下它们很可能不存在，
+    // 留着就是「已选但列表里没有」的旧值。
+    if ("ipId" in next) {
+      merged.series = undefined;
+      merged.sub = undefined;
+    }
+    // 主系列真的换了才清子系列（子系列从属于主系列，换了主系列后旧值会筛出空列表）。
+    // 不能用 `"seriesId" in next`：面板提交的是「主系列 + 子系列」一对，
+    // 两个键总是同时出现，按 in 判断会把刚选的子系列当场清掉。
+    if ("seriesId" in next && next.seriesId !== search.series) {
+      merged.sub = undefined;
+    }
     if ("seriesId" in next && next.seriesId != null) {
       // 选了具体系列时把 IP 补成它的父级，两个下拉就不会互相矛盾
       const parent = series.find((s) => s.id === next.seriesId);
@@ -192,7 +227,7 @@ function Home() {
       activeChips.push({
         key: "ip",
         label: ip.name,
-        clear: { ...search, ip: undefined, series: undefined },
+        clear: { ...search, ip: undefined, series: undefined, sub: undefined },
       });
   }
   if (search.series != null) {
@@ -201,7 +236,16 @@ function Home() {
       activeChips.push({
         key: "series",
         label: s.name,
-        clear: { ...search, series: undefined },
+        clear: { ...search, series: undefined, sub: undefined },
+      });
+  }
+  if (search.sub != null) {
+    const sub = subSeries.find((v) => v.id === search.sub);
+    if (sub)
+      activeChips.push({
+        key: "sub",
+        label: sub.name,
+        clear: { ...search, sub: undefined },
       });
   }
   if (search.type) {
@@ -325,6 +369,7 @@ function Home() {
       <section>
         <CatalogFilters
           value={filterValue}
+          subSeries={subSeries}
           ips={ips}
           series={series}
           onChange={onFilterChange}
@@ -374,7 +419,7 @@ function Home() {
           // key 跟着筛选走：换筛选时网格重新挂载，`grid-enter` 才播一次。
           // 不逐格 stagger——12 个格子逐格延迟会读成「加载慢」而不是「列表换了」。
           <div
-            key={`${search.ip}-${search.series}-${search.type}-${search.sort}`}
+            key={`${search.ip}-${search.series}-${search.sub}-${search.type}-${search.sort}`}
             className={`grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 ${changed ? "grid-enter" : ""}`}
           >
             {catalog.items.map((c) => (

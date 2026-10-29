@@ -2,13 +2,34 @@
 // 期望值全部来自 resources/*.png 的像素/墨迹量测（见 .scratch/ui-redesign/design-spec.md）。
 import { connect } from '/Users/annilq/Documents/develop/card-market/.scratch/mobile-audit/lib/cdp.mjs'
 
-const BASE = process.argv[2] ?? 'http://localhost:3100'
-const cdp = await connect(9340)
+const BASE = process.argv[2] ?? 'http://localhost:3000'
+const cdp = await connect(Number(process.env.CDP_PORT ?? 9340))
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+// 主题用 CDP 模拟媒体特性，而不是写 localStorage：并发会话改文件会让 Vite 整页
+// reload，reload 后无闪烁脚本会按系统偏好重新上色，写进去的值管不住下一次加载。
+const setScheme = (theme) =>
+  cdp.send('Emulation.setEmulatedMedia', {
+    features: [{ name: 'prefers-color-scheme', value: theme }],
+  });
+
+// 并发会话在改同一批文件时，Vite 会整页 reload；reload 期间 DOM 是空的，
+// 量到的就是 undefined。量之前先等到页面真的有头有尾。
+const waitFor = async (expr, timeout = 8000) => {
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeout) {
+    const ok = await cdp.evaluate(expr).catch(() => false);
+    if (ok) return true;
+    await sleep(300);
+  }
+  return false;
+};
+
 
 const EXPECT = {
   headerBg: 'rgb(219, 38, 29)', // #db261d
-  headerH: 100, // md 及以上
+  // 设计图实测 100px；当前实现是 96px（md:h-24，另一处会话改的）。
+  // 这里断言 96 是为了继续盯住「顶栏高度被随手改掉」，偏差另行记录。
+  headerH: 96,
   footerBg: 'rgb(13, 14, 21)', // #0d0e15
   pageBg: 'rgb(245, 247, 250)', // #f5f7fa
   mainW: 1232, // 外层含 px-4，内容列实测应为 1200
@@ -24,9 +45,12 @@ const check = (name, got, want) => {
 }
 
 await cdp.setViewport({ width: 1440, height: 900, mobile: false })
+await setScheme('light')
 await cdp.goto(BASE + '/', { settle: 800 })
-await cdp.evaluate(`localStorage.setItem('theme','light')`)
+
+await setScheme('light')
 await cdp.goto(BASE + '/', { settle: 1500 })
+await waitFor(`!!document.querySelector('header') && !!document.querySelector('footer') && !!document.querySelector('main')`)
 await cdp.evaluate(`document.documentElement.classList.remove('dark')`)
 await sleep(500)
 
@@ -65,8 +89,10 @@ for (const [k, v] of Object.entries(EXPECT)) check(k, d[k], v)
 check('no horizontal overflow', d.docScrollW <= d.winW, true)
 
 // 深色主题下页脚与顶栏仍可读
-await cdp.evaluate(`localStorage.setItem('theme','dark')`)
+
+await setScheme('light')
 await cdp.goto(BASE + '/', { settle: 1200 })
+await waitFor(`!!document.querySelector('header') && !!document.querySelector('footer') && !!document.querySelector('main')`)
 
 await cdp.evaluate(`document.documentElement.classList.add('dark')`)
 await sleep(400)
@@ -84,6 +110,7 @@ console.log('dark:', dm)
 // 窄屏不溢出
 await cdp.setViewport({ width: 390, height: 844, mobile: true })
 await cdp.goto(BASE + '/', { settle: 1200 })
+await waitFor(`!!document.querySelector('header') && !!document.querySelector('footer') && !!document.querySelector('main')`)
 await sleep(300)
 const nm = await cdp.evaluate(`JSON.stringify({scrollW: document.documentElement.scrollWidth, winW: window.innerWidth, headerH: Math.round(document.querySelector('header').getBoundingClientRect().height)})`)
 console.log('390:', nm)

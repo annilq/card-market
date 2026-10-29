@@ -254,6 +254,32 @@ html.dark {
   animation: banner-enter 200ms var(--ease-out-soft) both;
 }
 
+/* 右侧筛选面板：面板整块从右滑入，遮罩同时淡入。
+   时长取跨页转场那一档，曲线用常规状态变化——它是「打开一个控件」，
+   不是「换了一页」，不该和列表页转场抢戏。 */
+@keyframes sheet-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+.sheet-in {
+  animation: sheet-in var(--dur-state) var(--ease-out-soft) both;
+}
+@keyframes sheet-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.sheet-fade {
+  animation: sheet-fade var(--dur-feedback) var(--ease-out-soft) both;
+}
+
 /* ===== 浏览器自己的界面也要跟主题走 =====
    选中文字、滚动条、数字列宽这些不属于任何设计系统，默认值在深色页面里
    会突兀地亮一下。用同一套令牌喂它们，成本最低、辨识度最高。 */
@@ -299,7 +325,10 @@ html.dark .map-tiles {
     transform: none !important;
   }
   .grid-enter,
-  .banner-enter {
+  .banner-enter,
+  /* 面板仍要出现，只是不再位移滑入——滑入是纯空间运动，关掉不丢信息。 */
+  .sheet-in,
+  .sheet-fade {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

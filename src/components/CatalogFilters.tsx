@@ -1,43 +1,70 @@
-import { Link } from "@tanstack/react-router";
-import { useT } from "~/lib/i18n/react";
-import { DEFAULT_CARD_SORT } from "~/lib/types";
-import type { CardSort, Ip, Series } from "~/lib/types";
+import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
+import { FilterSheet } from '~/components/FilterSheet'
+import type { FilterField, FilterOption } from '~/components/FilterSheet'
+import { useT } from '~/lib/i18n/react'
+import { DEFAULT_CARD_SORT } from '~/lib/types'
+import type { CardSort, Ip, Series, SubSeries } from '~/lib/types'
+
 /**
- * 首页的四联筛选：回购分类（IP）· 分类（系列）· 类型（卡品状态）· 排序。
+ * 首页的筛选：IP 用 tab 条，分类 / 类型 / 排序用「点击 → 右侧滑出面板」。
  *
- * 全都是原生 `<select>`，不是自定义下拉：原生控件在手机上直接唤起系统选择器、
- * 键盘可操作、读屏可读，也不需要自己实现点击外部关闭与焦点管理。
- * 四个控件是同一体的一个数组在渲染，避免四份几乎相同的 JSX 各自漂移。
+ * 三个筛选原本是原生 `<select>`，改成面板是交互设计师的要求：select 在手机上
+ * 唤起系统滚轮，样式不可控，也放不下「主系列 → 子系列」两级。面板则能把
+ * 第二级做成竖直 tab，与附件设计一致。
  *
- * 筛选状态由调用方持有（首页放在 URL 查询串里），本组件只负责「选了什么就回报什么」。
+ * 面板只负责「选了什么就回报什么」，筛选状态仍由调用方持有（首页放在 URL 里）。
  */
 export interface CatalogFilterValue {
-  ipId: number | undefined;
-  seriesId: number | undefined;
-  cardStatus: "raw" | "packaged" | undefined;
-  sort: CardSort;
+  ipId: number | undefined
+  seriesId: number | undefined
+  subSeriesId: number | undefined
+  cardStatus: 'raw' | 'packaged' | undefined
+  sort: CardSort
 }
 
-// 下拉本身也补焦点环：只靠 border 变色在深色主题下几乎看不出焦点在哪。
-// 宽度统一，但要放得下最长的那条选项。实测可用内宽（扣掉左右内边距与
-// 右侧箭头位）必须 ≥ 111px：英文 "Price: high to low" 要 111px、
-// 日文「タイプ」选项「パッケージあり」要 98px、中文「价格：高→低」要 83px。
-// w-32(128px) 只剩 78px 可用，三种语言都会被截断；给到 w-44(176px) 才够。
-// 桌面固定 w-44；手机上改成占满剩余宽度（flex-1），否则 176px 的框在
-// 390 宽的屏幕上会留下一大块空白。
-const uiSelect =
-  "h-10 w-full min-w-0 flex-1 sm:w-44 sm:flex-none appearance-none rounded-lg border border-border-strong bg-surface px-3 pr-9 text-lg text-fg outline-none transition hover:border-muted focus:border-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted";
+function ChevronIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  )
+}
 
-// 原生 select 的箭头在深色主题下不可控，统一叠一个 chevron。
-// 走内联 style 而不是 Tailwind 任意值：任意值里的引号与 % 编码在构建时
-// 会被改写（实测生成的 background-image 是 none），内联不会被处理。
-const chevronStyle = {
-  backgroundImage:
-    "url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
-  backgroundRepeat: "no-repeat",
-  backgroundPosition: "right 0.75rem center",
-  backgroundSize: "16px 16px",
-} as const;
+// 触发控件：整颗是按钮，标签与当前值同行，右侧一个 chevron 表示「会展开」。
+// 高度 40px：与顶栏 IP tab 同高，一排控件才不会高低不齐。
+function FilterButton({
+  label,
+  current,
+  onClick,
+}: {
+  label: string
+  current: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-haspopup="dialog"
+      className="inline-flex h-10 min-w-0 max-w-full items-center gap-1.5 rounded px-3 text-sm transition-colors duration-150 hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted"
+    >
+      <span className="shrink-0 font-bold text-fg">{label}</span>
+      <span className="min-w-0 truncate text-muted">{current}</span>
+      <ChevronIcon />
+    </button>
+  )
+}
 
 // 40px 高：参考图实测 tab 从 y1476 到 1515。整颗是点击目标，
 // 纯文字行只有 20px，低于 WCAG 2.5.8 的 24px。
@@ -46,9 +73,9 @@ function IpTab({
   onClick,
   label,
 }: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
+  active: boolean
+  onClick: () => void
+  label: string
 }) {
   return (
     <button
@@ -57,100 +84,84 @@ function IpTab({
       aria-pressed={active}
       className={`inline-flex h-10 items-center px-5 text-xl transition-colors duration-150 ${
         active
-          ? "bg-brand text-white"
-          : "text-gray-400 hover:bg-[#f6dadc] bg-[#F2E2E3]"
+          ? 'bg-brand text-white'
+          : 'bg-[#F2E2E3] text-gray-400 hover:bg-[#f6dadc]'
       }`}
     >
       {label}
     </button>
-  );
+  )
 }
 
 export function CatalogFilters({
   value,
   ips,
   series,
+  subSeries,
   onChange,
   onReset,
   localeParams,
 }: {
-  value: CatalogFilterValue;
-  ips: Ip[];
-  series: Series[];
-  onChange: (next: Partial<CatalogFilterValue>) => void;
+  value: CatalogFilterValue
+  ips: Ip[]
+  series: Series[]
+  subSeries: SubSeries[]
+  onChange: (next: Partial<CatalogFilterValue>) => void
   /** 清空全部筛选。是否可用由调用方判断（没有筛选时按钮禁用）。 */
-  onReset: () => void;
+  onReset: () => void
   /** 当前语言段。显式传入，避免 `to="/{-$locale}/..."` 从非法路径段继承出二次 404。 */
-  localeParams: { locale: string | undefined };
+  localeParams: { locale: string | undefined }
 }) {
-  const t = useT();
+  const t = useT()
+  const [openField, setOpenField] = useState<FilterField | null>(null)
 
-  // 有没有可重置的东西：三个筛选为空且排序是默认值时才禁用按钮。
+  // 有没有可重置的东西：筛选为空且排序是默认值时才禁用按钮。
   // 用禁用而不是隐藏，按钮位置才不会在筛选前后跳动。
   const isDirty =
     value.ipId != null ||
     value.seriesId != null ||
+    value.subSeriesId != null ||
     value.cardStatus != null ||
-    value.sort !== DEFAULT_CARD_SORT;
-  // 「分类」跟着「回购分类」收窄：选了宝可梦就只列宝可梦的系列。
+    value.sort !== DEFAULT_CARD_SORT
+
+  // 「分类」跟着 IP 收窄：选了宝可梦就只列宝可梦的主系列。
   // 没选 IP 时列全部，这样单用「分类」也能查。
   const seriesOptions = value.ipId
     ? series.filter((s) => s.ip_id === value.ipId)
-    : series;
+    : series
 
-  const fields = [
-    {
-      id: "series",
-      label: t("filterSeries"),
-      value: value.seriesId == null ? "" : String(value.seriesId),
-      allLabel: t("facetAll"),
-      options: seriesOptions.map((s) => ({
-        value: String(s.id),
-        label: s.name,
-      })),
-      onPick: (raw: string) =>
-        onChange({ seriesId: raw ? Number(raw) : undefined }),
-    },
-    {
-      id: "type",
-      label: t("filterType"),
-      value: value.cardStatus ?? "",
-      allLabel: t("facetAll"),
-      options: [
-        { value: "raw", label: t("typeRaw") },
-        { value: "packaged", label: t("typePackaged") },
-      ],
-      onPick: (raw: string) =>
-        onChange({ cardStatus: raw ? (raw as "raw" | "packaged") : undefined }),
-    },
-    {
-      id: "sort",
-      label: t("filterSort"),
-      // 排序没有「全部」这一档：它总得是一个确定的顺序。
-      value: value.sort,
-      allLabel: null as string | null,
-      options: [
-        { value: DEFAULT_CARD_SORT, label: t("sortPriceDesc") },
-        { value: "price_asc", label: t("sortPriceAsc") },
-        { value: "newest", label: t("sortNewest") },
-        { value: "oldest", label: t("sortOldest") },
-      ],
-      onPick: (raw: string) => onChange({ sort: raw as CardSort }),
-    },
-  ];
+  const currentSeries = series.find((s) => s.id === value.seriesId)
+  const currentSub = subSeries.find((s) => s.id === value.subSeriesId)
+
+  const seriesText = currentSeries
+    ? currentSub
+      ? `${currentSeries.name} / ${currentSub.name}`
+      : `${currentSeries.name} / ${t('facetAll')}`
+    : t('facetAll')
+
+  const typeOptions: FilterOption[] = [
+    { value: '', label: t('facetAll') },
+    { value: 'raw', label: t('typeRaw') },
+    { value: 'packaged', label: t('typePackaged') },
+  ]
+  const sortOptions: FilterOption[] = [
+    { value: DEFAULT_CARD_SORT, label: t('sortPriceDesc') },
+    { value: 'price_asc', label: t('sortPriceAsc') },
+    { value: 'newest', label: t('sortNewest') },
+    { value: 'oldest', label: t('sortOldest') },
+  ]
 
   return (
-    <div role="group" aria-label={t("catalogFilters")}>
-      {/* IP tab 条：参考图里「宝可梦 / 海贼王」那一排就是 IP 选择，
-          红底白字 40px 高，未选中只有文字没有填充。
+    <div role="group" aria-label={t('catalogFilters')}>
+      {/* IP tab 条：参考图里「宝可梦 / 海贼王」那一排就是 IP 选择。
           用它替代原来的「回购分类」下拉是必要的：两者筛的是同一件事，
           同时存在就是同一个筛选两个入口、且会互相打架。 */}
-      <div className="mb-4 flex flex-wrap items-center gap-2 justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between">
         <div>
           <IpTab
             active={value.ipId == null}
             onClick={() => onChange({ ipId: undefined })}
-            label={t("facetAllIps")}
+            label={t('facetAllIps')}
           />
           {ips.map((ip) => (
             <IpTab
@@ -167,57 +178,69 @@ export function CatalogFilters({
             params={localeParams}
             className="text-sm text-muted transition hover:text-fg hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
-            {t("viewAll")}
+            {t('viewAll')}
           </Link>
         </div>
       </div>
 
-      {/* 手机：每行一个筛选（w-full），标签在左、下拉占满整行剩余宽度。
-          平板起才并排：≥640 两列，≥1024 四列，每列宽度由内容决定。 */}
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-8">
-        {fields.map((f) => (
-          <label
-            key={f.id}
-            className="flex w-full min-w-0 items-center gap-1.5 sm:w-auto"
-          >
-            {/* 标签宽度按语言自适应（不设固定宽度）：固定 80px 时「分类」「类型」
-                只有 24px 宽，后面会空出 56px，看起来就是标签与下拉间距过大。
-                改成由内容决定宽度后，同一行内四个下拉会因标签长短不同而左边缘
-                不齐——这是有意的取舍：对齐四列只是视觉整齐，紧贴标签才是
-                用户实际感知到的问题。 */}
-            <span className="shrink-0 whitespace-nowrap text-xl font-bold text-fg">
-              {f.label}
-            </span>
-            <select
-              value={f.value}
-              onChange={(e) => f.onPick(e.target.value)}
-              className={uiSelect}
-              style={chevronStyle}
-            >
-              {f.allLabel && <option value="">{f.allLabel}</option>}
-              {f.options.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        ))}
+      {/* 三个筛选改成触发控件：点一下，右侧滑出选择面板。
+          仍是一行排列，不再是四个下拉——面板把宽度还给了筛选值本身。 */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <FilterButton
+          label={t('filterSeries')}
+          current={seriesText}
+          onClick={() => setOpenField('series')}
+        />
+        <FilterButton
+          label={t('filterType')}
+          current={
+            value.cardStatus
+              ? value.cardStatus === 'raw'
+                ? t('typeRaw')
+                : t('typePackaged')
+              : t('facetAll')
+          }
+          onClick={() => setOpenField('type')}
+        />
+        <FilterButton
+          label={t('filterSort')}
+          current={
+            sortOptions.find((o) => o.value === value.sort)?.label ??
+            t('sortPriceDesc')
+          }
+          onClick={() => setOpenField('sort')}
+        />
 
-        {/* 「重置」是这一排筛选的最后一个控件：改完四个下拉之后手就在这一带，
-            清空动作也就该在这里，而不是回到标题行右上角找。
-            仍是 button（操作而非导航），没有可重置项时禁用而不是隐藏，
-            按钮位置才不会在筛选前后跳动。self-start：手机是单列纵向排列，
-            默认 stretch 会把按钮拉成整行宽的色块。 */}
+        {/* 「重置」仍在这一排的末尾：改完筛选之后手就在这一带。
+            没有可重置项时禁用而不是隐藏，按钮位置才不会在筛选前后跳动。 */}
         <button
           type="button"
           onClick={onReset}
           disabled={!isDirty}
-          className="self-start whitespace-nowrap py-1 text-lg text-muted transition hover:text-fg hover:underline disabled:cursor-default disabled:text-faint disabled:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="ml-auto shrink-0 whitespace-nowrap py-1 text-sm text-muted transition hover:text-fg hover:underline disabled:cursor-default disabled:text-faint disabled:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
-          {t("catalogReset")}
+          {t('catalogReset')}
         </button>
       </div>
+
+      {openField && (
+        <FilterSheet
+          field={openField}
+          title={
+            openField === 'series'
+              ? t('filterSeries')
+              : openField === 'type'
+                ? t('filterType')
+                : t('filterSort')
+          }
+          series={seriesOptions}
+          subSeries={subSeries}
+          value={value}
+          options={openField === 'type' ? typeOptions : sortOptions}
+          onPick={onChange}
+          onClose={() => setOpenField(null)}
+        />
+      )}
     </div>
-  );
+  )
 }

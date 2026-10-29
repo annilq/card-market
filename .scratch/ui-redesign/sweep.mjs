@@ -1,8 +1,15 @@
 // 全站烟测：7 页 × 1440/390 × 浅/深，查横向溢出与控制台报错。
 import { connect } from '/Users/annilq/Documents/develop/card-market/.scratch/mobile-audit/lib/cdp.mjs'
-const cdp = await connect(9340)
+const cdp = await connect(Number(process.env.CDP_PORT ?? 9340))
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
-const BASE = 'http://localhost:3100'
+// 主题用 CDP 模拟媒体特性，而不是写 localStorage：并发会话改文件会让 Vite 整页
+// reload，reload 后无闪烁脚本会按系统偏好重新上色，写进去的值管不住下一次加载。
+const setScheme = (theme) =>
+  cdp.send('Emulation.setEmulatedMedia', {
+    features: [{ name: 'prefers-color-scheme', value: theme }],
+  });
+
+const BASE = 'http://localhost:3000'
 const PAGES = ['/', '/cards', '/cards/1', '/announcements', '/announcements/1', '/message', '/shops', '/info/terms']
 let bad = 0
 for (const vp of [{ width: 1440, height: 900, mobile: false }, { width: 390, height: 844, mobile: true }, { width: 320, height: 640, mobile: true }]) {
@@ -11,7 +18,7 @@ for (const vp of [{ width: 1440, height: 900, mobile: false }, { width: 390, hei
   for (const theme of ['light', 'dark']) {
     // 主题直接切 html.dark 类：localStorage 在导航未落定时会抛 SecurityError，
     // 而深色样式本来就是类驱动的，切类与写 storage 对渲染结果等价。
-    await cdp.evaluate(`document.documentElement.classList.toggle('dark', ${theme === 'dark'})`).catch(() => {})
+    await setScheme(theme)
     for (const path of PAGES) {
       cdp.resetErrors()
       await cdp.goto(BASE + path, { settle: 900 })
