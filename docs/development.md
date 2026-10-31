@@ -77,6 +77,8 @@
 
 > 草案；[02](../.scratch/card-market/issues/02-card-fields.md) 卡牌字段、[01](../.scratch/card-market/issues/01-classification-model.md) 分类维度、[05](../.scratch/card-market/issues/05-banner-capabilities.md) banner 能力、[06](../.scratch/card-market/issues/06-announcement-capabilities.md) 公告能力、[07](../.scratch/card-market/issues/07-message-anti-abuse.md) 留言防滥用**均已决议**；`messages` 字段已收敛（见 §4.5）。
 
+> **列表页状态快捷切换**：`banners`、`cards`、`announcements`、`info_pages`、`shops` 的 `status` 字段在列表视图使用自定义 Display 扩展 **`status-switch`**（`directus/extensions/status-switch`）。编辑者在列表页点击状态徽章即可在 草稿 / 已发布 / 已归档 之间一键切换，无需进入详情页；候选状态自动取自该字段 `select-dropdown` 的 `choices`。切换经 `PATCH /items/{collection}/{id}` 持久化，并通过 items store 即时刷新当前行。重新构建：`npm run directus:extension:build:status`。
+
 ### 4.1 分类与维度集合（已定，见 ticket [01](../.scratch/card-market/issues/01-classification-model.md)）
 
 > 决策要点：多 IP 卡牌集市；**三层 IP→系列→子系列**；`稀有程度` 为独立维度集合 + 关系（非 `cards` 属性列）；`卡牌类型`(card_types) 已删除；`ips`/`series`/`sub_series`/`rarities` 四个维度均由 Directus 后台配置化维护。`状态` 用 Directus 内置 status（不计入分类维度）；`排序` 仅维度表保留（用于 facet 排序），`cards` 不设 sort。
@@ -187,6 +189,7 @@
 | content | text | 留言内容 | 始终（必填） |
 | contact_name | string | 联系人（选填，降门槛） | 可选 |
 | contact_info | string | 联系方式（邮箱/电话/微信，选填） | 可选 |
+| card | M2O→cards | 关联卡牌：访客从卡牌详情「咨询此卡」进入时带入，后台据此确认留言针对哪张卡片；直接留言则为空 | 可选 |
 | created_at | timestamp | 提交时间 | 自动 |
 | status | enum | **新 / 已处理 / 已归档 / 已标记垃圾**（自定义枚举，非 Directus 内置 status） | — |
 
@@ -229,10 +232,10 @@
 
 | 角色 | 读取 | 创建 | 其他 |
 | --- | --- | --- | --- |
-| Public（公开） | `cards`(仅 published) / `banners`(仅 published) / `announcements`(仅 published 且 published_at<=now) / `shops`(仅 published) / `info_pages`(仅 published) / `site_settings` / 图片 assets | `messages`（仅 content/contact_name/contact_info 创建） | 不可读 `messages`；不可写其他集合 |
+| Public（公开） | `cards`(仅 published) / `banners`(仅 published) / `announcements`(仅 published 且 published_at<=now) / `shops`(仅 published) / `info_pages`(仅 published) / `site_settings` / 图片 assets | `messages`（仅 content/contact_name/contact_info/card 创建） | 不可读 `messages`；不可写其他集合 |
 | Admin（管理员） | 全部 | 全部 | 全部（后台 UI） |
 
-> 公开角色对 `messages` 需配置"字段级创建权限"（仅允许写入 `content`/`contact_name`/`contact_info` 字段），并关闭公开读取。垃圾留言由管理员在后台手动置 `status=已标记垃圾`。
+> 公开角色对 `messages` 需配置"字段级创建权限"（仅允许写入 `content`/`contact_name`/`contact_info`/`card` 字段），并关闭公开读取。垃圾留言由管理员在后台手动置 `status=已标记垃圾`。
 
 ---
 

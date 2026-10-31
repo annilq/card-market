@@ -1,0 +1,21 @@
+{
+  "name": "directus-display-status-switch",
+  "version": "1.0.0",
+  "description": "后台列表页可点击的状态徽章：一键在 草稿 / 已发布 / 已归档 等状态间切换，无需打开详情页。",
+  "author": "",
+  "license": "MIT",
+  "directus:extension": {
+    "type": "display",
+    "path": "dist/index.js",
+    "source": "src/index.ts",
+    "host": "^11.0.0",
+    "hidden": false
+  },
+  "scripts": {
+    "build": "directus-extension build",
+    "watch": "directus-extension build --watch"
+  },
+  "devDependencies": {
+    "@directus/extensions-sdk": "^11.0.0"
+  }
+}

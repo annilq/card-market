@@ -13,7 +13,9 @@
     "directus:seed": "node directus/seed.mjs",
     "directus:snapshot": "npx directus schema snapshot directus/schema.yaml --yes",
     "directus:extension:build": "npm --prefix directus/extensions/map-picker run build",
-    "directus:extension:watch": "npm --prefix directus/extensions/map-picker run watch"
+    "directus:extension:watch": "npm --prefix directus/extensions/map-picker run watch",
+    "directus:extension:build:status": "npm --prefix directus/extensions/status-switch run build",
+    "directus:extension:watch:status": "npm --prefix directus/extensions/status-switch run watch"
   },
   "dependencies": {
     "@tanstack/react-router": "latest",

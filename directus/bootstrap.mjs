@@ -155,6 +155,7 @@ const FIELD_LABELS_JA = {
     content: 'お問い合わせ内容',
     contact_name: 'お名前',
     contact_info: '連絡先',
+    card: '相談カード',
     status: '対応ステータス',
   },
   site_settings: {
@@ -316,6 +317,7 @@ const collections = [
         options: {
           choices: CHOICES({ draft: '草稿', published: '已发布', archived: '已归档' }),
         },
+        display: 'status-switch',
         note: 'Directus 内置状态',
       },
       {
@@ -367,6 +369,7 @@ const collections = [
         interface: 'select-dropdown',
         default: 'draft',
         options: { choices: CHOICES({ draft: '草稿', published: '已发布', archived: '已归档' }) },
+        display: 'status-switch',
       },
     ],
   },
@@ -390,6 +393,7 @@ const collections = [
         interface: 'select-dropdown',
         default: 'draft',
         options: { choices: CHOICES({ draft: '草稿', published: '已发布', archived: '已归档' }) },
+        display: 'status-switch',
       },
     ],
   },
@@ -398,11 +402,21 @@ const collections = [
     label: '留言',
     icon: 'forum',
     note: '访客留言（工单式，非 Directus 状态）',
-    displayTemplate: '{{content}}',
+    // 列表/详情标题带卡片名：后台一眼看出留言针对哪张卡片（无卡片关联时 {{card.name}} 为空，末尾「 · 」会被忽略或留空）。
+    displayTemplate: '{{content}} · {{card.name}}',
     fields: [
       { field: 'content', label: '留言内容', type: 'text', interface: 'textarea', required: true },
       { field: 'contact_name', label: '联系人', type: 'string', interface: 'input', note: '联系人（选填）' },
       { field: 'contact_info', label: '联系方式', type: 'string', interface: 'input', note: '联系方式（选填）' },
+      {
+        field: 'card',
+        label: '咨询的卡牌',
+        type: 'integer',
+        interface: 'select-dropdown-m2o',
+        related: 'cards',
+        options: M2O_OPTIONS,
+        note: '关联卡牌：访客从卡牌详情「咨询此卡」进入时带入，后台据此确认留言针对哪张卡片；直接留言则为空',
+      },
       {
         field: 'status',
         label: '处理状态',
@@ -450,6 +464,7 @@ const collections = [
         interface: 'select-dropdown',
         default: 'published',
         options: { choices: CHOICES({ published: '已发布', draft: '草稿' }) },
+        display: 'status-switch',
       },
     ],
   },
@@ -495,6 +510,7 @@ const collections = [
         options: {
           choices: CHOICES({ draft: '草稿', published: '已发布', archived: '已归档' }),
         },
+        display: 'status-switch',
       },
     ],
   },
@@ -875,7 +891,7 @@ async function setupPermissions() {
     await ensurePermission(msgPid, {
       collection: 'messages',
       action: 'create',
-      fields: ['content', 'contact_name', 'contact_info'],
+      fields: ['content', 'contact_name', 'contact_info', 'card'],
       permissions: {},
       validation: {},
       presets: { status: 'new' },
