@@ -88,18 +88,7 @@ async function seedShops() {
       business_hours: '12:00–21:00（不定休）',
       description: '主打高罕卡专项回收，UR/SSR 估价优厚，欢迎线下交流。',
       sort: 2,
-      status: 'published',
-    },
-    {
-      name: 'card-market · 池袋店',
-      address: '东京都丰岛区西池袋 1-3 示例大楼 B1',
-      lat: 35.7295,
-      lng: 139.7109,
-      phone: '03-3456-7890',
-      business_hours: '11:00–19:00（周二休）',
-      description: '面向新手玩家的友好门店，裸卡与包装卡均可回收。',
-      sort: 3,
-      status: 'published',
+      status: 'draft',
     },
   ]
   for (const s of shops) await post('shops', s)
@@ -197,18 +186,14 @@ async function main() {
   // 维度
   const pokemon = await post('ips', { name: '宝可梦', sort: 1, status: true })
   const yugioh = await post('ips', { name: '游戏王', sort: 2, status: true })
-  const db = await post('ips', { name: '龙珠', sort: 3, status: true })
 
   const scarlet = await post('series', { name: '朱紫', ip_id: pokemon.id, sort: 1, status: true })
   const sword = await post('series', { name: '剑盾', ip_id: pokemon.id, sort: 2, status: true })
   const mainYg = await post('series', { name: '主力系列', ip_id: yugioh.id, sort: 1, status: true })
-  const dbMain = await post('series', { name: '主线', ip_id: db.id, sort: 1, status: true })
 
   const scarletA = await post('sub_series', { name: '朱紫A', series_id: scarlet.id, sort: 1, status: true })
   const swordA = await post('sub_series', { name: '剑盾A', series_id: sword.id, sort: 1, status: true })
   const ygA = await post('sub_series', { name: '游戏王A', series_id: mainYg.id, sort: 1, status: true })
-  // 龙珠仅两层，仍需空壳子系列占位以满足必填
-  const dbA = await post('sub_series', { name: '主线A', series_id: dbMain.id, sort: 1, status: true })
 
   const ssr = await post('rarities', { name: 'SSR', sort: 1, status: true })
   const ur = await post('rarities', { name: 'UR', sort: 2, status: true })
@@ -222,7 +207,6 @@ async function main() {
     { name: '妙蛙种子', ip: pokemon, s: sword, sub: swordA, r: n, code: '001/098', price: 35 },
     { name: '黑魔导', ip: yugioh, s: mainYg, sub: ygA, r: ur, code: 'EN001', price: 240, hv: true },
     { name: '青眼白龙', ip: yugioh, s: mainYg, sub: ygA, r: ssr, code: 'EN002', price: 560 },
-    { name: '孙悟空', ip: db, s: dbMain, sub: dbA, r: hr, code: 'DB-01', price: 90 },
   ]
   const cards = []
   for (const [index, c] of cardDefs.entries()) {
