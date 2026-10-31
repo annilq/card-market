@@ -65,6 +65,12 @@ export function MapView({
 
       const initKey = initedForRef.current
       if (!mapRef.current || initKey !== key) {
+        // 切换门店时同一个容器会被复用：先销毁可能残留的旧地图，否则再次
+        // L.map() 会抛 “Map container is already initialized”。
+        if (mapRef.current) {
+          mapRef.current.remove()
+          mapRef.current = null
+        }
         el.innerHTML = ''
         const map = L.map(el, { scrollWheelZoom: true }) as unknown as MapInstance
         // className 让瓦片层能在深色主题下被 CSS 反转（见 styles.css `.map-tiles`）。
@@ -104,6 +110,13 @@ export function MapView({
 
     return () => {
       cancelled = true
+      // 切换门店（key 变化）或组件卸载时，彻底销毁旧地图并释放容器，
+      // 这样下一次在同容器上 L.map() 才不会报 “already initialized”。
+      if (mapRef.current) {
+        mapRef.current.remove()
+        mapRef.current = null
+      }
+      initedForRef.current = ''
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])

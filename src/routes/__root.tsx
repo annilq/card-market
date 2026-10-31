@@ -419,7 +419,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <body className="min-h-screen flex flex-col">
         <header className="sticky top-0 z-9999 bg-brand text-white">
           <div className="mx-auto max-w-[1232px] px-4">
-            <div className="flex h-16 items-center gap-3 md:h-24 md:gap-6 text-lg">
+            <div className="flex h-12 items-center gap-3 md:h-24 md:gap-6 text-lg">
               <Link
                 to="/{-$locale}"
                 params={localeParams}

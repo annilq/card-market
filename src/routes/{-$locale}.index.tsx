@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type {
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   assetUrl,
@@ -148,9 +152,9 @@ function Home() {
   const t = useT();
   const locale = useLocale();
   const [idx, setIdx] = useState(0);
-  // 轮播的三个开关：只在能自动动、鼠标没停在上面、也没被用户手动停掉时才走。
-  // 自动轮播是「无用户操作就改变内容」，无障碍上必须能被停住——悬停暂停、
-  // 减少动态时干脆不走、点圆点后重新计时。
+  // 轮播的开关：只在能自动动、鼠标没停在上面、也没被键盘聚焦时才走。
+  // 自动轮播是「无用户操作就改变内容」，无障碍上必须能被停住——悬停/键盘聚焦暂停、
+  // 减少动态时干脆不走、手动切换后重新计时。
   const [paused, setPaused] = useState(false);
   // 同列表页：首屏不播网格入场，只在用户改过筛选之后播。
   const [changed, setChanged] = useState(false);
@@ -158,6 +162,9 @@ function Home() {
   // 列表请求已经带回了名称 / 编号 / 价格 / 稀有度，弹窗不必再取一次。
   const [modalCard, setModalCard] = useState<Card | null>(null);
   const reduced = useReducedMotion();
+  // 每次手动切换（滑动或点圆点）自增，让下面的计时器重新开始：
+  // 用户刚切到的那张能完整停留 5 秒，而不是切完立刻又被自动轮播换走。
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     if (banners.length <= 1 || paused || reduced) return;
@@ -166,7 +173,65 @@ function Home() {
       5000,
     );
     return () => clearInterval(timer);
-  }, [banners.length, paused, reduced]);
+  }, [banners.length, paused, reduced, tick]);
+
+  // 切到第 i 张（支持循环）并重启自动轮播计时。滑动与圆点共用这一个入口，
+  // 「手动切换 → 重新计时」这条规则因此只有一处实现。
+  const goTo = (i: number) => {
+    const n = banners.length;
+    if (n === 0) return;
+    setIdx(((i % n) + n) % n);
+    setTick((t) => t + 1);
+  };
+
+  // 触摸滑动切换。只认 touch/pen，不劫持鼠标——桌面端保持
+  // 「点圆点切换、点整块进链接」的原语义。
+  // 收尾挂在 window 的 pointerup 上：banner 只有 21:9 一条很矮，
+  // 手指横向划出边界时元素自身收不到事件，window 一定收得到。
+  // 纵向拖动交给浏览器滚动（section 上是 touch-action: pan-y），
+  // 浏览器接管滚动时会发 pointercancel，于是放弃这次切换。
+  const swipeStart = useRef<{ id: number; x: number; y: number } | null>(null);
+  // 滑动后浏览器仍可能补发一次 click，落在 banner 链接上会误跳转：
+  // 用这个标记在捕获阶段把那次 click 吃掉，下一次 pointerdown 再复位。
+  const swiped = useRef(false);
+
+  const onPointerDown = (e: ReactPointerEvent<HTMLElement>) => {
+    // 任何新的指针按下都先清掉「上一次滑动残留的吃 click 标记」：
+    // 否则一次滑动之后的鼠标点击（如桌面点圆点）会被误吞。
+    swiped.current = false;
+    if (e.pointerType === "mouse") return;
+    const start = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    swipeStart.current = start;
+
+    const finish = (ev: PointerEvent) => {
+      window.removeEventListener("pointerup", finish);
+      window.removeEventListener("pointercancel", cancel);
+      if (swipeStart.current !== start) return;
+      swipeStart.current = null;
+      const dx = ev.clientX - start.x;
+      const dy = ev.clientY - start.y;
+      // 横向位移够大、且明显大于纵向（否则是在滚页面），才认作切换。
+      if (Math.abs(dx) >= 40 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+        swiped.current = true;
+        goTo(idx + (dx < 0 ? 1 : -1)); // 左滑看下一张，右滑看上一张
+      }
+    };
+    const cancel = () => {
+      window.removeEventListener("pointerup", finish);
+      window.removeEventListener("pointercancel", cancel);
+      if (swipeStart.current === start) swipeStart.current = null;
+    };
+    window.addEventListener("pointerup", finish);
+    window.addEventListener("pointercancel", cancel);
+  };
+
+  // 吃掉滑动后补发的那次 click，避免误触 banner 链接跳走。
+  const onClickCapture = (e: ReactMouseEvent<HTMLElement>) => {
+    if (!swiped.current) return;
+    swiped.current = false;
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   const filterValue: CatalogFilterValue = {
     ipId: search.ip,
@@ -264,15 +329,34 @@ function Home() {
     <div className="space-y-4">
       {/* banner 与通知条紧邻：参考图实测 banner 底边 649、通知红条顶边 650，
           中间没有间距，两者读作同一块。 */}
-      {/* Banner 轮播。悬停暂停（鼠标停在图上时不该被换走），
-            减少动态时完全不自动，只保留手动圆点。 */}
+      {/* Banner 轮播。悬停或键盘聚焦时暂停（鼠标停在图上、键盘停在圆点上时，
+            内容都不该在脚下被换走），减少动态时完全不自动；手机上可左右滑动切换，
+            圆点在所有模式下都是可点的手动控制。 */}
       {banners.length > 0 && (
         <section
-          className="relative rounded-2xl overflow-hidden border border-border bg-accent aspect-[21/9]"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-          onFocus={() => setPaused(true)}
+          className="relative rounded-2xl overflow-hidden border border-border bg-accent aspect-[21/9] touch-pan-y select-none"
+          // 只在能悬停的设备（桌面）上用悬停暂停：手机触摸会合成 mouseenter，
+          // 若不加此闸门，手指点一下圆点/滑动后自动播放就被永久停掉。
+          onMouseEnter={() => {
+            if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+              setPaused(true);
+            }
+          }}
+          onMouseLeave={() => {
+            if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+              setPaused(false);
+            }
+          }}
+          // 只有键盘聚焦才暂停：鼠标/手指点按钮不该把自动播放永久停掉，
+          // 否则手机用户点一次圆点后就再也看不到轮播了。
+          onFocus={(e) => {
+            if (e.target instanceof HTMLElement && e.target.matches(":focus-visible")) {
+              setPaused(true);
+            }
+          }}
           onBlur={() => setPaused(false)}
+          onPointerDown={onPointerDown}
+          onClickCapture={onClickCapture}
         >
           {banners.map((b, i) => {
             const src = assetUrl(b.image, { width: 1280, format: "webp" });
@@ -288,8 +372,16 @@ function Home() {
                 {/* 图上文字：压一层足够深的渐隐黑色再写字。
                       之前是 from-black/60，深色主题下与图片的深色区域叠在一起，
                       实测对比度只有 1.23:1——文字几乎消失。改成底部实心、向上渐隐。 */}
+                {/* 图上有圆点时，右侧留出圆点的宽度，文字不会被压到圆点下面。 */}
                 {(b.title || b.description) && (
-                  <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 text-white bg-gradient-to-t from-black/85 via-black/55 to-transparent">
+                  <div
+                    className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 text-white bg-gradient-to-t from-black/85 via-black/55 to-transparent"
+                    style={
+                      banners.length > 1
+                        ? { paddingRight: Math.min(banners.length, 6) * 36 + 16 }
+                        : undefined
+                    }
+                  >
                     {b.title && (
                       <div className="text-lg sm:text-xl font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
                         {b.title}
@@ -333,27 +425,36 @@ function Home() {
             );
           })}
           {banners.length > 1 && (
-            // 圆点从 8px 视觉尺寸扩到 24px 触控区（WCAG 2.5.8）：
-            // 视觉上仍是小点，但热区覆盖整块 24×24。当前项用宽度而非颜色区分，
-            // 灰度或色觉差异下同样可辨。
-            <div className="absolute bottom-1 right-2 flex">
+            // 圆点：视觉上仍是一排小点，但每个热区 36×36（WCAG 2.5.8 要求 24×24，
+            // 手机拇指也更好点），位置在底部渐变最暗处，白点在任意图上都有对比。
+            // 当前项用「加宽」而非换色区分，灰度或色觉差异下同样可辨。
+            // 左右箭头键也能切换（键盘用户 tab 到圆点后可直接操作）。
+            <div
+              className="absolute bottom-1 right-2 flex items-center"
+              onKeyDown={(e) => {
+                if (e.key === "ArrowLeft") {
+                  e.preventDefault();
+                  goTo(idx - 1);
+                } else if (e.key === "ArrowRight") {
+                  e.preventDefault();
+                  goTo(idx + 1);
+                }
+              }}
+            >
               {banners.map((b, i) => (
                 <button
                   key={b.id}
                   type="button"
-                  onClick={() => {
-                    setIdx(i);
-                    setPaused(true);
-                  }}
+                  onClick={() => goTo(i)}
                   aria-label={t("bannerAria", { n: i + 1 })}
                   aria-current={i === idx ? "true" : undefined}
-                  className="group/dot flex h-6 w-6 items-center justify-center"
+                  className="group/dot flex h-9 w-9 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                   <span
-                    className={`h-1.5 rounded-full transition-all duration-200 ${
+                    className={`h-2 rounded-full transition-all duration-200 ${
                       i === idx
-                        ? "w-4 bg-white"
-                        : "w-1.5 bg-white/50 group-hover/dot:bg-white/80"
+                        ? "w-6 bg-white"
+                        : "w-2 bg-white/60 group-hover/dot:bg-white/90"
                     }`}
                   />
                 </button>

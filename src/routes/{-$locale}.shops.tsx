@@ -217,7 +217,7 @@ function ShopsPage() {
             <div className="flex min-w-0 flex-col gap-7 justify-center">
               <ShopInfo shop={current} />
               <ShopMap
-                shops={shops}
+                shops={[current]}
                 selectedId={current.id}
                 onSelect={setSelectedId}
               />
