@@ -2,6 +2,7 @@
 // 创建样例维度、卡牌、公告、banner、站点设置、一条留言，并上传占位图。
 // 用法：docker compose up -d 且 bootstrap 完成后，运行 npm run directus:seed
 import { Buffer } from 'node:buffer'
+import { readFile } from 'node:fs/promises'
 
 const BASE = process.env.DIRECTUS_URL || 'http://localhost:8055'
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com'
@@ -48,18 +49,31 @@ const getOne = (col) => api('GET', `/items/${col}?limit=1`).then((r) => r.data?.
 const PLACEHOLDER_PNG =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
 
-async function uploadPlaceholder(name) {
-  const buf = Buffer.from(PLACEHOLDER_PNG, 'base64')
+// 站点默认 logo：仓库里的顶部 logo 图，按脚本位置解析，不受运行 cwd 影响。
+const LOGO_PATH = new URL('../src/asserts/icon/logo_header.png', import.meta.url)
+
+async function uploadFile(title, buffer, type, filename) {
   const fd = new FormData()
-  fd.append('title', name)
-  fd.append('file', new Blob([buf], { type: 'image/png' }), `${name}.png`)
+  fd.append('title', title)
+  fd.append('file', new Blob([buffer], { type }), filename)
   const res = await fetch(`${BASE}/files`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${TOKEN}` },
     body: fd,
   })
-  if (!res.ok) throw new Error(`上传占位图失败 ${res.status}`)
+  if (!res.ok) throw new Error(`上传文件失败 ${res.status}`)
   return (await res.json()).data.id
+}
+
+async function uploadPlaceholder(name) {
+  return uploadFile(name, Buffer.from(PLACEHOLDER_PNG, 'base64'), 'image/png', `${name}.png`)
+}
+
+// 默认站点 logo：把仓库内的 logo_header.png 上传为 Directus 文件，
+// 返回文件 id（site_settings.logo 用）。跑种子时作为 site_logo 默认值写入。
+async function uploadLogo() {
+  const buf = await readFile(LOGO_PATH)
+  return uploadFile('logo_header', buf, 'image/png', 'logo_header.png')
 }
 
 async function seedShops() {
@@ -273,8 +287,10 @@ async function main() {
   })
 
   // 站点设置（单例，用 PATCH upsert）
+  const logoId = await uploadLogo()
   await patch('site_settings', {
     site_name: 'card-market',
+    logo: logoId,
     intro: '专注宝可梦 / 游戏王 / 龙珠等卡牌展示与高价回购。',
     x_account: '@cardmarket',
     contact_email: 'shop@example.com',
@@ -282,11 +298,13 @@ async function main() {
     privacy_policy: '<p>我们仅将联系方式用于回复您的咨询。</p>',
   })
 
-  // 一条留言（模拟访客提交）
+  // 一条留言（模拟访客提交）：关联「青眼白龙」卡牌，演示后台可见留言针对哪张卡片
+  const blueEyes = cards.find((c) => c.name === '青眼白龙')
   await post('messages', {
     content: '想咨询青眼白龙的回收价格，谢谢！',
     contact_name: '田中',
     contact_info: 'tanaka@example.com',
+    card: blueEyes?.id,
     status: 'new',
   })
 
