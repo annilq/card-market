@@ -39,7 +39,7 @@ export function GlobalSearch() {
           defaultValue={q ?? ''}
           aria-label={t('searchPlaceholder')}
           placeholder=" "
-          className="peer h-10 w-full rounded border-0 bg-white px-3.5 text-sm text-fg outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          className="peer h-10 w-full rounded-xl border-0 bg-white px-3.5 text-sm text-fg outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         />
         <span
           aria-hidden="true"
@@ -51,7 +51,7 @@ export function GlobalSearch() {
       </div>
       <button
         type="submit"
-        className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded bg-surface-2 px-4 text-sm text-fg transition hover:bg-border-strong"
+        className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-surface-2 px-4 text-sm text-fg transition hover:bg-border-strong"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="7" />

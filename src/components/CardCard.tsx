@@ -1,8 +1,8 @@
-import { Link } from '@tanstack/react-router'
-import { assetUrl } from '~/lib/directus'
-import { formatYen } from '~/lib/format'
-import { useT } from '~/lib/i18n/react'
-import type { Card } from '~/lib/types'
+import { Link } from "@tanstack/react-router";
+import { assetUrl } from "~/lib/directus";
+import { formatYen } from "~/lib/format";
+import { useT } from "~/lib/i18n/react";
+import type { Card } from "~/lib/types";
 
 /**
  * 卡牌卡片。`compact` 用于首页高价买取横条：窄卡位只保留图片、卡名与价格，
@@ -30,54 +30,66 @@ export function CardCard({
   vt = true,
   onOpen,
 }: {
-  card: Card
-  compact?: boolean
+  card: Card;
+  compact?: boolean;
   /**
    * 给了这个回调，点击就改成「弹出卡牌弹窗」而不是跳详情页。
    * 元素本身仍是带 href 的 <Link>：中键 / Cmd / Ctrl / Shift 点击照旧开新标签，
    * 爬虫与读屏看到的也仍是一个真实链接——弹窗只是拦了普通左键。
    */
-  onOpen?: (card: Card) => void
+  onOpen?: (card: Card) => void;
   /**
    * 是否参与跨页共享元素转场。默认开启；首页高价买取横条要关掉——
    * 同一张卡可能同时出现在横条和下方网格里，而 `view-transition-name`
    * 在同一份 DOM 里必须唯一，重复会让整次转场被浏览器直接跳过。
    * 横条本身是横向滚动的窄卡位，也不是主要的点入路径。
    */
-  vt?: boolean
+  vt?: boolean;
 }) {
-  const t = useT()
+  const t = useT();
   const img = assetUrl(card.images?.[0], {
     width: compact ? 240 : 400,
-    format: 'webp',
-  })
-  const isVault = card.card_status === 'packaged'
+    format: "webp",
+  });
+  const isVault = card.card_status === "packaged";
   // SSR / UR 是当前字典里最高的两档；用集合判断，客户加档时未知档落回常规字重。
-  const isScarce = !!card.rarity?.name && ['SSR', 'UR'].includes(card.rarity.name)
+  const isScarce =
+    !!card.rarity?.name && ["SSR", "UR"].includes(card.rarity.name);
 
   return (
     <Link
       to="/{-$locale}/cards/$id"
       params={{ id: String(card.id) }}
       onClick={(e) => {
-        if (!onOpen) return
+        if (!onOpen) return;
         // 修饰键与中键留给浏览器：那是在要求「开新标签 / 新窗口」，
         // 拦下来会把用户想开的新标签页变成一个弹窗。
-        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
-          return
+        if (
+          e.metaKey ||
+          e.ctrlKey ||
+          e.shiftKey ||
+          e.altKey ||
+          e.button !== 0
+        ) {
+          return;
         }
-        e.preventDefault()
-        onOpen(card)
+        e.preventDefault();
+        onOpen(card);
       }}
       // 共享元素转场：这张卡的图位在详情页是同一张图。
       // 名字按卡牌 id 生成，列表与详情用同一个名字，浏览器才认得出是同一个元素。
       viewTransition={vt}
-      className={`group relative block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted ${compact ? 'overflow-hidden rounded-xl border border-border bg-surface transition-[border-color,box-shadow] duration-150 hover:border-border-strong hover:shadow-md' : ''}`}
+      className={`group relative block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted ${compact ? "overflow-hidden rounded-xl border border-border bg-surface transition-[border-color,box-shadow] duration-150 hover:border-border-strong hover:shadow-md" : ""}`}
     >
       <div
-        className={`relative aspect-[3/4] overflow-hidden rounded-lg bg-surface-2 ${vt ? 'vt-card' : ''}`}
-        style={vt ? { ['--vt-name' as string]: `card-${card.id}` } : undefined}
+        className={`relative aspect-[3/4] overflow-hidden rounded-lg bg-surface-2 ${vt ? "vt-card" : ""}`}
+        style={vt ? { ["--vt-name" as string]: `card-${card.id}` } : undefined}
       >
+        {card.is_high_value && (
+          <span className="inline-block top-1 left-1 text-[11px] bg-brand text-white rounded-xl px-1.5 py-0.5 absolute">
+            {t("highValue")}
+          </span>
+        )}
         {img ? (
           <img
             src={img}
@@ -87,7 +99,7 @@ export function CardCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-hint text-sm">
-            {t('noImage')}
+            {t("noImage")}
           </div>
         )}
         {isVault && (
@@ -102,48 +114,43 @@ export function CardCard({
           // 徽章压在卡图上，不能用 8% 透明底：底色会随图片变化，浅色卡图上
           // 紫字直接掉到 2:1。这里用实心卡片色，对比度固定为令牌算好的那一档。
           <span className="absolute left-2 top-2 rounded bg-surface px-1.5 py-0.5 text-[11px] font-medium text-vault shadow-sm">
-            {t('statusPackaged')}
+            {t("statusPackaged")}
           </span>
         )}
       </div>
 
-      <div className={compact ? 'p-2' : 'pt-2.5'}>
+      <div className={compact ? "p-2" : "pt-2.5"}>
+        {/* 卡名两行截断：参考图的网格卡名就是两行，一行放不下完整的卡名。 */}
+        <div className="line-clamp-2 text-sm font-medium leading-snug text-fg">
+          {card.name}
+        </div>
         {!compact && (
           <div className="truncate text-xs text-faint">
             {card.ip?.name} · {card.series?.name}
           </div>
         )}
-        {/* 卡名两行截断：参考图的网格卡名就是两行，一行放不下完整的卡名。 */}
-        <div className="line-clamp-2 text-sm font-medium leading-snug text-fg">
-          {card.name}
-        </div>
         {/* 价格行：价格在左、稀有度在右，两者底部对齐。
             悬停时这一行不动——把「动」留给图片与边框，列表才不会在鼠标扫过时抖。 */}
-        <div className="mt-2 flex items-baseline justify-between gap-2">
+        <div className="mt-2 flex items-baseline justify-end gap-2">
           <span className="text-[20px] font-bold tabular-nums text-price">
             {card.price != null
-              ? t('priceTag', { price: formatYen(card.price) })
-              : t('priceOnRequest')}
+              ? t("priceTag", { price: formatYen(card.price) })
+              : t("priceOnRequest")}
           </span>
-          {!compact && card.rarity?.name && (
+          {/*{!compact && card.rarity?.name && (
             <span
               className={`text-xs text-faint ${isScarce ? 'font-semibold' : ''}`}
             >
               {card.rarity.name}
             </span>
-          )}
+          )}*/}
         </div>
-        {!compact && card.code && (
+        {/*{!compact && card.code && (
           <div className="text-xs text-faint mt-1">
             {t('cardCodeShort', { code: card.code })}
           </div>
-        )}
-        {!compact && card.is_high_value && (
-          <span className="inline-block mt-1 text-[11px] bg-high-value-bg text-high-value rounded px-1.5 py-0.5">
-            {t('highValue')}
-          </span>
-        )}
+        )}*/}
       </div>
     </Link>
-  )
+  );
 }

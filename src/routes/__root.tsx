@@ -12,7 +12,8 @@ import {
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { assetUrl, getBanners, getSiteSettings } from "~/lib/directus";
 import type { SiteSettings } from "~/lib/types";
-import { INFO_PAGE_KEYS, INFO_PAGE_LABEL_KEY } from "~/lib/info-pages";
+import type { InfoPageKey } from "~/lib/types";
+import { INFO_PAGE_LABEL_KEY } from "~/lib/info-pages";
 import { LOCALES, isDefaultLocale } from "~/lib/i18n/locales";
 import type { Locale } from "~/lib/i18n/locales";
 import { useLocale, useT } from "~/lib/i18n/react";
@@ -23,6 +24,7 @@ import { ContentLanguageNotice } from "~/components/ContentLanguageNotice";
 import "../styles.css";
 import ShopImg from "~/asserts/icon/shop.png";
 import XImg from "~/asserts/icon/x.png";
+import LogoFooterImg from "~/asserts/icon/logo_footer.png";
 
 // 在首屏绘制前同步主题，避免浅色闪一下。优先级：localStorage > 系统偏好。
 const NO_FLASH_SCRIPT = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
@@ -194,21 +196,32 @@ const iconBtnSquare = `${iconBtn} w-9`;
 // 版权区高度会跳一下。占位不画虚线框、不写「LOGO」字样：那两种画法
 // 对访客都像「图片挂了」，而这里只是运营还没传图。
 // 图片按高度优先缩放：竖版素材会自己缩窄，不会把版权区撑高。
+
+// 页脚超链接的展示顺序（与后台信息页的 key 解耦，单独固定）：
+// 运营信息 → 个人信息收集 → 数据使用 → 留言信息 → 利用规则。
+type FooterLink =
+  | { kind: "info"; key: InfoPageKey }
+  | { kind: "message" };
+
+const FOOTER_LINKS: readonly FooterLink[] = [
+  { kind: "info", key: "operation" },
+  { kind: "info", key: "personal-info" },
+  { kind: "info", key: "data-usage" },
+  { kind: "message" },
+  { kind: "info", key: "terms" },
+];
+
 function FooterLogo({
-  logo,
   name,
 }: {
-  logo: string | number | null;
   name: string;
 }) {
-  const src = assetUrl(logo, { height: 64, format: "webp" });
-  if (!src) return <div aria-hidden="true" className="h-16 w-40" />;
   return (
-    <div className="flex h-16 w-40 items-center justify-center">
+    <div className="flex items-center justify-center">
       <img
-        src={src}
+        src={LogoFooterImg}
         alt={name}
-        className="max-h-16 w-auto max-w-40 object-contain"
+        className="object-contain"
         loading="lazy"
       />
     </div>
@@ -400,6 +413,8 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
   // 这类二次 404 链接。这里统一用已解析出的合法 locale（默认语言为 undefined，不带段）。
   const localeParams = { locale: isDefaultLocale(locale) ? undefined : locale };
   const siteName = site?.site_name || t("defaultSiteName");
+  // 后台设了站点 logo（Directus 文件 id）就优先用图，没设才回落到站点名文字。
+  const logoUrl = assetUrl(site?.logo);
   // 店铺不再占一个文字导航项，改由搜索右侧的 SHOP 图标进入；留言咨询移到页脚。
   // 两者都还在全站可达，只是把主视线让给「浏览卡牌 / 看公告」。
   const nav = [
@@ -417,32 +432,27 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <HeadContent />
       </head>
       <body className="min-h-screen flex flex-col">
-        <header className="sticky top-0 z-9999 bg-brand text-white">
-          <div className="mx-auto max-w-[1232px] px-4">
+        <header className="sticky top-0 z-99 bg-brand text-white">
+          <div className="mx-auto max-w-[1200px] px-4">
             <div className="flex h-12 items-center gap-3 md:h-24 md:gap-6 text-lg">
               <Link
                 to="/{-$locale}"
                 params={localeParams}
-                className="min-w-0 shrink-0 truncate font-bold text-white md:text-2xl"
+                aria-label={siteName}
+                className="flex min-w-0 shrink-0 items-center truncate"
               >
-                {siteName}
+                {logoUrl ? (
+                  <img
+                    src={logoUrl}
+                    alt={siteName}
+                    className="h-7 w-auto object-contain md:h-[57px]"
+                  />
+                ) : (
+                  <span className="truncate font-bold text-white md:text-2xl">
+                    {siteName}
+                  </span>
+                )}
               </Link>
-
-              {/* 桌面端导航。链接本身撑到 32px 高：纯文字行只有 16px，
-                  低于 WCAG 2.5.8 的 24px，鼠标和触屏都更难命中。 */}
-              {/*<nav className="hidden items-center gap-5 text-white/85 xl:flex">
-                {nav.map((n) => (
-                  <Link
-                    key={n.to}
-                    to={n.to}
-                    params={localeParams}
-                    activeProps={{ className: "text-white font-semibold" }}
-                    className="inline-flex items-center py-2 transition hover:text-white"
-                  >
-                    {n.label}
-                  </Link>
-                ))}
-              </nav>*/}
 
               <div className="w-auto hidden min-w-0 flex-1 lg:flex">
                 <GlobalSearch />
@@ -469,29 +479,6 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                   <LocaleSwitcher compact />
                   <ThemeToggle />
                 </div>
-                {/*<button
-                  type="button"
-                  aria-label={t("openMenu")}
-                  aria-expanded={menuOpen}
-                  onClick={() => setMenuOpen((v) => !v)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded text-white hover:bg-white/15 lg:hidden"
-                >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  >
-                    {menuOpen ? (
-                      <path d="M6 6l12 12M18 6L6 18" />
-                    ) : (
-                      <path d="M4 7h16M4 12h16M4 17h16" />
-                    )}
-                  </svg>
-                </button>*/}
               </div>
             </div>
 
@@ -508,7 +495,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
           {/* 移动端下拉菜单 */}
           {menuOpen && (
             <div className="border-t border-white/25 bg-brand text-white lg:hidden">
-              <nav className="mx-auto flex max-w-[1232px] flex-col px-4 py-2">
+              <nav className="mx-auto flex max-w-[1200px] flex-col px-4 py-2">
                 {nav.map((n) => (
                   <Link
                     key={n.to}
@@ -542,7 +529,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
           )}
         </header>
 
-        <main className="mx-auto w-full max-w-[1232px] flex-1 px-4 py-6 sm:py-8">
+        <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-6">
           {/* 非默认语言的页面上，说明「内容是什么语言」——界面翻译了，后台内容没有。
               放在 main 顶部而不是每页各写一次，保证 404 与错误页也带上。 */}
           <ContentLanguageNotice />
@@ -555,9 +542,9 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               而不是「链接行 + 版权区」两层。
               链接栅格用 2 列起、sm 起 3 列：手机上三列会把「个人信息收集」
               挤成两行。每格 py-1.5 把点击高度抬到 28px（WCAG 2.5.8 要 24px）。 */}
-          <div className="mx-auto flex max-w-[1232px] flex-col gap-12 px-4 pt-20 md:flex-row md:items-start md:justify-between md:gap-16">
+          <div className="mx-auto flex max-w-[1200px] flex-col gap-12 px-4 pt-20 md:flex-row md:items-start md:justify-between md:gap-16">
             <div className="shrink-0">
-              <FooterLogo logo={site?.logo ?? null} name={siteName} />
+              <FooterLogo name={siteName} />
             </div>
 
             {/* 右侧块固定 665px 并靠右：参考图里「帮助中心」那一块就是
@@ -571,31 +558,34 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 aria-label={t("footerNavTitle")}
                 className="mt-4 grid grid-cols-2 gap-x-10 gap-y-1 sm:grid-cols-3 sm:gap-x-12"
               >
-                <Link
-                  to="/{-$locale}/message"
-                  params={localeParams}
-                  className="inline-flex items-center py-1.5 text-sm text-footer-muted transition hover:text-footer-fg hover:underline"
-                >
-                  {t("navContact")}
-                </Link>
-                {INFO_PAGE_KEYS.map((key) => (
-                  <Link
-                    key={key}
-                    to="/{-$locale}/info/$key"
-                    params={{ key, ...localeParams }}
-                    className="inline-flex items-center py-1.5 text-sm text-footer-muted transition hover:text-footer-fg hover:underline"
-                  >
-                    {t(INFO_PAGE_LABEL_KEY[key])}
-                  </Link>
-                ))}
+                {FOOTER_LINKS.map((link) =>
+                  link.kind === "message" ? (
+                    <Link
+                      key="message"
+                      to="/{-$locale}/message"
+                      params={localeParams}
+                      className="inline-flex items-center py-1.5 text-sm text-footer-muted transition hover:text-footer-fg hover:underline"
+                    >
+                      {t("navContact")}
+                    </Link>
+                  ) : (
+                    <Link
+                      key={link.key}
+                      to="/{-$locale}/info/$key"
+                      params={{ key: link.key, ...localeParams }}
+                      className="inline-flex items-center py-1.5 text-sm text-footer-muted transition hover:text-footer-fg hover:underline"
+                    >
+                      {t(INFO_PAGE_LABEL_KEY[link.key])}
+                    </Link>
+                  ),
+                )}
               </nav>
             </div>
           </div>
 
           <p className="pb-12 mt-12 text-center text-sm text-footer-fg">
             {t("copyright", {
-              year: new Date().getFullYear(),
-              site: siteName,
+              year: new Date().getFullYear()
             })}
           </p>
         </footer>

@@ -71,7 +71,7 @@ function AnnouncementDetail() {
     <article>
       <Link
         to="/{-$locale}/announcements"
-        className="inline-flex items-center py-1 text-xs text-muted transition-colors duration-150 hover:text-fg hover:underline"
+        className="inline-flex items-center py-1 text-sm text-muted transition-colors duration-150 hover:text-fg hover:underline"
       >
         {t('backToAnnouncementsArrow')}
       </Link>

@@ -306,6 +306,8 @@ export interface MessageInput {
   content: string
   contact_name?: string
   contact_info?: string
+  /** 关联卡牌主键：从卡牌详情「咨询此卡」进入时带入，后台据此确认留言针对哪张卡片；直接留言则为空 */
+  card?: number | string
 }
 
 /** 访客留言：直连 Directus public create（见 development.md §4.5 / ticket 07） */
@@ -320,6 +322,9 @@ export async function postMessage(
         content: input.content,
         contact_name: input.contact_name || null,
         contact_info: input.contact_info || null,
+        // 关联卡牌：访客从卡牌详情「咨询此卡」进来时带入；直接留言时 undefined → null。
+        // 必须在 Public Create 权限的 fields 白名单内（见 bootstrap.mjs），否则会被 Directus 静默丢弃。
+        card: input.card ?? null,
       }),
     })
     if (!res.ok) {

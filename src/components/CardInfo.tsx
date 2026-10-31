@@ -38,7 +38,7 @@ export function CardInfo({
             </span>
           )}
           {card.is_high_value && (
-            <span className="rounded-full bg-high-value-bg px-2.5 py-1 text-xs text-high-value">
+            <span className="rounded-full bg-brand px-2.5 py-1 text-xs text-white">
               {t('highValue')}
             </span>
           )}

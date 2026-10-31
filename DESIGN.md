@@ -236,7 +236,7 @@ Rarity names are the one place where **weight ranks, not size and not hue**: SSR
 
 ## Layout
 
-A single **1200px** content column (`max-w-[1232px]` plus `px-4`, measured off the mockups: content spans 360→1560 on a 1920 canvas), on every page. The header is sticky and **100px tall** (64px below `md`, where the search field drops to a second row rather than being squeezed).
+A single **1200px** content column (`max-w-[1200px]` plus `px-4`, measured off the mockups: content spans 360→1560 on a 1920 canvas), on every page. The header is sticky and **100px tall** (64px below `md`, where the search field drops to a second row rather than being squeezed).
 
 The home page is a vertical rhythm of `space-y-10` (40px) sections, each led by a Title-weight heading with a "全部 →" link pushed right — **except the banner, which sits flush against the notice bar** (the mockup measures 649 → 650, no gap; the two read as one block). The banner is the only element with a large radius (16px) and the only element that bleeds to a fixed 21:9 aspect. Below the strip, the IP filter is a **40px tab row** (Brand Red fill, white type when active) rather than a select, because the mockup uses tabs for the IP and keeps selects only for series, condition and sort.
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type {
+  CSSProperties,
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
 } from "react";
@@ -45,6 +46,41 @@ import type {
 const HOME_PAGE_SIZE = 12;
 
 const SORTS: CardSort[] = ["price_desc", "price_asc", "newest", "oldest"];
+
+/** 环形最短距离：从激活 idx 到 i 的有符号偏移，用于桌面「居中聚光」布局。 */
+function bannerOffset(idx: number, i: number, n: number): number {
+  if (n <= 1) return 0;
+  let d = (i - idx) % n;
+  if (d < 0) d += n;
+  if (d > n / 2) d -= n;
+  return d;
+}
+
+/** 居中聚光：把偏移换算成 CSS 变量（位移/缩放/透明度/亮度/层级）。
+ *  对应方案 A「聚光居中」、中等虚化（与 demo 一致）：邻图缩 16%、半透明 + 压暗。 */
+type BannerVars = CSSProperties &
+  Record<"--bx" | "--bs" | "--bo" | "--bb" | "--bz", string>;
+
+function bannerSlideStyle(off: number): BannerVars {
+  const a = Math.abs(off);
+  if (off === 0) {
+    return { "--bx": "0%", "--bs": "1", "--bo": "1", "--bb": "1", "--bz": "30" };
+  }
+  // 距激活图 ±1 / ±2 的横向错位：42% / 76%。
+  const sign = off > 0 ? 1 : -1;
+  const bx = (a === 1 ? 42 : 76) * sign;
+  const bs = 1 - 0.16 * a; // 每远一层缩小 16%
+  const bo = Math.max(0, 1 - 0.55 * (0.55 * a)); // 半透明
+  const bb = 1 - 0.35 * a; // 压暗
+  const bz = 30 - a * 10;
+  return {
+    "--bx": `${bx}%`,
+    "--bs": bs.toFixed(3),
+    "--bo": bo.toFixed(3),
+    "--bb": bb.toFixed(3),
+    "--bz": String(bz),
+  };
+}
 
 /**
  * 首页筛选状态放在 URL 查询串里（`?ip=1&series=2&type=raw&sort=price_asc`）。
@@ -326,7 +362,7 @@ function Home() {
     });
   }
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* banner 与通知条紧邻：参考图实测 banner 底边 649、通知红条顶边 650，
           中间没有间距，两者读作同一块。 */}
       {/* Banner 轮播。悬停或键盘聚焦时暂停（鼠标停在图上、键盘停在圆点上时，
@@ -334,7 +370,8 @@ function Home() {
             圆点在所有模式下都是可点的手动控制。 */}
       {banners.length > 0 && (
         <section
-          className="relative rounded-2xl overflow-hidden border border-border bg-accent aspect-[21/9] touch-pan-y select-none"
+          className="banner-stage"
+          data-single={banners.length === 1 ? "true" : undefined}
           // 只在能悬停的设备（桌面）上用悬停暂停：手机触摸会合成 mouseenter，
           // 若不加此闸门，手指点一下圆点/滑动后自动播放就被永久停掉。
           onMouseEnter={() => {
@@ -360,6 +397,12 @@ function Home() {
         >
           {banners.map((b, i) => {
             const src = assetUrl(b.image, { width: 1280, format: "webp" });
+            const n = banners.length;
+            const off = bannerOffset(idx, i, n);
+            const a = Math.abs(off);
+            const isActive = i === idx;
+            const hidden = a > 2; // 离激活图超过两张（环形）的幻灯：隐藏且不可点。
+            const near = a === 1 || a === 2; // 两侧相邻图：桌面可点击切换。
             const inner = (
               <>
                 {src && (
@@ -372,15 +415,10 @@ function Home() {
                 {/* 图上文字：压一层足够深的渐隐黑色再写字。
                       之前是 from-black/60，深色主题下与图片的深色区域叠在一起，
                       实测对比度只有 1.23:1——文字几乎消失。改成底部实心、向上渐隐。 */}
-                {/* 图上有圆点时，右侧留出圆点的宽度，文字不会被压到圆点下面。 */}
+                {/* 圆点已移到舞台底部正中，文字无需再为其让位。 */}
                 {(b.title || b.description) && (
                   <div
                     className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 text-white bg-gradient-to-t from-black/85 via-black/55 to-transparent"
-                    style={
-                      banners.length > 1
-                        ? { paddingRight: Math.min(banners.length, 6) * 36 + 16 }
-                        : undefined
-                    }
                   >
                     {b.title && (
                       <div className="text-lg sm:text-xl font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
@@ -396,33 +434,44 @@ function Home() {
                 )}
               </>
             );
-            const el = (
+            // 每张幻灯都是绝对定位的层；桌面下由 CSS 变量决定它相对于激活位的
+            // 位移/缩放/透明度/亮度，移动端靠 data-active 做交叉淡入。
+            const slide = (
               <div
-                className={`absolute inset-0 transition-opacity duration-500 ${
-                  i === idx ? "opacity-100" : "opacity-0"
+                className={`banner-slide ${hidden ? "is-hidden" : ""} ${
+                  near ? "is-near" : ""
                 }`}
-                aria-hidden={i !== idx}
+                data-active={isActive ? "true" : undefined}
+                style={n === 1 ? undefined : bannerSlideStyle(off)}
+                aria-hidden={isActive ? undefined : "true"}
+                onClick={(e) => {
+                  if (!isActive) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    goTo(i);
+                  }
+                }}
               >
                 {inner}
               </div>
             );
-            return b.link ? (
-              b.link.startsWith("/") ? (
+            // 激活图若有链接则整块可点进去；其余侧图只是「点击切换到它」，不导航。
+            if (isActive && b.link) {
+              return b.link.startsWith("/") ? (
                 // b.link 来自后台内容，绕过路由类型，需补语言段，否则会掉回默认语言。
                 <Link
                   key={b.id}
                   to={localizeHref(b.link, locale) as "/{-$locale}/cards"}
                 >
-                  {el}
+                  {slide}
                 </Link>
               ) : (
                 <a key={b.id} href={b.link} target="_blank" rel="noreferrer">
-                  {el}
+                  {slide}
                 </a>
-              )
-            ) : (
-              <div key={b.id}>{el}</div>
-            );
+              );
+            }
+            return <div key={b.id}>{slide}</div>;
           })}
           {banners.length > 1 && (
             // 圆点：视觉上仍是一排小点，但每个热区 36×36（WCAG 2.5.8 要求 24×24，
@@ -430,7 +479,7 @@ function Home() {
             // 当前项用「加宽」而非换色区分，灰度或色觉差异下同样可辨。
             // 左右箭头键也能切换（键盘用户 tab 到圆点后可直接操作）。
             <div
-              className="absolute bottom-1 right-2 flex items-center"
+              className="absolute bottom-2 left-1/2 -translate-x-1/2 z-40 flex items-center"
               onKeyDown={(e) => {
                 if (e.key === "ArrowLeft") {
                   e.preventDefault();
@@ -451,7 +500,7 @@ function Home() {
                   className="group/dot flex h-9 w-9 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                   <span
-                    className={`h-2 rounded-full transition-all duration-200 ${
+                    className={`h-2 rounded-full transition-all duration-200 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] ${
                       i === idx
                         ? "w-6 bg-white"
                         : "w-2 bg-white/60 group-hover/dot:bg-white/90"

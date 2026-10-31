@@ -90,7 +90,7 @@ export function FilterSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-999">
       {/* 遮罩：点它关闭。用 div + aria-hidden，因为它不是可聚焦控件，
           键盘用户走 Esc 或面板右上角那个关闭按钮。 */}
       <div

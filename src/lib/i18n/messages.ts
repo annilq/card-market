@@ -30,7 +30,7 @@ const zh = {
   notFoundHeading: '页面不存在',
   notFoundBody: '页面不存在或已被删除。',
   errorBody: '页面加载出错了，请稍后重试。',
-  copyright: 'Copyright © {year} {site}. All rights reserved.',
+  copyright: 'Copyright © {year} KoDuckYa.Inc. All rights reserved.',
 
   // 信息页（审核用：运营信息 / 个人信息收集 / 利用规则 / 数据使用）
   infoNavTitle: '网站信息',
@@ -189,7 +189,7 @@ const ja: Record<MessageKey, string> = {
   notFoundHeading: 'ページが見つかりません',
   notFoundBody: 'ページが存在しないか、削除されました。',
   errorBody: 'ページの読み込みに失敗しました。時間をおいて再度お試しください。',
-  copyright: 'Copyright © {year} {site}. All rights reserved.',
+  copyright: 'Copyright © {year} KoDuckYa.Inc. All rights reserved.',
 
   infoNavTitle: 'サイト情報',
   footerNavTitle: 'サイト内リンク',
@@ -335,7 +335,7 @@ const en: Record<MessageKey, string> = {
   notFoundHeading: 'Page not found',
   notFoundBody: 'This page does not exist or has been removed.',
   errorBody: 'Something went wrong while loading this page. Please try again.',
-  copyright: 'Copyright © {year} {site}. All rights reserved.',
+  copyright: 'Copyright © {year} KoDuckYa.Inc. All rights reserved.',
 
   infoNavTitle: 'Site information',
   footerNavTitle: 'Site links',

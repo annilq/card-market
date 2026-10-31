@@ -7,7 +7,7 @@
 import type { InfoPageKey } from './types'
 import type { MessageKey } from './i18n/messages'
 
-/** 页脚与路由共用的顺序（审计要求的展示顺序）。 */
+/** 受支持的信息页标识集合（顺序用于路由解析，页脚展示顺序见 __root.tsx 的 FOOTER_LINKS）。 */
 export const INFO_PAGE_KEYS: readonly InfoPageKey[] = [
   'operation',
   'personal-info',

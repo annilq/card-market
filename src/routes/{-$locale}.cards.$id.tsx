@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { Card } from '~/components/Card'
 import { CardInfo } from '~/components/CardInfo'
 import { assetUrl, getCard } from '~/lib/directus'
 import { formatDate, useLocale, useT } from '~/lib/i18n/react'
@@ -13,7 +14,7 @@ import {
   siteFromMatches,
   siteNameOf,
 } from '~/lib/seo'
-import type { Card } from '~/lib/types'
+import type { Card as CardData } from '~/lib/types'
 
 export const Route = createFileRoute('/{-$locale}/cards/$id')({
   loader: async ({ params }): Promise<{ card: Awaited<ReturnType<typeof getCard>> }> => {
@@ -26,7 +27,7 @@ export const Route = createFileRoute('/{-$locale}/cards/$id')({
     const locale = localeFromMatches(matches)
     const site = siteFromMatches(matches)
     const card = (matches[matches.length - 1]?.loaderData as
-      | { card?: Card | null }
+      | { card?: CardData | null }
       | undefined)?.card
     const siteName = siteNameOf(site, locale)
     if (!card) {
@@ -116,7 +117,10 @@ function CardDetail() {
           // 形变成大图——这是全站唯一的作者时刻，它解释「你点的就是这一张」。
           // 聚焦环走系统令牌（墨色 2px + 2px offset），不是浏览器默认的蓝框：
           // 这一块是全站唯一「可聚焦的图片组」，默认环在这里会像一处漏样式。
-          className="vt-card relative aspect-[3/4] bg-surface-2 rounded-xl overflow-hidden border border-border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted"
+          // max-w-[60vh] + aspect-[3/4] 把高度锁在 80vh 以内：宽屏下图片列会
+          // 随视口变宽、按 3:4 无限长高，这里给一个上限，避免一张图顶到屏幕外。
+          // max-h-[80vh] 是冗余兜底；mx-auto 让图片在过宽的列里居中。
+          className="vt-card relative mx-auto aspect-[3/4] max-h-[80vh] w-full max-w-[60vh] bg-surface-2 rounded-xl overflow-hidden border border-border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted"
           style={{ ['--vt-name' as string]: `card-${card.id}` }}
           onKeyDown={onKeyDown}
           tabIndex={imgs.length > 1 ? 0 : undefined}
@@ -170,7 +174,7 @@ function CardDetail() {
         {/* 与弹窗共用同一个信息组件（设计要求）：徽章 + 名称/编号/状态 + 价格。
             详情页这一列不拉伸，CardInfo 里那块 mt-auto 没有多余高度可占，
             价格就紧跟在三行下面。桌面吸顶：价格与「咨询此卡」始终在视口内。 */}
-        <div className="mt-3 md:sticky md:top-20">
+        <Card className="mt-3 p-5">
           <CardInfo card={card} nameAs="h1" />
 
           {/* 桌面 CTA 紧跟价格：价格与「问这张卡」是同一件事的两面。
@@ -190,27 +194,29 @@ function CardDetail() {
               {t('backToList')}
             </Link>
           </div>
-        </div>
+        </Card>
 
-        {/* 上架时间不进 CardInfo（附件的信息列只有三行），单独留一行：
-            它是这页剩下的唯一事实，删掉就没处看了。 */}
-        {card.date_created && (
-          <div className="mt-5 text-sm text-faint">
-            {t('listedAt')}：
-            <span className="tabular-nums text-muted">
-              {formatDate(card.date_created, locale)}
-            </span>
-          </div>
-        )}
+        {/* 上架时间与描述同属「这张卡的细节」，收进同一张卡片里，
+            与页面底色隔开；两者之间仍用一条分隔线（原本就是带 border-t 的两段）。 */}
+        <Card className="mt-5 p-5">
+          {card.date_created && (
+            <div className="text-sm text-faint">
+              {t('listedAt')}：
+              <span className="tabular-nums text-muted">
+                {formatDate(card.date_created, locale)}
+              </span>
+            </div>
+          )}
 
-        {card.description && (
-          <div className="mt-6 border-t border-border pt-5">
-            <div className="text-sm text-faint mb-1.5">{t('description')}</div>
-            <p className="text-body whitespace-pre-wrap leading-relaxed">
-              {card.description}
-            </p>
-          </div>
-        )}
+          {card.description && (
+            <div className={card.date_created ? 'mt-5 border-t border-border pt-5' : ''}>
+              <div className="text-sm text-faint mb-1.5">{t('description')}</div>
+              <p className="text-body whitespace-pre-wrap leading-relaxed">
+                {card.description}
+              </p>
+            </div>
+          )}
+        </Card>
 
         {/* 手机：返回列表是次要动作，留在文档流末尾。 */}
         <div className="mt-6 md:hidden">

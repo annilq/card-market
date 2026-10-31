@@ -90,6 +90,8 @@ function MessageForm() {
       content: text,
       contact_name: name.trim() || undefined,
       contact_info: info.trim() || undefined,
+      // 用户若点击叉号移除了卡片上下文，attachedCard 为 null，card 不发送，留言即与卡牌无关。
+      card: attachedCard?.id,
     })
     setSubmitting(false)
     if (res.ok) {
