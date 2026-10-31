@@ -1,43 +1,30 @@
-# 卡牌展示与回购信息网站 — 本地开发栈
-# 直接 docker compose up -d 即可拉起 Directus + PostgreSQL（含 pg_trgm 扩展）。
+# 卡牌展示与回购信息网站 — 本地开发栈（离线可用）
+# 直接 docker compose up -d 即可拉起 Directus。镜像用 ghcr.io 官方镜像 + pull_policy: never，
+# 完全不依赖 Docker Hub（Docker Hub 不可达时也能跑）。
+# 数据库复用本机已运行的 PostgreSQL（Postgres.app / brew 等），通过 host.docker.internal
+# 连接宿主机 localhost，因此不再内置 postgres 容器。
+# 前提：
+#   1) 本机 Postgres 已在 5432 监听；
+#   2) 已建好 directus 库与 directus 角色（密码 directus）；
+#   3) 已启用 pg_trgm 扩展（bootstrap 会创建 gin_trgm_ops 索引，缺扩展会报错）。
 # 详见 README.md。生产部署见 ticket 09-deployment。
 
 services:
-  database:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: directus
-      POSTGRES_PASSWORD: directus
-      POSTGRES_DB: directus
-    volumes:
-      - db_data:/var/lib/postgresql/data
-      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U directus -d directus"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-    ports:
-      - "5432:5432"
-
   directus:
-    image: directus/directus:11
+    image: ghcr.io/directus/directus:11
+    pull_policy: never
     restart: unless-stopped
     ports:
       - "8055:8055"
-    depends_on:
-      database:
-        condition: service_healthy
     environment:
       # 开发默认值，生产务必替换为强随机值（见 .env.example）
       KEY: "dev-only-key-please-change-in-production-0000000000"
       SECRET: "dev-only-secret-please-change-in-production-0000000000"
       ADMIN_EMAIL: "admin@example.com"
       ADMIN_PASSWORD: "admin12345"
-      # 数据库（pg_trgm 扩展已通过 init SQL 启用）
+      # 数据库：连接本机 Postgres（host.docker.internal 在 Docker Desktop 上可达宿主机 localhost）
       DB_CLIENT: "pg"
-      DB_HOST: "database"
+      DB_HOST: "host.docker.internal"
       DB_PORT: "5432"
       DB_DATABASE: "directus"
       DB_USER: "directus"
@@ -56,9 +43,11 @@ services:
       WEBSOCKETS_ENABLED: "true"
       # 自定义后台扩展（地图选点接口 map-picker）加载目录
       EXTENSIONS_PATH: "/directus/extensions"
+      # 地图选点需加载 OpenStreetMap 瓦片图片，但 Directus 默认 CSP 的 img-src 不含该域名会被拦截。
+      # 注意：getConfigFromEnv 不会解析 JSON 对象，但支持 __ 嵌套键，因此用 __IMG_SRC 写入
+      # directives.imgSrc（字符串值，Helmet 可直接用作 img-src 指令），仅在默认 img-src 基础上
+      # 追加 OSM 瓦片域名；其余指令保持默认（connect-src 已含 https://*，Nominatim 搜索不受影响）。
+      CONTENT_SECURITY_POLICY_DIRECTIVES__IMG_SRC: "'self' data: blob: https://raw.githubusercontent.com https://avatars.githubusercontent.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org"
     volumes:
       - ./directus/uploads:/directus/uploads
       - ./directus/extensions:/directus/extensions
-
-volumes:
-  db_data:

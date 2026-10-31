@@ -1,5 +1,7 @@
 # 卡牌展示与回购信息网站 — 项目开发文档
 
+> 本地运行与部署的具体步骤（建库、启动命令、故障排查）见 [operations.md](./operations.md)。架构、数据模型与决策见下文。
+
 > 本文档给出技术架构、数据模型、前后端集成、部署与开发任务拆解，作为方案选型、工作量评估与开发报价的工程依据。已定选型直接落地；标注"待定/待确认"的部分对应 wayfinder 决策 ticket（见 `.scratch/card-market/`）。本文与 `docs/requirements.md` 配套，前者定义"做什么"，本文定义"怎么做"。
 
 ---
@@ -66,6 +68,8 @@
 
 1. 所选对象存储的自定义域名（CNAME）+ HTTPS / CDN（如 R2 自定义域、S3 + CloudFront）；若选 Directus 本地文件，则由反向代理 / CDN 提供 HTTPS 与缓存。
 2. Directus 与前端同域或正确配置 CORS / 反向代理，避免凭证泄露。
+
+注：本仓库 `docker-compose.yml` 当前复用宿主或已有的 PostgreSQL（经 `host.docker.internal`），并不内置 postgres 容器。本机启动、建库与故障排查的具体步骤见 [operations.md](./operations.md)。
 
 ---
 
@@ -439,6 +443,8 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 | M6 部署 | 选定部署方案、域名/HTTPS、反向代理、备份 | 09 | 上线 |
 | M7 测试 | 功能测试 + 验收（见需求文档第 8 节） | 全部 | 验收报告 |
 
+本机环境搭建与启动的具体命令见 [operations.md](./operations.md)。
+
 ---
 
 ## 10. 风险与待确认
@@ -466,7 +472,7 @@ STORAGE_LOCAL_ROOT="/directus/uploads"
 - [ ] 移动端/桌面端响应式正常。
 - [ ] 多语言：`/`、`/ja`、`/en` 三语首屏文案与 `<html lang>` 正确；未知语言段 404；语言切换保留当前路径与筛选态；`node scripts/check-i18n.mjs` 全绿（见 §7.2）。
 - [ ] 部署：域名 HTTPS、反向代理、数据库备份、基础监控就绪。
-- [ ] 提供部署与后台使用说明文档。
+- [ ] 提供部署与后台使用说明文档（见 [operations.md](./operations.md)）。
 
 ---
 

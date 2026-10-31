@@ -23,6 +23,11 @@ STORAGE_LOCAL_DRIVER="local"
 STORAGE_LOCAL_ROOT="./directus/uploads"
 # 自定义后台扩展（地图选点接口 map-picker）加载目录
 EXTENSIONS_PATH="./directus/extensions"
+# 将 npm 缓存指向可写目录，绕开 ~/.npm/_cacache 中残留的 root 属主文件导致的 EPERM。
+# （一次性彻底修复可用：sudo chown -R 501:20 "$HOME/.npm"）
+NPM_CACHE_DIR="${TMPDIR:-/tmp}/cardmarket-npmcache"
+mkdir -p "$NPM_CACHE_DIR"
+npm_config_cache="$NPM_CACHE_DIR"
 set +a
 # 固定到 11.x，与 docker-compose 的 directus/directus:11 镜像、以及地图选点扩展的
 # host(^11.0.0) 保持一致；避免 npx 拉到不兼容的 12.x 导致启动失败。
