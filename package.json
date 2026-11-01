@@ -18,6 +18,7 @@
     "directus:extension:watch:status": "npm --prefix directus/extensions/status-switch run watch"
   },
   "dependencies": {
+    "@directus/extensions-sdk": "^11.0.10",
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "latest",
     "isomorphic-dompurify": "^3.19.0",
