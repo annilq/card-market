@@ -189,6 +189,22 @@ const FIELD_LABELS_JA = {
   },
 }
 
+// 内容模块侧栏的展示顺序（越小越靠上）。Directus 用 directus_collections.sort 排序，
+// 这里集中声明，ensureCollection 会把 meta.sort 落到库里（新建与存量同步都覆盖）。
+const COLLECTION_MENU_SORT = {
+  shops: 1, // 店铺
+  site_settings: 2, // 站点设置
+  info_pages: 3, // 站点信息页面
+  announcements: 4, // 公告
+  cards: 5, // 卡牌
+  banners: 6, // 轮播图
+  ips: 7, // IP / 大类
+  series: 8, // 系列
+  sub_series: 9, // 子系列
+  rarities: 10, // 稀有度
+  messages: 11, // 留言
+}
+
 // 支持的语言：zh-CN / ja-JP（新增语言时扩展 buildTranslations 与两张标签表）
 
 function buildTranslations({ zh, ja }) {
@@ -538,17 +554,20 @@ async function ensureCollection(def) {
     zh: def.label,
     ja: COLLECTION_LABELS_JA[def.name],
   })
+  // 内容模块侧栏顺序：越小越靠上（见 COLLECTION_MENU_SORT）。
+  const sort = COLLECTION_MENU_SORT[def.name] ?? 0
   if (await collectionExists(def.name)) {
-    // 存量环境：同步图标/说明/多语言名，保证界面展示一致
+    // 存量环境：同步图标/说明/多语言名/侧栏顺序，保证界面展示一致
     await api('PATCH', `/collections/${def.name}`, {
       meta: {
         icon: def.icon || 'box',
         note: def.note || '',
         display_template: def.displayTemplate || '{{id}}',
+        sort,
         translations,
       },
     })
-    console.log(`· 集合已存在，元数据已同步：${def.name}`)
+    console.log(`· 集合已存在，元数据已同步：${def.name}（侧栏顺序 ${sort}）`)
     return
   }
   await api('POST', '/collections', {
@@ -558,11 +577,12 @@ async function ensureCollection(def) {
       note: def.note || '',
       display_template: def.displayTemplate || '{{id}}',
       singleton: def.singleton || false,
+      sort,
       translations,
     },
     schema: { name: def.name },
   })
-  console.log(`+ 创建集合：${def.name}`)
+  console.log(`+ 创建集合：${def.name}（侧栏顺序 ${sort}）`)
 }
 
 // 字段元数据（新建与同步共用，保证两处一致）
@@ -960,6 +980,41 @@ async function clearCache() {
   }
 }
 
+// 列表（tabular）视图里，status 列承载「只读状态药丸 + 修改状态按钮」。
+// Directus 对自定义 display 列不会测量其内部宽度，自动列宽偏小，导致
+// 「修改状态」按钮被单元格 overflow 裁掉一部分。这里给 5 个集合的 status
+// 列设置固定宽度，保证按钮完整可见（保留其余列宽与列顺序）。
+const STATUS_COLUMN_WIDTH = 200
+const STATUS_WIDTH_COLLECTIONS = ['announcements', 'cards', 'banners', 'info_pages', 'shops']
+async function setupListWidths() {
+  for (const c of STATUS_WIDTH_COLLECTIONS) {
+    const filter = encodeURIComponent(
+      JSON.stringify({ collection: { _eq: c }, layout: { _eq: 'tabular' } }),
+    )
+    let presets
+    try {
+      presets = (await api('GET', `/presets?filter=${filter}&limit=100&fields=id,user,layout_options`)).data || []
+    } catch (err) {
+      console.warn(`⚠ ${c} 列表预设读取失败，跳过列宽设置：`, err.message)
+      continue
+    }
+    for (const p of presets) {
+      const lo = p.layout_options || {}
+      const tab = lo.tabular || {}
+      const widths = { ...(tab.widths || {}) }
+      widths.status = STATUS_COLUMN_WIDTH
+      tab.widths = widths
+      lo.tabular = tab
+      try {
+        await api('PATCH', `/presets/${p.id}`, { layout_options: lo })
+        console.log(`✓ ${c} 预设#${p.id} 的 status 列宽设为 ${STATUS_COLUMN_WIDTH}px`)
+      } catch (err) {
+        console.warn(`⚠ ${c} 预设#${p.id} 列宽设置失败：`, err.message)
+      }
+    }
+  }
+}
+
 // 新增字段后若忘记补日文标签，这里给出提示（不影响执行）
 function checkTranslationCoverage() {
   const missing = []
@@ -1196,6 +1251,7 @@ async function main() {
   for (const d of DROP_FIELDS) await dropField(d.collection, d.field)
   await setupPermissions()
   await setupSettings()
+  await setupListWidths()
   await clearCache()
   console.log('\n✅ 数据模型落地完成。下一步：npm run directus:seed')
 }
