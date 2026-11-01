@@ -388,8 +388,8 @@ html.dark .map-tiles {
 }
 @media (hover: hover) and (pointer: fine) {
   .banner-stage {
-    /* 内容列 max-w-1232 居中，左右出血用 50% - 50vw 顶到视口边。
-       macOS 用 overlay 滚动条，100vw 等于视口宽，不会横向溢出。 */
+    /* 整段 100vw 满屏铺开（左右出血顶到视口边）；
+       中间激活 banner 固定 1232px（内容列宽），两侧暗场露出虚化相邻图。 */
     width: 100vw;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
@@ -404,8 +404,8 @@ html.dark .map-tiles {
     inset: auto;
     top: 50%;
     left: 50%;
-    width: min(900px, 62vw);
-    height: min(330px, 30vw);
+    width: min(1232px, 100%);
+    height: 100%;
     transform: translate(-50%, -50%) translateX(var(--bx, 0%)) scale(var(--bs, 1));
     opacity: var(--bo, 1);
     filter: brightness(var(--bb, 1));
