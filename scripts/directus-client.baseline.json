@@ -1,0 +1,738 @@
+{
+  "object": {
+    "DIRECTUS_BASE": "<BASE>",
+    "assetUrl": [
+      "<BASE>/assets/file-a",
+      "<BASE>/assets/file-a?width=600&format=webp",
+      "<BASE>/assets/file-a?width=1200&height=630&format=jpg&fit=cover",
+      null
+    ],
+    "getCards_default": {
+      "items": [
+        {
+          "id": 1,
+          "name": "皮卡丘",
+          "code": "PK-001",
+          "price": 120,
+          "status": "published",
+          "card_status": "raw",
+          "is_high_value": false,
+          "date_created": "2026-10-01T00:00:00.000Z",
+          "ip_id": {
+            "name": "宝可梦"
+          },
+          "series_id": {
+            "name": "基础系列"
+          },
+          "sub_series_id": {
+            "name": "第一弹"
+          },
+          "rarity_id": {
+            "name": "HR"
+          },
+          "images": [
+            "file-a",
+            "file-b",
+            "file-c"
+          ],
+          "ip": {
+            "name": "宝可梦"
+          },
+          "series": {
+            "name": "基础系列"
+          },
+          "sub_series": {
+            "name": "第一弹"
+          },
+          "rarity": {
+            "name": "HR"
+          }
+        },
+        {
+          "id": 2,
+          "name": "喷火龙",
+          "code": "PK-002",
+          "price": 880,
+          "status": "published",
+          "card_status": "packaged",
+          "is_high_value": true,
+          "date_created": "2026-10-02T00:00:00.000Z",
+          "ip_id": {
+            "name": "宝可梦"
+          },
+          "series_id": null,
+          "sub_series_id": null,
+          "rarity_id": {
+            "name": "SR"
+          },
+          "images": [],
+          "ip": {
+            "name": "宝可梦"
+          },
+          "rarity": {
+            "name": "SR"
+          }
+        }
+      ],
+      "total": 6
+    },
+    "getCards_full": {
+      "items": [
+        {
+          "id": 1,
+          "name": "皮卡丘",
+          "code": "PK-001",
+          "price": 120,
+          "status": "published",
+          "card_status": "raw",
+          "is_high_value": false,
+          "date_created": "2026-10-01T00:00:00.000Z",
+          "ip_id": {
+            "name": "宝可梦"
+          },
+          "series_id": {
+            "name": "基础系列"
+          },
+          "sub_series_id": {
+            "name": "第一弹"
+          },
+          "rarity_id": {
+            "name": "HR"
+          },
+          "images": [
+            "file-a",
+            "file-b",
+            "file-c"
+          ],
+          "ip": {
+            "name": "宝可梦"
+          },
+          "series": {
+            "name": "基础系列"
+          },
+          "sub_series": {
+            "name": "第一弹"
+          },
+          "rarity": {
+            "name": "HR"
+          }
+        },
+        {
+          "id": 2,
+          "name": "喷火龙",
+          "code": "PK-002",
+          "price": 880,
+          "status": "published",
+          "card_status": "packaged",
+          "is_high_value": true,
+          "date_created": "2026-10-02T00:00:00.000Z",
+          "ip_id": {
+            "name": "宝可梦"
+          },
+          "series_id": null,
+          "sub_series_id": null,
+          "rarity_id": {
+            "name": "SR"
+          },
+          "images": [],
+          "ip": {
+            "name": "宝可梦"
+          },
+          "rarity": {
+            "name": "SR"
+          }
+        }
+      ],
+      "total": 6
+    },
+    "getCards_newest": {
+      "items": [
+        {
+          "id": 1,
+          "name": "皮卡丘",
+          "code": "PK-001",
+          "price": 120,
+          "status": "published",
+          "card_status": "raw",
+          "is_high_value": false,
+          "date_created": "2026-10-01T00:00:00.000Z",
+          "ip_id": {
+            "name": "宝可梦"
+          },
+          "series_id": {
+            "name": "基础系列"
+          },
+          "sub_series_id": {
+            "name": "第一弹"
+          },
+          "rarity_id": {
+            "name": "HR"
+          },
+          "images": [
+            "file-a",
+            "file-b",
+            "file-c"
+          ],
+          "ip": {
+            "name": "宝可梦"
+          },
+          "series": {
+            "name": "基础系列"
+          },
+          "sub_series": {
+            "name": "第一弹"
+          },
+          "rarity": {
+            "name": "HR"
+          }
+        },
+        {
+          "id": 2,
+          "name": "喷火龙",
+          "code": "PK-002",
+          "price": 880,
+          "status": "published",
+          "card_status": "packaged",
+          "is_high_value": true,
+          "date_created": "2026-10-02T00:00:00.000Z",
+          "ip_id": {
+            "name": "宝可梦"
+          },
+          "series_id": null,
+          "sub_series_id": null,
+          "rarity_id": {
+            "name": "SR"
+          },
+          "images": [],
+          "ip": {
+            "name": "宝可梦"
+          },
+          "rarity": {
+            "name": "SR"
+          }
+        }
+      ],
+      "total": 6
+    },
+    "getCard_1": {
+      "id": 1,
+      "name": "皮卡丘",
+      "code": "PK-001",
+      "price": 120,
+      "status": "published",
+      "card_status": "raw",
+      "is_high_value": false,
+      "date_created": "2026-10-01T00:00:00.000Z",
+      "ip_id": {
+        "name": "宝可梦"
+      },
+      "series_id": {
+        "name": "基础系列"
+      },
+      "sub_series_id": {
+        "name": "第一弹"
+      },
+      "rarity_id": {
+        "name": "HR"
+      },
+      "images": [
+        "file-a",
+        "file-b",
+        "file-c"
+      ],
+      "ip": {
+        "name": "宝可梦"
+      },
+      "series": {
+        "name": "基础系列"
+      },
+      "sub_series": {
+        "name": "第一弹"
+      },
+      "rarity": {
+        "name": "HR"
+      }
+    },
+    "getCard_missing": null,
+    "getIps": [
+      {
+        "id": 1,
+        "name": "宝可梦",
+        "sort": 1
+      }
+    ],
+    "getSeries": [
+      {
+        "id": 2,
+        "name": "基础系列",
+        "ip_id": 1,
+        "sort": 1
+      }
+    ],
+    "getSubSeries": [
+      {
+        "id": 3,
+        "name": "第一弹",
+        "series_id": 2,
+        "sort": 1
+      }
+    ],
+    "getRarities": [
+      {
+        "id": 3,
+        "name": "HR",
+        "sort": 1
+      },
+      {
+        "id": 4,
+        "name": "SR",
+        "sort": 2
+      }
+    ],
+    "getBanners": [
+      {
+        "id": 1,
+        "title": "回购中",
+        "description": "高价回收",
+        "image": "file-banner",
+        "link": "https://example.com",
+        "sort": 1,
+        "status": "published"
+      }
+    ],
+    "getAnnouncements": [
+      {
+        "id": 1,
+        "title": "开站公告",
+        "body": "欢迎",
+        "published_at": "2026-10-01T00:00:00.000Z",
+        "is_pinned": true
+      }
+    ],
+    "getAnnouncement_1": {
+      "id": 1,
+      "title": "开站公告",
+      "body": "欢迎",
+      "published_at": "2026-10-01T00:00:00.000Z",
+      "is_pinned": true
+    },
+    "getAnnouncement_missing": null,
+    "getSiteSettings": {
+      "id": 1,
+      "site_name": "卡牌市场",
+      "logo": "file-logo",
+      "x_account": "@cardmarket"
+    },
+    "getInfoPages": [
+      {
+        "id": 1,
+        "page_key": "terms",
+        "title": "利用规则",
+        "body": "规则正文",
+        "sort": 1
+      },
+      {
+        "id": 2,
+        "page_key": "data-usage",
+        "title": "数据使用",
+        "body": "数据正文",
+        "sort": 2
+      }
+    ],
+    "getInfoPage_terms": {
+      "id": 1,
+      "page_key": "terms",
+      "title": "利用规则",
+      "body": "规则正文",
+      "sort": 1
+    },
+    "getInfoPage_unknown": null,
+    "getShops": [
+      {
+        "id": 1,
+        "name": "东京店",
+        "image": "file-shop",
+        "lat": 35.68,
+        "lng": 139.76,
+        "sort": 1,
+        "status": "published"
+      }
+    ],
+    "postMessage_ok": {
+      "ok": true,
+      "hasError": false
+    },
+    "postMessage_fail": {
+      "ok": false,
+      "hasError": true
+    }
+  },
+  "array": {
+    "DIRECTUS_BASE": "<BASE>",
+    "assetUrl": [
+      "<BASE>/assets/file-a",
+      "<BASE>/assets/file-a?width=600&format=webp",
+      "<BASE>/assets/file-a?width=1200&height=630&format=jpg&fit=cover",
+      null
+    ],
+    "getCards_default": {
+      "items": [
+        {
+          "id": 1,
+          "name": "皮卡丘",
+          "code": "PK-001",
+          "price": 120,
+          "status": "published",
+          "card_status": "raw",
+          "is_high_value": false,
+          "date_created": "2026-10-01T00:00:00.000Z",
+          "ip_id": {
+            "name": "宝可梦"
+          },
+          "series_id": {
+            "name": "基础系列"
+          },
+          "sub_series_id": {
+            "name": "第一弹"
+          },
+          "rarity_id": {
+            "name": "HR"
+          },
+          "images": [
+            "file-a",
+            "file-b",
+            "file-c"
+          ],
+          "ip": {
+            "name": "宝可梦"
+          },
+          "series": {
+            "name": "基础系列"
+          },
+          "sub_series": {
+            "name": "第一弹"
+          },
+          "rarity": {
+            "name": "HR"
+          }
+        },
+        {
+          "id": 2,
+          "name": "喷火龙",
+          "code": "PK-002",
+          "price": 880,
+          "status": "published",
+          "card_status": "packaged",
+          "is_high_value": true,
+          "date_created": "2026-10-02T00:00:00.000Z",
+          "ip_id": {
+            "name": "宝可梦"
+          },
+          "series_id": null,
+          "sub_series_id": null,
+          "rarity_id": {
+            "name": "SR"
+          },
+          "images": [],
+          "ip": {
+            "name": "宝可梦"
+          },
+          "rarity": {
+            "name": "SR"
+          }
+        }
+      ],
+      "total": 6
+    },
+    "getCards_full": {
+      "items": [
+        {
+          "id": 1,
+          "name": "皮卡丘",
+          "code": "PK-001",
+          "price": 120,
+          "status": "published",
+          "card_status": "raw",
+          "is_high_value": false,
+          "date_created": "2026-10-01T00:00:00.000Z",
+          "ip_id": {
+            "name": "宝可梦"
+          },
+          "series_id": {
+            "name": "基础系列"
+          },
+          "sub_series_id": {
+            "name": "第一弹"
+          },
+          "rarity_id": {
+            "name": "HR"
+          },
+          "images": [
+            "file-a",
+            "file-b",
+            "file-c"
+          ],
+          "ip": {
+            "name": "宝可梦"
+          },
+          "series": {
+            "name": "基础系列"
+          },
+          "sub_series": {
+            "name": "第一弹"
+          },
+          "rarity": {
+            "name": "HR"
+          }
+        },
+        {
+          "id": 2,
+          "name": "喷火龙",
+          "code": "PK-002",
+          "price": 880,
+          "status": "published",
+          "card_status": "packaged",
+          "is_high_value": true,
+          "date_created": "2026-10-02T00:00:00.000Z",
+          "ip_id": {
+            "name": "宝可梦"
+          },
+          "series_id": null,
+          "sub_series_id": null,
+          "rarity_id": {
+            "name": "SR"
+          },
+          "images": [],
+          "ip": {
+            "name": "宝可梦"
+          },
+          "rarity": {
+            "name": "SR"
+          }
+        }
+      ],
+      "total": 6
+    },
+    "getCards_newest": {
+      "items": [
+        {
+          "id": 1,
+          "name": "皮卡丘",
+          "code": "PK-001",
+          "price": 120,
+          "status": "published",
+          "card_status": "raw",
+          "is_high_value": false,
+          "date_created": "2026-10-01T00:00:00.000Z",
+          "ip_id": {
+            "name": "宝可梦"
+          },
+          "series_id": {
+            "name": "基础系列"
+          },
+          "sub_series_id": {
+            "name": "第一弹"
+          },
+          "rarity_id": {
+            "name": "HR"
+          },
+          "images": [
+            "file-a",
+            "file-b",
+            "file-c"
+          ],
+          "ip": {
+            "name": "宝可梦"
+          },
+          "series": {
+            "name": "基础系列"
+          },
+          "sub_series": {
+            "name": "第一弹"
+          },
+          "rarity": {
+            "name": "HR"
+          }
+        },
+        {
+          "id": 2,
+          "name": "喷火龙",
+          "code": "PK-002",
+          "price": 880,
+          "status": "published",
+          "card_status": "packaged",
+          "is_high_value": true,
+          "date_created": "2026-10-02T00:00:00.000Z",
+          "ip_id": {
+            "name": "宝可梦"
+          },
+          "series_id": null,
+          "sub_series_id": null,
+          "rarity_id": {
+            "name": "SR"
+          },
+          "images": [],
+          "ip": {
+            "name": "宝可梦"
+          },
+          "rarity": {
+            "name": "SR"
+          }
+        }
+      ],
+      "total": 6
+    },
+    "getCard_1": {
+      "id": 1,
+      "name": "皮卡丘",
+      "code": "PK-001",
+      "price": 120,
+      "status": "published",
+      "card_status": "raw",
+      "is_high_value": false,
+      "date_created": "2026-10-01T00:00:00.000Z",
+      "ip_id": {
+        "name": "宝可梦"
+      },
+      "series_id": {
+        "name": "基础系列"
+      },
+      "sub_series_id": {
+        "name": "第一弹"
+      },
+      "rarity_id": {
+        "name": "HR"
+      },
+      "images": [
+        "file-a",
+        "file-b",
+        "file-c"
+      ],
+      "ip": {
+        "name": "宝可梦"
+      },
+      "series": {
+        "name": "基础系列"
+      },
+      "sub_series": {
+        "name": "第一弹"
+      },
+      "rarity": {
+        "name": "HR"
+      }
+    },
+    "getCard_missing": null,
+    "getIps": [
+      {
+        "id": 1,
+        "name": "宝可梦",
+        "sort": 1
+      }
+    ],
+    "getSeries": [
+      {
+        "id": 2,
+        "name": "基础系列",
+        "ip_id": 1,
+        "sort": 1
+      }
+    ],
+    "getSubSeries": [
+      {
+        "id": 3,
+        "name": "第一弹",
+        "series_id": 2,
+        "sort": 1
+      }
+    ],
+    "getRarities": [
+      {
+        "id": 3,
+        "name": "HR",
+        "sort": 1
+      },
+      {
+        "id": 4,
+        "name": "SR",
+        "sort": 2
+      }
+    ],
+    "getBanners": [
+      {
+        "id": 1,
+        "title": "回购中",
+        "description": "高价回收",
+        "image": "file-banner",
+        "link": "https://example.com",
+        "sort": 1,
+        "status": "published"
+      }
+    ],
+    "getAnnouncements": [
+      {
+        "id": 1,
+        "title": "开站公告",
+        "body": "欢迎",
+        "published_at": "2026-10-01T00:00:00.000Z",
+        "is_pinned": true
+      }
+    ],
+    "getAnnouncement_1": {
+      "id": 1,
+      "title": "开站公告",
+      "body": "欢迎",
+      "published_at": "2026-10-01T00:00:00.000Z",
+      "is_pinned": true
+    },
+    "getAnnouncement_missing": null,
+    "getSiteSettings": {
+      "id": 1,
+      "site_name": "卡牌市场",
+      "logo": "file-logo",
+      "x_account": "@cardmarket"
+    },
+    "getInfoPages": [
+      {
+        "id": 1,
+        "page_key": "terms",
+        "title": "利用规则",
+        "body": "规则正文",
+        "sort": 1
+      },
+      {
+        "id": 2,
+        "page_key": "data-usage",
+        "title": "数据使用",
+        "body": "数据正文",
+        "sort": 2
+      }
+    ],
+    "getInfoPage_terms": {
+      "id": 1,
+      "page_key": "terms",
+      "title": "利用规则",
+      "body": "规则正文",
+      "sort": 1
+    },
+    "getInfoPage_unknown": null,
+    "getShops": [
+      {
+        "id": 1,
+        "name": "东京店",
+        "image": "file-shop",
+        "lat": 35.68,
+        "lng": 139.76,
+        "sort": 1,
+        "status": "published"
+      }
+    ],
+    "postMessage_ok": {
+      "ok": true,
+      "hasError": false
+    },
+    "postMessage_fail": {
+      "ok": false,
+      "hasError": true
+    }
+  }
+}
