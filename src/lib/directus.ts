@@ -1,5 +1,14 @@
 // Directus REST 客户端（前端，公开角色读取 + 留言创建）
 // 服务端 SSR 与浏览器端共用：统一走公开地址 VITE_DIRECTUS_URL。
+import {
+  aggregate,
+  createDirectus,
+  createItem,
+  readItem,
+  readItems,
+  readSingleton,
+  rest,
+} from '@directus/sdk'
 import type {
   Announcement,
   Banner,
@@ -20,6 +29,8 @@ const BASE: string =
   'http://localhost:8055'
 
 export const DIRECTUS_BASE = BASE
+
+const client = createDirectus(BASE).with(rest())
 
 /** 构造图片资产 URL（Directus 文件接口，可加缩略图/格式转换，见 development.md §5.3） */
 export function assetUrl(
@@ -42,24 +53,11 @@ export function assetUrl(
   return `${BASE}/assets/${fileId}${q ? `?${q}` : ''}`
 }
 
-interface DirectusList<T> {
-  data: T[]
-  meta: { filter_count: number; total_count?: number }
-}
-interface DirectusItem<T> {
-  data: T
-}
-
-async function dGet<T>(path: string): Promise<T | null> {
+// SDK 对 404 与网络错误抛异常，页面需要降级渲染，故在边界统一转成 null。
+async function safeRequest<T>(run: () => Promise<T>): Promise<T | null> {
   try {
-    const res = await fetch(`${BASE}${path}`, {
-      headers: { Accept: 'application/json' },
-    })
-    if (res.status === 404) return null
-    if (!res.ok) throw new Error(`Directus ${res.status} @ ${path}`)
-    return (await res.json()) as T
+    return await run()
   } catch (err) {
-    // SSR 与客户端统一：抓取失败时返回 null，由页面降级渲染
     console.error('[directus]', err)
     return null
   }
@@ -70,8 +68,14 @@ async function dGet<T>(path: string): Promise<T | null> {
 // normalizeCard 再归一化为 id 数组，页面组件无需感知关联结构。
 // 关联字段按外键列名展开（ip_id.name），Directus 只在 ip_id 上返回对象；
 // normalizeCard 再摊平成 ip/series/rarity，页面组件只认这个形状。
-const CARD_FIELDS =
-  '*,ip_id.name,series_id.name,sub_series_id.name,rarity_id.name,images.directus_files_id'
+const CARD_FIELDS = [
+  '*',
+  'ip_id.name',
+  'series_id.name',
+  'sub_series_id.name',
+  'rarity_id.name',
+  'images.directus_files_id',
+]
 
 interface CardImageJunction {
   directus_files_id?: string | { id?: string } | null
@@ -157,149 +161,217 @@ function buildCardFilter(
 async function rarityIdsMatching(term: string | undefined): Promise<number[]> {
   const keyword = term?.trim()
   if (!keyword) return []
-  const params = new URLSearchParams()
-  params.set('fields', 'id')
-  params.set('filter', JSON.stringify({ name: { _icontains: keyword } }))
-  const res = await dGet<DirectusList<{ id: number }>>(`/items/rarities?${params}`)
-  return (res?.data ?? []).map((r) => r.id)
+  const res = await safeRequest(() =>
+    client.request(
+      readItems('rarities', {
+        fields: ['id'],
+        filter: { name: { _icontains: keyword } },
+      }),
+    ),
+  )
+  return ((res ?? []) as Array<{ id: number }>).map((r) => r.id)
 }
 
 export async function getCards(q: CardQuery): Promise<CardListResult> {
-  const params = new URLSearchParams()
-  params.set('fields', CARD_FIELDS)
-  params.set('meta', 'filter_count')
-  params.set('page', String(q.page ?? 1))
-  params.set('limit', String(q.limit ?? 24))
-  params.set('sort', cardSortValue(q.sort))
-
   const rarityIds = await rarityIdsMatching(q.q)
-  params.set('filter', JSON.stringify(buildCardFilter(q, rarityIds)))
-
-  const res = await dGet<DirectusList<Card>>(`/items/cards?${params}`)
-  if (!res) return { items: [], total: 0 }
+  const filter = buildCardFilter(q, rarityIds)
+  const items = await safeRequest(() =>
+    client.request(
+      readItems('cards', {
+        fields: CARD_FIELDS,
+        filter,
+        sort: cardSortValue(q.sort),
+        page: q.page ?? 1,
+        limit: q.limit ?? 24,
+      }),
+    ),
+  )
+  if (!items) return { items: [], total: 0 }
+  // SDK 只返回响应 data，丢弃 meta.filter_count，故单独聚合一次取总数。
+  const counts = await safeRequest(() =>
+    client.request(
+      aggregate('cards', { aggregate: { count: '*' }, query: { filter } }),
+    ),
+  )
+  const count = Array.isArray(counts)
+    ? Number((counts as Array<{ count?: string | null }>)[0]?.count ?? NaN)
+    : NaN
   return {
-    items: res.data.map(normalizeCard),
-    total: res.meta?.filter_count ?? res.data.length,
+    items: (items as Card[]).map(normalizeCard),
+    total: Number.isNaN(count) ? items.length : count,
   }
 }
 
 export async function getCard(id: string | number): Promise<Card | null> {
-  const params = new URLSearchParams()
-  params.set('fields', CARD_FIELDS)
-  params.set('filter', JSON.stringify({ status: { _eq: 'published' } }))
-  const res = await dGet<DirectusItem<Card>>(`/items/cards/${id}?${params}`)
-  return res?.data ? normalizeCard(res.data) : null
+  const res = await safeRequest(() =>
+    client.request(
+      readItem('cards', id, {
+        fields: CARD_FIELDS,
+        filter: { status: { _eq: 'published' } },
+      }),
+    ),
+  )
+  return res ? normalizeCard(res as Card) : null
 }
 
 export async function getIps(): Promise<Ip[]> {
-  const res = await dGet<DirectusList<Ip>>(
-    '/items/ips?filter[status][_eq]=true&sort=sort&fields=id,name,sort',
+  const res = await safeRequest(() =>
+    client.request(
+      readItems('ips', {
+        fields: ['id', 'name', 'sort'],
+        filter: { status: { _eq: true } },
+        sort: ['sort'],
+      }),
+    ),
   )
-  return res?.data ?? []
+  return (res as Ip[] | null) ?? []
 }
 
 export async function getSeries(): Promise<Series[]> {
-  const res = await dGet<DirectusList<Series>>(
-    '/items/series?filter[status][_eq]=true&sort=sort&fields=id,name,ip_id,sort',
+  const res = await safeRequest(() =>
+    client.request(
+      readItems('series', {
+        fields: ['id', 'name', 'ip_id', 'sort'],
+        filter: { status: { _eq: true } },
+        sort: ['sort'],
+      }),
+    ),
   )
-  return res?.data ?? []
+  return (res as Series[] | null) ?? []
 }
 
 export async function getSubSeries(): Promise<SubSeries[]> {
-  const res = await dGet<DirectusList<SubSeries>>(
-    '/items/sub_series?filter[status][_eq]=true&sort=sort&fields=id,name,series_id,sort',
+  const res = await safeRequest(() =>
+    client.request(
+      readItems('sub_series', {
+        fields: ['id', 'name', 'series_id', 'sort'],
+        filter: { status: { _eq: true } },
+        sort: ['sort'],
+      }),
+    ),
   )
-  return res?.data ?? []
+  return (res as SubSeries[] | null) ?? []
 }
 
 export async function getRarities(): Promise<Rarity[]> {
-  const res = await dGet<DirectusList<Rarity>>(
-    '/items/rarities?filter[status][_eq]=true&sort=sort&fields=id,name,sort',
+  const res = await safeRequest(() =>
+    client.request(
+      readItems('rarities', {
+        fields: ['id', 'name', 'sort'],
+        filter: { status: { _eq: true } },
+        sort: ['sort'],
+      }),
+    ),
   )
-  return res?.data ?? []
+  return (res as Rarity[] | null) ?? []
 }
 
 export async function getBanners(): Promise<Banner[]> {
-  const res = await dGet<DirectusList<Banner>>(
-    '/items/banners?filter[status][_eq]=published&sort=sort&fields=id,title,description,image,link,sort',
+  const res = await safeRequest(() =>
+    client.request(
+      readItems('banners', {
+        fields: ['id', 'title', 'description', 'image', 'link', 'sort'],
+        filter: { status: { _eq: 'published' } },
+        sort: ['sort'],
+      }),
+    ),
   )
-  return res?.data ?? []
+  return (res as Banner[] | null) ?? []
 }
 
 export async function getAnnouncements(): Promise<Announcement[]> {
   const now = new Date().toISOString()
-  const filter = JSON.stringify({
-    status: { _eq: 'published' },
-    _or: [{ published_at: { _null: true } }, { published_at: { _lte: now } }],
-  })
-  const res = await dGet<DirectusList<Announcement>>(
-    `/items/announcements?sort=-is_pinned,-published_at&fields=id,title,body,published_at,is_pinned&filter=${encodeURIComponent(
-      filter,
-    )}`,
+  const res = await safeRequest(() =>
+    client.request(
+      readItems('announcements', {
+        fields: ['id', 'title', 'body', 'published_at', 'is_pinned'],
+        filter: {
+          status: { _eq: 'published' },
+          _or: [
+            { published_at: { _null: true } },
+            { published_at: { _lte: now } },
+          ],
+        },
+        sort: ['-is_pinned', '-published_at'],
+      }),
+    ),
   )
-  return res?.data ?? []
+  return (res as Announcement[] | null) ?? []
 }
 
 export async function getAnnouncement(
   id: string | number,
 ): Promise<Announcement | null> {
-  const res = await dGet<DirectusItem<Announcement>>(
-    `/items/announcements/${id}?fields=id,title,body,published_at,is_pinned`,
+  const res = await safeRequest(() =>
+    client.request(
+      readItem('announcements', id, {
+        fields: ['id', 'title', 'body', 'published_at', 'is_pinned'],
+      }),
+    ),
   )
-  return res?.data ?? null
+  return (res as Announcement | null) ?? null
 }
 
 export async function getSiteSettings(): Promise<SiteSettings | null> {
   // 单例集合：Directus 返回 data 为对象（非数组）
-  const res = await dGet<{ data: SiteSettings | SiteSettings[] }>(
-    '/items/site_settings?limit=1&fields=*',
+  const res = await safeRequest(() =>
+    client.request(readSingleton('site_settings', { fields: ['*'] })),
   )
   if (!res) return null
-  const item = Array.isArray(res.data) ? res.data[0] : res.data
+  const data = res as unknown as SiteSettings | SiteSettings[]
+  const item = Array.isArray(data) ? data[0] : data
   return item ?? null
 }
 
 // 审核用信息页：运营信息 / 个人信息收集 / 利用规则 / 数据使用。
 // 页脚入口与路由都按 page_key 定位，故排序按后台 sort 字段（保持运营约定的展示顺序）。
-const INFO_PAGE_FIELDS = 'id,page_key,title,body,sort'
+const INFO_PAGE_FIELDS = ['id', 'page_key', 'title', 'body', 'sort']
 
 export async function getInfoPages(): Promise<InfoPage[]> {
-  const params = new URLSearchParams()
-  params.set('fields', INFO_PAGE_FIELDS)
-  params.set('filter', JSON.stringify({ status: { _eq: 'published' } }))
-  params.set('sort', 'sort')
-  const res = await dGet<DirectusList<InfoPage>>(`/items/info_pages?${params}`)
-  return res?.data ?? []
+  const res = await safeRequest(() =>
+    client.request(
+      readItems('info_pages', {
+        fields: INFO_PAGE_FIELDS,
+        filter: { status: { _eq: 'published' } },
+        sort: ['sort'],
+      }),
+    ),
+  )
+  return (res as InfoPage[] | null) ?? []
 }
 
 /** 按标识取单个信息页；未发布或不存在的页返回 null（页面据此显示 404 面板）。 */
 export async function getInfoPage(
   pageKey: string,
 ): Promise<InfoPage | null> {
-  const params = new URLSearchParams()
-  params.set('fields', INFO_PAGE_FIELDS)
-  params.set(
-    'filter',
-    JSON.stringify({
-      page_key: { _eq: pageKey },
-      status: { _eq: 'published' },
-    }),
+  const res = await safeRequest(() =>
+    client.request(
+      readItems('info_pages', {
+        fields: INFO_PAGE_FIELDS,
+        filter: {
+          page_key: { _eq: pageKey },
+          status: { _eq: 'published' },
+        },
+        limit: 1,
+      }),
+    ),
   )
-  params.set('limit', '1')
-  const res = await dGet<DirectusList<InfoPage>>(`/items/info_pages?${params}`)
-  return res?.data?.[0] ?? null
+  return (res as InfoPage[] | null)?.[0] ?? null
 }
 
-const SHOP_FIELDS =
-  '*,image'
+const SHOP_FIELDS = ['*', 'image']
 
 export async function getShops(): Promise<Shop[]> {
-  const params = new URLSearchParams()
-  params.set('fields', SHOP_FIELDS)
-  params.set('filter', JSON.stringify({ status: { _eq: 'published' } }))
-  params.set('sort', 'sort')
-  const res = await dGet<DirectusList<Shop>>(`/items/shops?${params}`)
-  return res?.data ?? []
+  const res = await safeRequest(() =>
+    client.request(
+      readItems('shops', {
+        fields: SHOP_FIELDS,
+        filter: { status: { _eq: 'published' } },
+        sort: ['sort'],
+      }),
+    ),
+  )
+  return (res as Shop[] | null) ?? []
 }
 
 export interface MessageInput {
@@ -315,10 +387,8 @@ export async function postMessage(
   input: MessageInput,
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const res = await fetch(`${BASE}/items/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    await client.request(
+      createItem('messages', {
         content: input.content,
         contact_name: input.contact_name || null,
         contact_info: input.contact_info || null,
@@ -326,15 +396,11 @@ export async function postMessage(
         // 必须在 Public Create 权限的 fields 白名单内（见 bootstrap.mjs），否则会被 Directus 静默丢弃。
         card: input.card ?? null,
       }),
-    })
-    if (!res.ok) {
-      const text = await res.text().catch(() => '')
-      // error 只用来记录与排查，**不要直接渲染给访客**：里面是 HTTP 状态码
-      // 与 Directus 的原始响应体。界面文案由页面按语言给出。
-      return { ok: false, error: `HTTP ${res.status} ${text.slice(0, 500)}` }
-    }
+    )
     return { ok: true }
   } catch (err) {
+    // error 只用来记录与排查，**不要直接渲染给访客**：里面是 SDK 的异常信息。
+    // 界面文案由页面按语言给出。
     return {
       ok: false,
       error: err instanceof Error ? `${err.name}: ${err.message}` : String(err),
